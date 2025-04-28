@@ -1,0 +1,25 @@
+package app
+
+import (
+	"github.com/jmoiron/sqlx"
+	"github.com/joshsoftware/code-curiosity-2025/internal/app/auth"
+	"github.com/joshsoftware/code-curiosity-2025/internal/app/user"
+	"github.com/joshsoftware/code-curiosity-2025/internal/repository"
+)
+
+type Dependencies struct {
+	AuthService auth.Service
+	UserService user.Service
+}
+
+func InitDependencies(db *sqlx.DB) Dependencies {
+	userRepository := repository.NewUserRepository(db)
+
+	userService := user.NewService(userRepository)
+	authService := auth.NewService(userService)
+
+	return Dependencies{
+		AuthService: authService,
+		UserService: userService,
+	}
+}
