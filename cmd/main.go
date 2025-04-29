@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	
 	"os/signal"
 	"syscall"
 	"time"
@@ -33,7 +34,7 @@ func main() {
 	defer db.Close()
 
 	dependencies := app.InitDependencies(db)
-	
+
 	router := app.NewRouter(dependencies)
 
 	server := http.Server{

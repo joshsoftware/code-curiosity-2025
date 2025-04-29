@@ -61,6 +61,7 @@ func (b *BaseRepository) HandleTransaction(ctx context.Context, tx *sqlx.Tx, inc
 		}
 		return nil
 	}
+	
 	err := tx.Commit()
 	if err != nil {
 		slog.Error("error occurred while committing database transaction", "error", err)
@@ -73,6 +74,5 @@ func (b *BaseRepository) initiateQueryExecuter(tx *sqlx.Tx) QueryExecuter {
 	if tx != nil {
 		return tx
 	}
-
 	return b.db
 }

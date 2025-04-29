@@ -8,8 +8,8 @@ import (
 	"github.com/joshsoftware/code-curiosity-2025/internal/app/user"
 	"github.com/joshsoftware/code-curiosity-2025/internal/config"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/apperrors"
-	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/constants"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/jwt"
+	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/middleware"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
 )
@@ -87,12 +87,14 @@ func (s *service) GithubOAuthLoginCallback(ctx context.Context, code string) (st
 }
 
 func (s *service) GetLoggedInUser(ctx context.Context) (User, error) {
-	userIdValue := ctx.Value(constants.UserIdKey)
+	userIdValue := ctx.Value(middleware.UserIdKey)
+
 	userId, ok := userIdValue.(int)
 	if !ok {
 		slog.Error("error obtaining user id from context")
 		return User{}, apperrors.ErrInternalServer
 	}
+
 	user, err := s.userService.GetUserById(ctx, userId)
 	if err != nil {
 		slog.Error("failed to get logged in user", "error", err)

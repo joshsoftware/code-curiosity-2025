@@ -7,16 +7,22 @@ import (
 
 	"github.com/joshsoftware/code-curiosity-2025/internal/config"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/apperrors"
-	constant "github.com/joshsoftware/code-curiosity-2025/internal/pkg/constants"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/jwt"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/response"
+)
+
+type contextKey string
+
+const (
+	UserIdKey  contextKey = "userId"
+	IsAdminKey contextKey = "isAdmin"
 )
 
 func CorsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		appCfg := config.GetAppConfig()
 		w.Header().Set("Access-Control-Allow-Origin", appCfg.ClientURL)
-		
+
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
@@ -29,7 +35,6 @@ func CorsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// Checks whether the user is valid, that is signed in before the user can access the next handler functionality
 func Authentication(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
@@ -46,9 +51,9 @@ func Authentication(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		userId := token.UserId
-		ctx := context.WithValue(r.Context(),constant.UserIdKey, userId)
+		ctx := context.WithValue(r.Context(), UserIdKey, userId)
 		isAdmin := token.IsAdmin
-		ctx = context.WithValue(ctx, constant.IsAdminKey, isAdmin)
+		ctx = context.WithValue(ctx, IsAdminKey, isAdmin)
 		r = r.WithContext(ctx)
 
 		next.ServeHTTP(w, r)

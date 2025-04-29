@@ -12,6 +12,7 @@ import (
 func UpdateUserEmail(userService Service) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+
 		var requestBody Email
 		err := json.NewDecoder(r.Body).Decode(&requestBody)
 		if err != nil {
@@ -27,5 +28,7 @@ func UpdateUserEmail(userService Service) func(w http.ResponseWriter, r *http.Re
 			response.WriteJson(w, status, errorMessage, nil)
 			return
 		}
+
+		response.WriteJson(w, http.StatusOK, "email updated successfully", nil)
 	}
 }

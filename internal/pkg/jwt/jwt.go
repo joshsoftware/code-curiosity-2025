@@ -21,7 +21,6 @@ func GenerateJWT(userId int, isAdmin bool) (string, error) {
 		IsAdmin: isAdmin,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
-			Issuer:    "BeMyRoomie",
 		},
 	}
 

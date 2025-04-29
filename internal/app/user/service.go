@@ -5,7 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/apperrors"
-	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/constants"
+	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/middleware"
 	"github.com/joshsoftware/code-curiosity-2025/internal/repository"
 )
 
@@ -14,10 +14,10 @@ type service struct {
 }
 
 type Service interface {
+	GetUserById(ctx context.Context, userId int) (User, error)
 	GetUserByGithubId(ctx context.Context, githubId int) (User, error)
 	CreateUser(ctx context.Context, userInfo CreateUserRequestBody) (User, error)
 	UpdateUserEmail(ctx context.Context, email string) error
-	GetUserById(ctx context.Context, userId int) (User, error)
 }
 
 func NewService(userRepository repository.UserRepository) Service {
@@ -58,7 +58,8 @@ func (s *service) CreateUser(ctx context.Context, userInfo CreateUserRequestBody
 }
 
 func (s *service) UpdateUserEmail(ctx context.Context, email string) error {
-	userIdValue := ctx.Value(constants.UserIdKey)
+	userIdValue := ctx.Value(middleware.UserIdKey)
+
 	userId, ok := userIdValue.(int)
 	if !ok {
 		slog.Error("error obtaining user id from context")
@@ -70,5 +71,6 @@ func (s *service) UpdateUserEmail(ctx context.Context, email string) error {
 		slog.Error("failed to update user email", "error", err)
 		return err
 	}
+
 	return nil
 }
