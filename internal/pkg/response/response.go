@@ -29,6 +29,7 @@ func WriteJson(w http.ResponseWriter, statusCode int, message string, data inter
 		_, err := w.Write([]byte(fmt.Sprintf(`{ "message" : "%s" }`, apperrors.ErrInternalServer.Error())))
 		if err != nil {
 			slog.Error("error occurred while writing response", "error", err)
+			http.Error(w, "error occurred while writing response", http.StatusInternalServerError)
 		}
 		return
 	}

@@ -9,21 +9,6 @@ import (
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/response"
 )
 
-func GetLoggedInUser(userService Service) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		userInfo, err := userService.GetLoggedInUser(ctx)
-		if err != nil {
-			slog.Error("failed to get logged in user", "error", err)
-			status, errorMessage := apperrors.MapError(err)
-			response.WriteJson(w, status, errorMessage, nil)
-			return
-		}
-
-		response.WriteJson(w, http.StatusOK, "logged in user fetched successfully", userInfo)
-	}
-}
-
 func UpdateUserEmail(userService Service) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()

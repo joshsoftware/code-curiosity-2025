@@ -8,6 +8,7 @@ import (
 	"github.com/joshsoftware/code-curiosity-2025/internal/app/user"
 	"github.com/joshsoftware/code-curiosity-2025/internal/config"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/apperrors"
+	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/constants"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/jwt"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
@@ -21,6 +22,7 @@ type service struct {
 type Service interface {
 	GithubOAuthLoginUrl(ctx context.Context) string
 	GithubOAuthLoginCallback(ctx context.Context, code string) (string, error)
+	GetLoggedInUser(ctx context.Context) (User, error)
 }
 
 func NewService(userService user.Service) Service {
@@ -59,27 +61,43 @@ func (s *service) GithubOAuthLoginCallback(ctx context.Context, code string) (st
 	}
 	defer resp.Body.Close()
 
-	var userInfo User
+	var userInfo GithubUserResponse
 	err = json.NewDecoder(resp.Body).Decode(&userInfo)
 	if err != nil {
 		slog.Error("failed to unmarshal user info", "error", err)
 		return "", apperrors.ErrInternalServer
 	}
 
-	_, err = s.userService.GetUserByGithubId(ctx, userInfo.GithubId)
+	userData, err := s.userService.GetUserByGithubId(ctx, userInfo.GithubId)
 	if err != nil {
-		_, err = s.userService.CreateUser(ctx, user.CreateUserRequestBody(userInfo))
+		userData, err = s.userService.CreateUser(ctx, user.CreateUserRequestBody(userInfo))
 		if err != nil {
 			slog.Error("failed to create user", "error", err)
 			return "", apperrors.ErrUserCreationFailed
 		}
 	}
 
-	jwtToken, err := jwt.GenerateJWT(userInfo.UserId, userInfo.IsAdmin)
+	jwtToken, err := jwt.GenerateJWT(userData.Id, userInfo.IsAdmin)
 	if err != nil {
 		slog.Error("error generating jwt", "error", err)
 		return "", apperrors.ErrInternalServer
 	}
 
 	return jwtToken, nil
+}
+
+func (s *service) GetLoggedInUser(ctx context.Context) (User, error) {
+	userIdValue := ctx.Value(constants.UserIdKey)
+	userId, ok := userIdValue.(int)
+	if !ok {
+		slog.Error("error obtaining user id from context")
+		return User{}, apperrors.ErrInternalServer
+	}
+	user, err := s.userService.GetUserById(ctx, userId)
+	if err != nil {
+		slog.Error("failed to get logged in user", "error", err)
+		return User{}, apperrors.ErrInternalServer
+	}
+
+	return User(user), nil
 }

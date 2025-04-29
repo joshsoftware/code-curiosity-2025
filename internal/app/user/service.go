@@ -16,8 +16,8 @@ type service struct {
 type Service interface {
 	GetUserByGithubId(ctx context.Context, githubId int) (User, error)
 	CreateUser(ctx context.Context, userInfo CreateUserRequestBody) (User, error)
-	GetLoggedInUser(ctx context.Context) (User, error)
 	UpdateUserEmail(ctx context.Context, email string) error
+	GetUserById(ctx context.Context, userId int) (User, error)
 }
 
 func NewService(userRepository repository.UserRepository) Service {
@@ -26,23 +26,21 @@ func NewService(userRepository repository.UserRepository) Service {
 	}
 }
 
-func (s *service) GetUserByGithubId(ctx context.Context, githubId int) (User, error) {
-	tx, err := s.userRepository.BeginTx(ctx)
+func (s *service) GetUserById(ctx context.Context, userId int) (User, error) {
+	userInfo, err := s.userRepository.GetUserById(ctx, nil, userId)
 	if err != nil {
-		slog.Error("failed to start user creation", "error", err)
+		slog.Error("failed to get user by id", "error", err)
 		return User{}, err
 	}
 
-	defer func() {
-		if txErr := s.userRepository.HandleTransaction(ctx, tx, err); txErr != nil {
-			slog.Error("failed to handle transaction", "error", txErr)
-			err = txErr
-		}
-	}()
+	return User(userInfo), nil
 
-	userInfo, err := s.userRepository.GetUserByGithubId(ctx, tx, githubId)
+}
+
+func (s *service) GetUserByGithubId(ctx context.Context, githubId int) (User, error) {
+	userInfo, err := s.userRepository.GetUserByGithubId(ctx, nil, githubId)
 	if err != nil {
-		slog.Error("failed to get user by id", "error", err)
+		slog.Error("failed to get user by github id", "error", err)
 		return User{}, err
 	}
 
@@ -50,20 +48,7 @@ func (s *service) GetUserByGithubId(ctx context.Context, githubId int) (User, er
 }
 
 func (s *service) CreateUser(ctx context.Context, userInfo CreateUserRequestBody) (User, error) {
-	tx, err := s.userRepository.BeginTx(ctx)
-	if err != nil {
-		slog.Error("failed to start user creation", "error", err)
-		return User{}, err
-	}
-
-	defer func() {
-		if txErr := s.userRepository.HandleTransaction(ctx, tx, err); txErr != nil {
-			slog.Error("failed to handle transaction", "error", txErr)
-			err = txErr
-		}
-	}()
-
-	user, err := s.userRepository.CreateUser(ctx, tx, repository.CreateUserRequestBody(userInfo))
+	user, err := s.userRepository.CreateUser(ctx, nil, repository.CreateUserRequestBody(userInfo))
 	if err != nil {
 		slog.Error("failed to create user", "error", err)
 		return User{}, apperrors.ErrUserCreationFailed
@@ -72,57 +57,15 @@ func (s *service) CreateUser(ctx context.Context, userInfo CreateUserRequestBody
 	return User(user), nil
 }
 
-func (s *service) GetLoggedInUser(ctx context.Context) (User, error) {
-	tx, err := s.userRepository.BeginTx(ctx)
-	if err != nil {
-		slog.Error("failed to start user creation", "error", err)
-		return User{}, err
-	}
-
-	defer func() {
-		if txErr := s.userRepository.HandleTransaction(ctx, tx, err); txErr != nil {
-			slog.Error("failed to handle transaction", "error", txErr)
-			err = txErr
-		}
-	}()
-
-	userIdValue := ctx.Value(constants.UserIdKey)
-	userId, ok := userIdValue.(int)
-	if !ok {
-		slog.Error("error obtaining user id from context")
-		return User{}, err
-	}
-	user, err := s.userRepository.GetUserByUserId(ctx, nil, userId)
-	if err != nil {
-		slog.Error("failed to get logged in user", "error", err)
-		return User{}, err
-	}
-
-	return User(user), nil
-}
-
 func (s *service) UpdateUserEmail(ctx context.Context, email string) error {
-	tx, err := s.userRepository.BeginTx(ctx)
-	if err != nil {
-		slog.Error("failed to start user creation", "error", err)
-		return err
-	}
-
-	defer func() {
-		if txErr := s.userRepository.HandleTransaction(ctx, tx, err); txErr != nil {
-			slog.Error("failed to handle transaction", "error", txErr)
-			err = txErr
-		}
-	}()
-
 	userIdValue := ctx.Value(constants.UserIdKey)
 	userId, ok := userIdValue.(int)
 	if !ok {
 		slog.Error("error obtaining user id from context")
-		return err
+		return apperrors.ErrInternalServer
 	}
 
-	err = s.userRepository.UpdateUserEmail(ctx, nil, userId, email)
+	err := s.userRepository.UpdateUserEmail(ctx, nil, userId, email)
 	if err != nil {
 		slog.Error("failed to update user email", "error", err)
 		return err

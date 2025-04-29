@@ -6,6 +6,8 @@ import (
 	"net/http"
 
 	"github.com/joshsoftware/code-curiosity-2025/internal/config"
+	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/apperrors"
+	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/response"
 )
 
 func GithubOAuthLoginUrl(authService Service) http.HandlerFunc {
@@ -21,6 +23,7 @@ func GithubOAuthLoginUrl(authService Service) http.HandlerFunc {
 func GithubOAuthLoginCallback(authService Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+
 		appCfg := config.GetAppConfig()
 		code := r.URL.Query().Get("code")
 
@@ -31,8 +34,8 @@ func GithubOAuthLoginCallback(authService Service) http.HandlerFunc {
 			return
 		}
 
-		cookie:= &http.Cookie{
-			Name: AccessTokenCookieName,
+		cookie := &http.Cookie{
+			Name:  AccessTokenCookieName,
 			Value: token,
 			//TODO set domain before deploying to production
 			// Domain: "yourdomain.com",
@@ -40,5 +43,21 @@ func GithubOAuthLoginCallback(authService Service) http.HandlerFunc {
 		}
 		http.SetCookie(w, cookie)
 		http.Redirect(w, r, appCfg.ClientURL, http.StatusPermanentRedirect)
+	}
+}
+
+func GetLoggedInUser(authService Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		userInfo, err := authService.GetLoggedInUser(ctx)
+		if err != nil {
+			slog.Error("error getting logged in user")
+			status, errorMessage := apperrors.MapError(err)
+			response.WriteJson(w, status, errorMessage, nil)
+			return
+		}
+
+		response.WriteJson(w, http.StatusOK, "logged in user fetched successfully", userInfo)
 	}
 }

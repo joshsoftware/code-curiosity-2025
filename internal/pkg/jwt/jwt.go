@@ -13,7 +13,6 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-// Generates jwt token
 func GenerateJWT(userId int, isAdmin bool) (string, error) {
 	appCfg := config.GetAppConfig()
 
@@ -27,18 +26,19 @@ func GenerateJWT(userId int, isAdmin bool) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(appCfg.JWTSecret)
+	tokenString, err := token.SignedString([]byte(appCfg.JWTSecret))
 	if err != nil {
 		return "", err
 	}
+
 	return tokenString, nil
 }
 
-// Verfies JWT token
 func ParseJWT(tokenStr string) (*Claims, error) {
 	appCfg := config.GetAppConfig()
+
 	token, err := jwt.ParseWithClaims(tokenStr, &Claims{}, func(token *jwt.Token) (interface{}, error) {
-		return appCfg.JWTSecret, nil
+		return []byte(appCfg.JWTSecret), nil
 	})
 	if err != nil {
 		return nil, err
@@ -46,8 +46,7 @@ func ParseJWT(tokenStr string) (*Claims, error) {
 
 	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
 		return claims, nil
-	} else {
-		return nil, err
-
 	}
+
+	return nil, err
 }

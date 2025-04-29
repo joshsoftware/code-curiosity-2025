@@ -1,7 +1,7 @@
 package repository
 
 type User struct {
-	UserId         string `json:"user_id"`
+	Id             int    `json:"user_id"`
 	GithubId       int    `json:"github_id"`
 	GithubUsername string `json:"github_username"`
 	Email          string `json:"email"`
@@ -15,7 +15,6 @@ type User struct {
 }
 
 type CreateUserRequestBody struct {
-	UserId         int    `json:"user_id"`
 	GithubId       int    `json:"id"`
 	GithubUsername string `json:"github_id"`
 	AvatarUrl      string `json:"avatar_url"`

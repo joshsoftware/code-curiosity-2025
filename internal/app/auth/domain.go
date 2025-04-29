@@ -8,7 +8,20 @@ const (
 )
 
 type User struct {
-	UserId         int    `json:"user_id"`
+	Id             int    `json:"user_id"`
+	GithubId       int    `json:"github_id"`
+	GithubUsername string `json:"github_username"`
+	Email          string `json:"email"`
+	AvatarUrl      string `json:"avatar_url"`
+	CurrentBalance int    `json:"current_balance"`
+	IsBlocked      bool   `json:"is_blocked"`
+	IsAdmin        bool   `json:"is_admin"`
+	Password       string `json:"password"`
+	CreatedAt      string `json:"created_at"`
+	UpdatedAt      string `json:"updated_at"`
+}
+
+type GithubUserResponse struct {
 	GithubId       int    `json:"id"`
 	GithubUsername string `json:"login"`
 	AvatarUrl      string `json:"avatar_url"`

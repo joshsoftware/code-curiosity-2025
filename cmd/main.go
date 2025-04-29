@@ -12,7 +12,6 @@ import (
 
 	"github.com/joshsoftware/code-curiosity-2025/internal/app"
 	"github.com/joshsoftware/code-curiosity-2025/internal/config"
-	"github.com/joshsoftware/code-curiosity-2025/internal/repository"
 )
 
 func main() {
@@ -26,7 +25,7 @@ func main() {
 
 	cfg := config.GetAppConfig()
 
-	db, err := repository.InitDataStore(cfg)
+	db, err := config.InitDataStore(cfg)
 	if err != nil {
 		slog.Error("error initializing database", "error", err)
 		return
@@ -34,7 +33,7 @@ func main() {
 	defer db.Close()
 
 	dependencies := app.InitDependencies(db)
-
+	
 	router := app.NewRouter(dependencies)
 
 	server := http.Server{

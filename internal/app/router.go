@@ -18,8 +18,9 @@ func NewRouter(deps Dependencies) http.Handler {
 
 	router.HandleFunc("GET /api/v1/auth/github", auth.GithubOAuthLoginUrl(deps.AuthService))
 	router.HandleFunc("GET /api/v1/auth/github/callback", auth.GithubOAuthLoginCallback(deps.AuthService))
-	router.HandleFunc("GET /api/v1/auth/user", middleware.Authentication(user.GetLoggedInUser(deps.UserService)))
-	router.HandleFunc("PATCH /api/v1/auth/user/email", user.UpdateUserEmail(deps.UserService))
+	router.HandleFunc("GET /api/v1/auth/user", middleware.Authentication(auth.GetLoggedInUser(deps.AuthService)))
+
+	router.HandleFunc("PATCH /api/v1/user/email", user.UpdateUserEmail(deps.UserService))
 
 	return middleware.CorsMiddleware(router)
 }

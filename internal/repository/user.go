@@ -19,7 +19,7 @@ type UserRepository interface {
 	RepositoryTransaction
 	GetUserByGithubId(ctx context.Context, tx *sqlx.Tx, githubId int) (User, error)
 	CreateUser(ctx context.Context, tx *sqlx.Tx, userInfo CreateUserRequestBody) (User, error)
-	GetUserByUserId(ctx context.Context, tx *sqlx.Tx, userId int) (User, error)
+	GetUserById(ctx context.Context, tx *sqlx.Tx, userId int) (User, error)
 	UpdateUserEmail(ctx context.Context, tx *sqlx.Tx, userId int, email string) error
 }
 
@@ -31,10 +31,21 @@ func NewUserRepository(db *sqlx.DB) UserRepository {
 
 const (
 	GetUserByGithubIdQuery = "SELECT * from users where github_id=$1"
+
 	GetUserByUserIdQuery   = "SELECT * from users where user_id=$1"
-	CreateUserQuery        = `INSERT INTO users (github_id, github_username, email, avatar_url, created_at, updated_at) 
+
+	CreateUserQuery        = `
+	INSERT INTO users ( 
+	github_id, 
+	github_username, 
+	email, 
+	avatar_url, 
+	created_at, 
+	updated_at
+	) 
 	VALUES ($1, $2, $3, $4, $5, $6) 
 	RETURNING *`
+
 	UpdateEmailQuery = "UPDATE users SET email=$1 where user_id=$2"
 )
 
@@ -50,7 +61,7 @@ func (ur *userRepository) CreateUser(ctx context.Context, tx *sqlx.Tx, userInfo 
 		time.Now(),
 		time.Now(),
 	).Scan(
-		&user.UserId,
+		&user.Id,
 		&user.GithubId,
 		&user.GithubUsername,
 		&user.Email,
@@ -76,7 +87,7 @@ func (ur *userRepository) GetUserByGithubId(ctx context.Context, tx *sqlx.Tx, gi
 
 	var user User
 	err := executer.QueryRowContext(ctx, GetUserByGithubIdQuery, githubId).Scan(
-		&user.UserId,
+		&user.Id,
 		&user.GithubId,
 		&user.GithubUsername,
 		&user.Email,
@@ -100,12 +111,12 @@ func (ur *userRepository) GetUserByGithubId(ctx context.Context, tx *sqlx.Tx, gi
 	return user, nil
 }
 
-func (ur *userRepository) GetUserByUserId(ctx context.Context, tx *sqlx.Tx, userId int) (User, error) {
+func (ur *userRepository) GetUserById(ctx context.Context, tx *sqlx.Tx, userId int) (User, error) {
 	executer := ur.BaseRepository.initiateQueryExecuter(tx)
 
 	var user User
 	err := executer.QueryRowContext(ctx, GetUserByGithubIdQuery, userId).Scan(
-		&user.UserId,
+		&user.Id,
 		&user.GithubId,
 		&user.GithubUsername,
 		&user.Email,
@@ -122,19 +133,20 @@ func (ur *userRepository) GetUserByUserId(ctx context.Context, tx *sqlx.Tx, user
 			slog.Error("user not found", "error", err)
 			return User{}, apperrors.ErrUserNotFound
 		}
-		slog.Error("error occurred while getting user by github id", "error", err)
+		slog.Error("error occurred while getting user by id", "error", err)
 		return User{}, apperrors.ErrInternalServer
 	}
 
 	return user, nil
 }
 
-func (ur *userRepository) UpdateUserEmail(ctx context.Context, tx *sqlx.Tx, userId int, email string) error {
+func (ur *userRepository) UpdateUserEmail(ctx context.Context, tx *sqlx.Tx, Id int, email string) error {
 	executer := ur.BaseRepository.initiateQueryExecuter(tx)
-	_, err := executer.ExecContext(ctx, UpdateEmailQuery, email, userId)
+	_, err := executer.ExecContext(ctx, UpdateEmailQuery, email, Id)
 	if err != nil {
 		slog.Error("failed to update user email", "error", err)
 		return apperrors.ErrInternalServer
 	}
+
 	return nil
 }
