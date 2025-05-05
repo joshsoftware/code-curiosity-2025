@@ -30,7 +30,7 @@ func NewUserRepository(db *sqlx.DB) UserRepository {
 }
 
 const (
-	getUserByIdQuery = "SELECT * from users where user_id=$1"
+	getUserByIdQuery = "SELECT * from users where id=$1"
 
 	getUserByGithubIdQuery = "SELECT * from users where github_id=$1"
 
@@ -46,7 +46,7 @@ const (
 	VALUES ($1, $2, $3, $4, $5, $6) 
 	RETURNING *`
 
-	updateEmailQuery = "UPDATE users SET email=$1 where user_id=$2"
+	updateEmailQuery = "UPDATE users SET email=$1 where id=$2"
 )
 
 func (ur *userRepository) GetUserById(ctx context.Context, tx *sqlx.Tx, userId int) (User, error) {
@@ -57,8 +57,8 @@ func (ur *userRepository) GetUserById(ctx context.Context, tx *sqlx.Tx, userId i
 		&user.Id,
 		&user.GithubId,
 		&user.GithubUsername,
-		&user.Email,
 		&user.AvatarUrl,
+		&user.Email,
 		&user.CurrentBalance,
 		&user.IsBlocked,
 		&user.IsAdmin,

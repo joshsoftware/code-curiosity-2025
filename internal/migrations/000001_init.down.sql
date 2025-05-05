@@ -1,4 +1,3 @@
--- Drop foreign key constraints
 ALTER TABLE "summary" DROP CONSTRAINT "summary_contribution_id_foreign";
 ALTER TABLE "repositories" DROP CONSTRAINT "repositories_user_id_foreign";
 ALTER TABLE "goals" DROP CONSTRAINT "goals_user_id_foreign";
@@ -13,7 +12,6 @@ ALTER TABLE "contributions" DROP CONSTRAINT "contributions_repository_id_foreign
 ALTER TABLE "score_configuration" DROP CONSTRAINT "score_configuration_user_id_foreign";
 ALTER TABLE "transactions" DROP CONSTRAINT "transactions_contribution_id_foreign";
 
--- Drop tables (reverse order)
 DROP TABLE IF EXISTS "score_configuration";
 DROP TABLE IF EXISTS "goals";
 DROP TABLE IF EXISTS "badges";
