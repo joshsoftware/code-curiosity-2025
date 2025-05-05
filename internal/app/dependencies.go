@@ -10,6 +10,8 @@ import (
 type Dependencies struct {
 	AuthService auth.Service
 	UserService user.Service
+	AuthHandler auth.Handler
+	UserHandler user.Handler
 }
 
 func InitDependencies(db *sqlx.DB) Dependencies {
@@ -18,8 +20,13 @@ func InitDependencies(db *sqlx.DB) Dependencies {
 	userService := user.NewService(userRepository)
 	authService := auth.NewService(userService)
 
+	authHandler := auth.NewHandler(authService)
+	userHandler := user.NewHandler(userService)
+
 	return Dependencies{
 		AuthService: authService,
 		UserService: userService,
+		AuthHandler: authHandler,
+		UserHandler: userHandler,
 	}
 }

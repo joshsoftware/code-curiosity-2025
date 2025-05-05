@@ -33,7 +33,7 @@ func NewService(userService user.Service) Service {
 		ClientSecret: appCfg.GithubOauth.ClientSecret,
 		RedirectURL:  appCfg.GithubOauth.RedirectURL,
 		Endpoint:     github.Endpoint,
-		Scopes:       []string{"read:user", "user:email"},
+		Scopes:       []string{"read:user"},
 	}
 
 	return &service{

@@ -9,26 +9,38 @@ import (
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/response"
 )
 
-func UpdateUserEmail(userService Service) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
+type handler struct {
+	userService Service
+}
 
-		var requestBody Email
-		err := json.NewDecoder(r.Body).Decode(&requestBody)
-		if err != nil {
-			slog.Error(apperrors.ErrFailedMarshal.Error(), "error", err)
-			response.WriteJson(w, http.StatusBadRequest, apperrors.ErrInvalidRequestBody.Error(), nil)
-			return
-		}
+type Handler interface {
+	UpdateUserEmail(w http.ResponseWriter, r *http.Request)
+}
 
-		err = userService.UpdateUserEmail(ctx, requestBody.Email)
-		if err != nil {
-			slog.Error("failed to update user email", "error", err)
-			status, errorMessage := apperrors.MapError(err)
-			response.WriteJson(w, status, errorMessage, nil)
-			return
-		}
-
-		response.WriteJson(w, http.StatusOK, "email updated successfully", nil)
+func NewHandler(userService Service) Handler {
+	return &handler{
+		userService: userService,
 	}
+}
+
+func (h *handler) UpdateUserEmail(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var requestBody Email
+	err := json.NewDecoder(r.Body).Decode(&requestBody)
+	if err != nil {
+		slog.Error(apperrors.ErrFailedMarshal.Error(), "error", err)
+		response.WriteJson(w, http.StatusBadRequest, apperrors.ErrInvalidRequestBody.Error(), nil)
+		return
+	}
+
+	err = h.userService.UpdateUserEmail(ctx, requestBody.Email)
+	if err != nil {
+		slog.Error("failed to update user email", "error", err)
+		status, errorMessage := apperrors.MapError(err)
+		response.WriteJson(w, status, errorMessage, nil)
+		return
+	}
+
+	response.WriteJson(w, http.StatusOK, "email updated successfully", nil)
 }

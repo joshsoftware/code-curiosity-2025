@@ -10,54 +10,65 @@ import (
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/response"
 )
 
-func GithubOAuthLoginUrl(authService Service) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
+type handler struct {
+	authService Service
+}
 
-		url := authService.GithubOAuthLoginUrl(ctx)
+type Handler interface {
+	GithubOAuthLoginUrl(w http.ResponseWriter, r *http.Request)
+	GithubOAuthLoginCallback(w http.ResponseWriter, r *http.Request)
+	GetLoggedInUser(w http.ResponseWriter, r *http.Request)
+}
 
-		http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+func NewHandler(authService Service) Handler {
+	return &handler{
+		authService: authService,
 	}
 }
 
-func GithubOAuthLoginCallback(authService Service) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
+func (h *handler) GithubOAuthLoginUrl(w http.ResponseWriter, r *http.Request) {
 
-		appCfg := config.GetAppConfig()
-		code := r.URL.Query().Get("code")
+	ctx := r.Context()
 
-		token, err := authService.GithubOAuthLoginCallback(ctx, code)
-		if err != nil {
-			slog.Error("failed to login with github", "error", err)
-			http.Redirect(w, r, fmt.Sprintf("%s?authError=%s", appCfg.ClientURL, LoginWithGithubFailed), http.StatusTemporaryRedirect)
-			return
-		}
+	url := h.authService.GithubOAuthLoginUrl(ctx)
 
-		cookie := &http.Cookie{
-			Name:  AccessTokenCookieName,
-			Value: token,
-			//TODO set domain before deploying to production
-			// Domain: "yourdomain.com",
-			HttpOnly: true,
-		}
-		http.SetCookie(w, cookie)
-		http.Redirect(w, r, appCfg.ClientURL, http.StatusPermanentRedirect)
-	}
+	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 }
 
-func GetLoggedInUser(authService Service) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
+func (h *handler) GithubOAuthLoginCallback(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 
-		userInfo, err := authService.GetLoggedInUser(ctx)
-		if err != nil {
-			slog.Error("error getting logged in user")
-			status, errorMessage := apperrors.MapError(err)
-			response.WriteJson(w, status, errorMessage, nil)
-			return
-		}
+	appCfg := config.GetAppConfig()
+	code := r.URL.Query().Get("code")
 
-		response.WriteJson(w, http.StatusOK, "logged in user fetched successfully", userInfo)
+	token, err := h.authService.GithubOAuthLoginCallback(ctx, code)
+	if err != nil {
+		slog.Error("failed to login with github", "error", err)
+		http.Redirect(w, r, fmt.Sprintf("%s?authError=%s", appCfg.ClientURL, LoginWithGithubFailed), http.StatusTemporaryRedirect)
+		return
 	}
+
+	cookie := &http.Cookie{
+		Name:  AccessTokenCookieName,
+		Value: token,
+		//TODO set domain before deploying to production
+		// Domain: "yourdomain.com",
+		HttpOnly: true,
+	}
+	http.SetCookie(w, cookie)
+	http.Redirect(w, r, appCfg.ClientURL, http.StatusPermanentRedirect)
+}
+
+func (h *handler) GetLoggedInUser(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	userInfo, err := h.authService.GetLoggedInUser(ctx)
+	if err != nil {
+		slog.Error("error getting logged in user")
+		status, errorMessage := apperrors.MapError(err)
+		response.WriteJson(w, status, errorMessage, nil)
+		return
+	}
+
+	response.WriteJson(w, http.StatusOK, "logged in user fetched successfully", userInfo)
 }
