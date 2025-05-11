@@ -12,6 +12,7 @@ import (
 
 type handler struct {
 	authService Service
+	appConfig config.AppConfig
 }
 
 type Handler interface {
@@ -20,14 +21,14 @@ type Handler interface {
 	GetLoggedInUser(w http.ResponseWriter, r *http.Request)
 }
 
-func NewHandler(authService Service) Handler {
+func NewHandler(authService Service, appConfig config.AppConfig) Handler {
 	return &handler{
 		authService: authService,
+		appConfig: appConfig,
 	}
 }
 
 func (h *handler) GithubOAuthLoginUrl(w http.ResponseWriter, r *http.Request) {
-
 	ctx := r.Context()
 
 	url := h.authService.GithubOAuthLoginUrl(ctx)
@@ -38,13 +39,12 @@ func (h *handler) GithubOAuthLoginUrl(w http.ResponseWriter, r *http.Request) {
 func (h *handler) GithubOAuthLoginCallback(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	appCfg := config.GetAppConfig()
 	code := r.URL.Query().Get("code")
 
 	token, err := h.authService.GithubOAuthLoginCallback(ctx, code)
 	if err != nil {
 		slog.Error("failed to login with github", "error", err)
-		http.Redirect(w, r, fmt.Sprintf("%s?authError=%s", appCfg.ClientURL, LoginWithGithubFailed), http.StatusTemporaryRedirect)
+		http.Redirect(w, r, fmt.Sprintf("%s?authError=%s", h.appConfig.ClientURL, LoginWithGithubFailed), http.StatusTemporaryRedirect)
 		return
 	}
 
@@ -56,7 +56,7 @@ func (h *handler) GithubOAuthLoginCallback(w http.ResponseWriter, r *http.Reques
 		HttpOnly: true,
 	}
 	http.SetCookie(w, cookie)
-	http.Redirect(w, r, appCfg.ClientURL, http.StatusPermanentRedirect)
+	http.Redirect(w, r, h.appConfig.ClientURL, http.StatusPermanentRedirect)
 }
 
 func (h *handler) GetLoggedInUser(w http.ResponseWriter, r *http.Request) {

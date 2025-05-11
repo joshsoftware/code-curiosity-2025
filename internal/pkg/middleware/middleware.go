@@ -18,9 +18,8 @@ const (
 	IsAdminKey contextKey = "isAdmin"
 )
 
-func CorsMiddleware(next http.Handler) http.Handler {
+func CorsMiddleware(next http.Handler, appCfg config.AppConfig) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		appCfg := config.GetAppConfig()
 		w.Header().Set("Access-Control-Allow-Origin", appCfg.ClientURL)
 
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
@@ -35,7 +34,7 @@ func CorsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func Authentication(next http.HandlerFunc) http.HandlerFunc {
+func Authentication(next http.HandlerFunc, appCfg config.AppConfig) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
@@ -44,7 +43,7 @@ func Authentication(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-		token, err := jwt.ParseJWT(tokenString)
+		token, err := jwt.ParseJWT(tokenString, appCfg)
 		if err != nil {
 			response.WriteJson(w, http.StatusUnauthorized, apperrors.ErrAuthorizationFailed.Error(), nil)
 			return

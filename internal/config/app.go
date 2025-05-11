@@ -26,34 +26,29 @@ type GithubOauth struct {
 }
 
 type AppConfig struct {
-	IsProduction bool       `yaml:"is_production"`
-	HTTPServer   HTTPServer `yaml:"http_server"`
-	Database     Database   `yaml:"database"`
-	JWTSecret    string     `yaml:"jwt_secret"`
-	ClientURL    string     `yaml:"client_url"`
+	IsProduction bool        `yaml:"is_production"`
+	HTTPServer   HTTPServer  `yaml:"http_server"`
+	Database     Database    `yaml:"database"`
+	JWTSecret    string      `yaml:"jwt_secret"`
+	ClientURL    string      `yaml:"client_url"`
 	GithubOauth  GithubOauth `yaml:"github_oauth"`
 }
 
-var appCfg AppConfig
-
-func LoadAppConfig() error {
+func LoadAppConfig() (AppConfig, error) {
 	appConfigPath := os.Getenv("CONFIG_PATH")
 
 	if appConfigPath == "" {
-		return apperrors.ErrNoAppConfigPath
+		return AppConfig{}, apperrors.ErrNoAppConfigPath
 	}
 
 	if _, err := os.Stat(appConfigPath); os.IsNotExist(err) {
-		return apperrors.ErrNoAppConfigPath
+		return AppConfig{}, apperrors.ErrNoAppConfigPath
 	}
-
+	
+	var appCfg AppConfig
 	if err := cleanenv.ReadConfig(appConfigPath, &appCfg); err != nil {
-		return apperrors.ErrFailedToLoadAppConfig
+		return AppConfig{}, apperrors.ErrFailedToLoadAppConfig
 	}
-
-	return nil
-}
-
-func GetAppConfig() AppConfig {
-	return appCfg
+	
+	return appCfg, nil
 }

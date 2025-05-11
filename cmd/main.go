@@ -18,13 +18,12 @@ import (
 func main() {
 	ctx := context.Background()
 
-	err := config.LoadAppConfig()
+	cfg,err := config.LoadAppConfig()
 	if err != nil {
 		slog.Error("error loading app config", "error", err)
 		return
 	}
 
-	cfg := config.GetAppConfig()
 
 	db, err := config.InitDataStore(cfg)
 	if err != nil {
@@ -33,7 +32,7 @@ func main() {
 	}
 	defer db.Close()
 
-	dependencies := app.InitDependencies(db)
+	dependencies := app.InitDependencies(db,cfg)
 
 	router := app.NewRouter(dependencies)
 

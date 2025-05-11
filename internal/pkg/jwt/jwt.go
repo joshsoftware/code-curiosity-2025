@@ -13,9 +13,7 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-func GenerateJWT(userId int, isAdmin bool) (string, error) {
-	appCfg := config.GetAppConfig()
-
+func GenerateJWT(userId int, isAdmin bool, appCfg config.AppConfig) (string, error) {
 	claims := Claims{
 		UserId:  userId,
 		IsAdmin: isAdmin,
@@ -33,8 +31,7 @@ func GenerateJWT(userId int, isAdmin bool) (string, error) {
 	return tokenString, nil
 }
 
-func ParseJWT(tokenStr string) (*Claims, error) {
-	appCfg := config.GetAppConfig()
+func ParseJWT(tokenStr string, appCfg config.AppConfig) (*Claims, error) {
 
 	token, err := jwt.ParseWithClaims(tokenStr, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(appCfg.JWTSecret), nil

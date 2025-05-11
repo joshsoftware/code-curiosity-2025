@@ -3,6 +3,8 @@ package auth
 const (
 	LoginWithGithubFailed = "LoginWithGithubFailed"
 	AccessTokenCookieName = "AccessToken"
+	GitHubOAuthState ="state"
+	GithubOauthScope="read:user"
 	GetUserGithubUrl      = "https://api.github.com/user"
 	GetUserEmailUrl       = "https://api.github.com/user/emails"
 )

@@ -17,6 +17,7 @@ import (
 type service struct {
 	githubOAuth2 oauth2.Config
 	userService  user.Service
+	appCfg config.AppConfig
 }
 
 type Service interface {
@@ -25,25 +26,24 @@ type Service interface {
 	GetLoggedInUser(ctx context.Context) (User, error)
 }
 
-func NewService(userService user.Service) Service {
-	appCfg := config.GetAppConfig()
-
+func NewService(userService user.Service, appCfg config.AppConfig) Service {
 	oauth2Config := oauth2.Config{
 		ClientID:     appCfg.GithubOauth.ClientID,
 		ClientSecret: appCfg.GithubOauth.ClientSecret,
 		RedirectURL:  appCfg.GithubOauth.RedirectURL,
 		Endpoint:     github.Endpoint,
-		Scopes:       []string{"read:user"},
+		Scopes:       []string{GithubOauthScope},
 	}
 
 	return &service{
 		githubOAuth2: oauth2Config,
 		userService:  userService,
+		appCfg: appCfg,
 	}
 }
 
 func (s *service) GithubOAuthLoginUrl(ctx context.Context) string {
-	return s.githubOAuth2.AuthCodeURL("state", oauth2.AccessTypeOffline)
+	return s.githubOAuth2.AuthCodeURL(GitHubOAuthState, oauth2.AccessTypeOffline)
 }
 
 func (s *service) GithubOAuthLoginCallback(ctx context.Context, code string) (string, error) {
@@ -77,7 +77,7 @@ func (s *service) GithubOAuthLoginCallback(ctx context.Context, code string) (st
 		}
 	}
 
-	jwtToken, err := jwt.GenerateJWT(userData.Id, userInfo.IsAdmin)
+	jwtToken, err := jwt.GenerateJWT(userData.Id, userInfo.IsAdmin,s.appCfg)
 	if err != nil {
 		slog.Error("error generating jwt", "error", err)
 		return "", apperrors.ErrInternalServer

@@ -4,6 +4,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/joshsoftware/code-curiosity-2025/internal/app/auth"
 	"github.com/joshsoftware/code-curiosity-2025/internal/app/user"
+	"github.com/joshsoftware/code-curiosity-2025/internal/config"
 	"github.com/joshsoftware/code-curiosity-2025/internal/repository"
 )
 
@@ -12,15 +13,16 @@ type Dependencies struct {
 	UserService user.Service
 	AuthHandler auth.Handler
 	UserHandler user.Handler
+	AppCfg      config.AppConfig
 }
 
-func InitDependencies(db *sqlx.DB) Dependencies {
+func InitDependencies(db *sqlx.DB, appCfg config.AppConfig) Dependencies {
 	userRepository := repository.NewUserRepository(db)
 
 	userService := user.NewService(userRepository)
-	authService := auth.NewService(userService)
+	authService := auth.NewService(userService, appCfg)
 
-	authHandler := auth.NewHandler(authService)
+	authHandler := auth.NewHandler(authService, appCfg)
 	userHandler := user.NewHandler(userService)
 
 	return Dependencies{
@@ -28,5 +30,6 @@ func InitDependencies(db *sqlx.DB) Dependencies {
 		UserService: userService,
 		AuthHandler: authHandler,
 		UserHandler: userHandler,
+		AppCfg:      appCfg,
 	}
 }
