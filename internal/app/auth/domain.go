@@ -23,9 +23,9 @@ type User struct {
 	IsAdmin             bool          `json:"is_admin"`
 	Password            string        `json:"password"`
 	IsDeleted           bool          `json:"is_deleted"`
-	DeletedAt           sql.NullTime  `json:"deleted_at"`
-	CreatedAt           string        `json:"created_at"`
-	UpdatedAt           string        `json:"updated_at"`
+	DeletedAt           sql.NullInt64 `json:"deleted_at"`
+	CreatedAt           int64         `json:"created_at"`
+	UpdatedAt           int64         `json:"updated_at"`
 }
 
 type GithubUserResponse struct {

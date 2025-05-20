@@ -1,6 +1,8 @@
 package repository
 
-import "database/sql"
+import (
+	"database/sql"
+)
 
 type User struct {
 	Id                  int
@@ -14,9 +16,9 @@ type User struct {
 	IsAdmin             bool
 	Password            string
 	IsDeleted           bool
-	DeletedAt           sql.NullTime
-	CreatedAt           string
-	UpdatedAt           string
+	DeletedAt           sql.NullInt64
+	CreatedAt           int64
+	UpdatedAt           int64
 }
 
 type CreateUserRequestBody struct {
