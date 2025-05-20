@@ -1,20 +1,23 @@
-CREATE TABLE "users" (
+CREATE TABLE "users"(
     "id" SERIAL PRIMARY KEY,
     "github_id" BIGINT NOT NULL UNIQUE,
     "github_username" VARCHAR(255) NOT NULL,
     "avatar_url" VARCHAR(255) NOT NULL,
-    "email" VARCHAR(255),
+    "email" VARCHAR(255) NULL,
+    "current_active_goal_id" BIGINT NULL,
     "current_balance" BIGINT DEFAULT 0,
     "is_blocked" BOOLEAN DEFAULT FALSE,
     "is_admin" BOOLEAN DEFAULT FALSE,
     "password" VARCHAR(255) DEFAULT '',
+    "is_deleted" BOOLEAN DEFAULT FALSE,
+    "deleted_at" TIMESTAMP(0) WITHOUT TIME ZONE,
     "created_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
     "updated_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL
 );
 
-CREATE TABLE "leaderboard_hourly" (
+CREATE TABLE "leaderboard_hourly"(
     "id" SERIAL PRIMARY KEY,
-    "user_id" INTEGER NOT NULL REFERENCES "users"("id"),
+    "user_id" BIGINT NOT NULL,
     "github_id" BIGINT NOT NULL,
     "avatar_url" VARCHAR(255) NOT NULL,
     "current_balance" BIGINT NOT NULL,
@@ -23,23 +26,11 @@ CREATE TABLE "leaderboard_hourly" (
     "created_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL
 );
 
-CREATE TABLE "repositories" (
+CREATE TABLE "contributions"(
     "id" SERIAL PRIMARY KEY,
-    "user_id" INTEGER NOT NULL REFERENCES "users"("id"),
-    "repo_name" VARCHAR(255) NOT NULL,
-    "description" VARCHAR(255) NOT NULL,
-    "languages" JSON NOT NULL,
-    "contributor_id" INTEGER NOT NULL REFERENCES "users"("id"),
-    "owner_name" VARCHAR(255) NOT NULL,
-    "update_date" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
-    "created_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
-    "updated_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL
-);
-
-CREATE TABLE "contributions" (
-    "id" SERIAL PRIMARY KEY,
-    "user_id" INTEGER NOT NULL REFERENCES "users"("id"),
-    "repository_id" INTEGER NOT NULL REFERENCES "repositories"("id"),
+    "user_id" BIGINT NOT NULL,
+    "repository_id" BIGINT NOT NULL,
+    "contribution_score_id" BIGINT NOT NULL,
     "contribution_type" VARCHAR(255) NOT NULL,
     "balance_change" BIGINT NOT NULL,
     "contributed_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
@@ -47,62 +38,100 @@ CREATE TABLE "contributions" (
     "updated_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL
 );
 
-CREATE TABLE "goals" (
+CREATE TABLE "repositories"(
     "id" SERIAL PRIMARY KEY,
-    "user_id" INTEGER NOT NULL REFERENCES "users"("id"),
-    "level_name" VARCHAR(255) NOT NULL,
-    "is_completed" BOOLEAN NOT NULL,
+    "github_repo_id" BIGINT NOT NULL,
+    "repo_name" VARCHAR(255) NOT NULL,
+    "description" VARCHAR(255) NOT NULL,
+    "languages_url" VARCHAR(255) NOT NULL,
+    "repo_url" VARCHAR(255) NOT NULL,
+    "owner_name" VARCHAR(255) NOT NULL,
+    "update_date" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
     "created_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
     "updated_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL
 );
 
-CREATE TABLE "badges" (
+CREATE TABLE "badges"(
     "id" SERIAL PRIMARY KEY,
-    "user_id" INTEGER NOT NULL REFERENCES "users"("id"),
+    "user_id" BIGINT NOT NULL,
     "badge_type" VARCHAR(255) NOT NULL,
     "earned_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
     "created_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL
 );
 
-CREATE TABLE "transactions" (
+CREATE TABLE "transactions"(
     "id" SERIAL PRIMARY KEY,
-    "user_id" INTEGER NOT NULL REFERENCES "users"("id"),
-    "contribution_id" INTEGER NOT NULL REFERENCES "contributions"("id"),
-    "transaction_type" VARCHAR(255) NOT NULL,
+    "user_id" BIGINT NOT NULL,
+    "contribution_id" BIGINT NOT NULL,
+    "is_redeemed" BOOLEAN NOT NULL,
+    "is_gained" BOOLEAN NOT NULL,
     "transacted_balance" BIGINT NOT NULL,
     "transacted_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
     "created_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL
 );
 
-CREATE TABLE "summary" (
+CREATE TABLE "summary"(
     "id" SERIAL PRIMARY KEY,
-    "user_id" INTEGER NOT NULL REFERENCES "users"("id"),
+    "user_id" BIGINT NOT NULL,
     "month_year" BIGINT NOT NULL,
     "net_balance" BIGINT NOT NULL,
     "badges_count" BIGINT NOT NULL,
     "rank" BIGINT NOT NULL,
-    "contribution_id" INTEGER NOT NULL REFERENCES "contributions"("id"),
+    "contribution_id" BIGINT NOT NULL,
     "created_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
     "updated_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL
 );
 
-CREATE TABLE "goal_criteria" (
+CREATE TABLE "contribution_score"(
     "id" SERIAL PRIMARY KEY,
-    "contribution_id" INTEGER NOT NULL REFERENCES "contributions"("id"),
-    "goal_type" VARCHAR(255) NOT NULL,
-    "progress_count" BIGINT NOT NULL,
+    "admin_id" BIGINT NOT NULL,
+    "contribution_type" VARCHAR(255) NOT NULL,
+    "score" BIGINT NOT NULL,
+    "created_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
+    "updated_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL
+);
+
+CREATE TABLE "goal"(
+    "id" SERIAL PRIMARY KEY,
+    "level" VARCHAR(255) NOT NULL,
+    "created_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
+    "updated_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL
+);
+
+CREATE TABLE "goal_contribution"(
+    "id" SERIAL PRIMARY KEY,
+    "goal_id" BIGINT NOT NULL,
+    "contribution_score_id" BIGINT NOT NULL,
     "target_count" BIGINT NOT NULL,
+    "is_custom" BOOLEAN NOT NULL,
+    "set_by_user_id" BIGINT NOT NULL,
     "created_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
     "updated_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL
 );
 
-CREATE TABLE "score_configuration" (
-    "id" SERIAL PRIMARY KEY,
-    "user_id" INTEGER NOT NULL REFERENCES "users"("id"),
-    "field1_score" BIGINT NOT NULL,
-    "field2_score" BIGINT NOT NULL,
-    "field3_score" BIGINT NOT NULL,
-    "field4_score" BIGINT NOT NULL,
-    "created_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
-    "updated_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL
-);
+ALTER TABLE
+    "goal_contribution" ADD CONSTRAINT "goal_contribution_set_by_user_id_foreign" FOREIGN KEY("set_by_user_id") REFERENCES "users"("id");
+ALTER TABLE
+    "goal_contribution" ADD CONSTRAINT "goal_contribution_contribution_score_id_foreign" FOREIGN KEY("contribution_score_id") REFERENCES "contribution_score"("id");
+ALTER TABLE
+    "contribution_score" ADD CONSTRAINT "contribution_score_admin_id_foreign" FOREIGN KEY("admin_id") REFERENCES "users"("id");
+ALTER TABLE
+    "summary" ADD CONSTRAINT "summary_user_id_foreign" FOREIGN KEY("user_id") REFERENCES "users"("id");
+ALTER TABLE
+    "transactions" ADD CONSTRAINT "transactions_user_id_foreign" FOREIGN KEY("user_id") REFERENCES "users"("id");
+ALTER TABLE
+    "contributions" ADD CONSTRAINT "contributions_contribution_score_id_foreign" FOREIGN KEY("contribution_score_id") REFERENCES "contribution_score"("id");
+ALTER TABLE
+    "badges" ADD CONSTRAINT "badges_user_id_foreign" FOREIGN KEY("user_id") REFERENCES "users"("id");
+ALTER TABLE
+    "goal_contribution" ADD CONSTRAINT "goal_contribution_goal_id_foreign" FOREIGN KEY("goal_id") REFERENCES "goal"("id");
+ALTER TABLE
+    "transactions" ADD CONSTRAINT "transactions_contribution_id_foreign" FOREIGN KEY("contribution_id") REFERENCES "contributions"("id");
+ALTER TABLE
+    "contributions" ADD CONSTRAINT "contributions_user_id_foreign" FOREIGN KEY("user_id") REFERENCES "users"("id");
+ALTER TABLE
+    "contributions" ADD CONSTRAINT "contributions_repository_id_foreign" FOREIGN KEY("repository_id") REFERENCES "repositories"("id");
+ALTER TABLE
+    "leaderboard_hourly" ADD CONSTRAINT "leaderboard_hourly_user_id_foreign" FOREIGN KEY("user_id") REFERENCES "users"("id");
+ALTER TABLE
+    "summary" ADD CONSTRAINT "summary_contribution_id_foreign" FOREIGN KEY("contribution_id") REFERENCES "contributions"("id");

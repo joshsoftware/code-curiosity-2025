@@ -1,17 +1,22 @@
 package repository
 
+import "database/sql"
+
 type User struct {
-	Id             int
-	GithubId       int
-	GithubUsername string
-	Email          string
-	AvatarUrl      string
-	CurrentBalance int
-	IsBlocked      bool
-	IsAdmin        bool
-	Password       string
-	CreatedAt      string
-	UpdatedAt      string
+	Id                  int
+	GithubId            int
+	GithubUsername      string
+	Email               string
+	AvatarUrl           string
+	CurrentBalance      int
+	CurrentActiveGoalId sql.NullInt64
+	IsBlocked           bool
+	IsAdmin             bool
+	Password            string
+	IsDeleted           bool
+	DeletedAt           sql.NullTime
+	CreatedAt           string
+	UpdatedAt           string
 }
 
 type CreateUserRequestBody struct {

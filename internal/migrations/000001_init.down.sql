@@ -1,24 +1,10 @@
-ALTER TABLE "summary" DROP CONSTRAINT "summary_contribution_id_foreign";
-ALTER TABLE "repositories" DROP CONSTRAINT "repositories_user_id_foreign";
-ALTER TABLE "goals" DROP CONSTRAINT "goals_user_id_foreign";
-ALTER TABLE "contributions" DROP CONSTRAINT "contributions_user_id_foreign";
-ALTER TABLE "badges" DROP CONSTRAINT "badges_user_id_foreign";
-ALTER TABLE "goals" DROP CONSTRAINT "goals_goal_id_foreign";
-ALTER TABLE "summary" DROP CONSTRAINT "summary_user_id_foreign";
-ALTER TABLE "repositories" DROP CONSTRAINT "repositories_contributor_id_foreign";
-ALTER TABLE "goal_criteria" DROP CONSTRAINT "goal_criteria_contribution_id_foreign";
-ALTER TABLE "transactions" DROP CONSTRAINT "transactions_user_id_foreign";
-ALTER TABLE "contributions" DROP CONSTRAINT "contributions_repository_id_foreign";
-ALTER TABLE "score_configuration" DROP CONSTRAINT "score_configuration_user_id_foreign";
-ALTER TABLE "transactions" DROP CONSTRAINT "transactions_contribution_id_foreign";
-
-DROP TABLE IF EXISTS "score_configuration";
-DROP TABLE IF EXISTS "goals";
+DROP TABLE IF EXISTS "goal_contribution";
+DROP TABLE IF EXISTS "goal";
+DROP TABLE IF EXISTS "summary";
 DROP TABLE IF EXISTS "badges";
 DROP TABLE IF EXISTS "leaderboard_hourly";
-DROP TABLE IF EXISTS "goal_criteria";
-DROP TABLE IF EXISTS "summary";
 DROP TABLE IF EXISTS "transactions";
 DROP TABLE IF EXISTS "contributions";
 DROP TABLE IF EXISTS "repositories";
+DROP TABLE IF EXISTS "contribution_score";
 DROP TABLE IF EXISTS "users";
