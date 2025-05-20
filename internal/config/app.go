@@ -44,11 +44,11 @@ func LoadAppConfig() (AppConfig, error) {
 	if _, err := os.Stat(appConfigPath); os.IsNotExist(err) {
 		return AppConfig{}, apperrors.ErrNoAppConfigPath
 	}
-	
+
 	var appCfg AppConfig
 	if err := cleanenv.ReadConfig(appConfigPath, &appCfg); err != nil {
 		return AppConfig{}, apperrors.ErrFailedToLoadAppConfig
 	}
-	
+
 	return appCfg, nil
 }

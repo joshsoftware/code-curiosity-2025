@@ -17,7 +17,7 @@ import (
 type service struct {
 	githubOAuth2 oauth2.Config
 	userService  user.Service
-	appCfg config.AppConfig
+	appCfg       config.AppConfig
 }
 
 type Service interface {
@@ -38,7 +38,7 @@ func NewService(userService user.Service, appCfg config.AppConfig) Service {
 	return &service{
 		githubOAuth2: oauth2Config,
 		userService:  userService,
-		appCfg: appCfg,
+		appCfg:       appCfg,
 	}
 }
 
@@ -77,7 +77,7 @@ func (s *service) GithubOAuthLoginCallback(ctx context.Context, code string) (st
 		}
 	}
 
-	jwtToken, err := jwt.GenerateJWT(userData.Id, userInfo.IsAdmin,s.appCfg)
+	jwtToken, err := jwt.GenerateJWT(userData.Id, userInfo.IsAdmin, s.appCfg)
 	if err != nil {
 		slog.Error("error generating jwt", "error", err)
 		return "", apperrors.ErrInternalServer
