@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/joshsoftware/code-curiosity-2025/internal/app/goal"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/apperrors"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/middleware"
 	"github.com/joshsoftware/code-curiosity-2025/internal/repository"
@@ -11,6 +12,7 @@ import (
 
 type service struct {
 	userRepository repository.UserRepository
+	goalService    goal.GoalService
 }
 
 type Service interface {
@@ -18,11 +20,13 @@ type Service interface {
 	GetUserByGithubId(ctx context.Context, githubId int) (User, error)
 	CreateUser(ctx context.Context, userInfo CreateUserRequestBody) (User, error)
 	UpdateUserEmail(ctx context.Context, email string) error
+	UpdateCurrentActiveGoalId(ctx context.Context, level string) (int, error)
 }
 
-func NewService(userRepository repository.UserRepository) Service {
+func NewService(userRepository repository.UserRepository, goalService goal.GoalService) Service {
 	return &service{
 		userRepository: userRepository,
+		goalService:    goalService,
 	}
 }
 
@@ -73,4 +77,30 @@ func (s *service) UpdateUserEmail(ctx context.Context, email string) error {
 	}
 
 	return nil
+}
+
+func (s *service) UpdateCurrentActiveGoalId(ctx context.Context, level string) (int, error) {
+	userIdCtxVal := ctx.Value(middleware.UserIdKey)
+
+	userId, ok := userIdCtxVal.(int)
+
+	if !ok {
+		slog.Error("error obtaining user id from context")
+		return 0, apperrors.ErrInternalServer
+	}
+
+	goalId, err := s.goalService.GetGoalIdByGoalLevel(ctx, level)
+
+	if err != nil {
+		slog.Error("[user service] error occured while fetching goal id by goal level")
+		return 0, err
+	}
+
+	goalId, err = s.userRepository.UpdateCurrentActiveGoalId(ctx, nil, userId, goalId)
+
+	if err != nil {
+		slog.Error("[user service] Failed to update current active goal id", "error", err)
+	}
+
+	return goalId, err
 }

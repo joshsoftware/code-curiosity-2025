@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/joshsoftware/code-curiosity-2025/internal/app/goal"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/apperrors"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/response"
 )
@@ -15,6 +16,7 @@ type handler struct {
 
 type Handler interface {
 	UpdateUserEmail(w http.ResponseWriter, r *http.Request)
+	UpdateCurrentActiveGoalId(w http.ResponseWriter, r *http.Request)
 }
 
 func NewHandler(userService Service) Handler {
@@ -43,4 +45,27 @@ func (h *handler) UpdateUserEmail(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.WriteJson(w, http.StatusOK, "email updated successfully", nil)
+}
+
+func (h *handler) UpdateCurrentActiveGoalId(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var reqBody goal.GoalLevel
+
+	err := json.NewDecoder(r.Body).Decode(&reqBody)
+	if err != nil {
+		slog.Error(apperrors.ErrFailedMarshal.Error(), "error", err)
+		response.WriteJson(w, http.StatusBadRequest, apperrors.ErrInvalidRequestBody.Error(), nil)
+		return
+	}
+
+	goalId, err := h.userService.UpdateCurrentActiveGoalId(ctx, reqBody.LevelName)
+	if err != nil {
+		slog.Error("[user handler] Failed to update current active goal id", "error", err)
+		status, errMsg := apperrors.MapError(err)
+		response.WriteJson(w, status, errMsg, nil)
+		return
+	}
+
+	response.WriteJson(w, http.StatusOK, "Goal updated successfully", goal.GoalId{GoalId: goalId})
 }
