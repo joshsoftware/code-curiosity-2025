@@ -30,6 +30,8 @@ var (
 
 	ErrJWTCreationFailed = errors.New("failed to create jwt token")
 	ErrAuthorizationFailed=errors.New("failed to authorize user")
+
+	GoalNotFound = errors.New("goal not found")
 )
 
 func MapError(err error) (statusCode int, errMessage string) {
