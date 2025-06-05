@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"log/slog"
-	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/apperrors"
@@ -39,11 +38,9 @@ const (
 	github_id, 
 	github_username, 
 	email, 
-	avatar_url, 
-	created_at, 
-	updated_at
+	avatar_url
 	) 
-	VALUES ($1, $2, $3, $4, $5, $6) 
+	VALUES ($1, $2, $3, $4) 
 	RETURNING *`
 
 	updateEmailQuery = "UPDATE users SET email=$1 where id=$2"
@@ -122,8 +119,6 @@ func (ur *userRepository) CreateUser(ctx context.Context, tx *sqlx.Tx, userInfo 
 		userInfo.GithubUsername,
 		userInfo.Email,
 		userInfo.AvatarUrl,
-		time.Now().Unix(),
-		time.Now().Unix(),
 	).Scan(
 		&user.Id,
 		&user.GithubId,
