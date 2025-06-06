@@ -41,48 +41,6 @@ func InitMainDBMigrations(config config.AppConfig) (migration Migration, er erro
 	return
 }
 
-// RunMigrations used to run a migrations
-func (migration Migration) RunMigrations() {
-	slog.Info("Migrations started from ", "directory", migration.directoryName)
-	startTime := time.Now()
-	defer func() {
-		slog.Info("Migrations complete, total time taken ", "time", time.Since(startTime))
-	}()
-
-	// dbVersion is the currently active database migration version
-	dbVersion, dirty, err := migration.m.Version()
-	if err != nil && err != migrate.ErrNilVersion {
-		slog.Error(err.Error())
-	}
-
-	// localVersion is the local migration version
-	localVersion, err := migration.MigrationLocalVersion()
-	if err != nil {
-		slog.Error(err.Error())
-	}
-
-	if dbVersion > uint(localVersion) {
-		slog.Error(fmt.Sprintf("Your database migration %d is ahead of local migration %d, you might need to rollback a few migrations", dbVersion, localVersion))
-	}
-	if dbVersion < uint(localVersion) && dirty {
-		slog.Error(fmt.Sprintf("Your currently active database migration %d is dirty, you might need to rollback it and then deploy again.", dbVersion))
-	}
-
-	err = migration.m.Up()
-	if err != nil {
-		if err == migrate.ErrNoChange {
-			return
-		}
-
-		dbVersion, _, err2 := migration.m.Version()
-		if err2 != nil {
-			slog.Error(err2.Error())
-		}
-
-		slog.Error(fmt.Sprintf("Migration failed with error %s, current active database migration is %d", err, dbVersion))
-	}
-}
-
 // MigrationsUp used to make migrations up
 func (migration Migration) MigrationsUp() {
 	err := migration.m.Up()
@@ -112,16 +70,6 @@ func (migration Migration) MigrationsDown() {
 	}
 	migration.MigrationVersion()
 	slog.Info("Migration down completed")
-}
-
-// ForceVersion forces the migration to a specific version
-func (migration Migration) ForceVersion(version int) {
-	err := migration.m.Force(version)
-	if err != nil {
-		slog.Error(err.Error())
-	}
-
-	slog.Info(fmt.Sprintf("Migration force version %d complete", version))
 }
 
 // CreateMigrationFile creates new migration files
@@ -177,85 +125,6 @@ func (migration Migration) MigrationVersion() (err error) {
 
 	slog.Info(fmt.Sprintf("version: %v, dirty: %v", version, dirty))
 	return
-}
-
-// MigrationLocalVersion gets the latest migration version from local file system
-func (migration Migration) MigrationLocalVersion() (localversion int, err error) {
-	localDIRFileVersions, err := getMigrationVersionsFromDir(migration.directoryName)
-	if err != nil {
-		return 0, fmt.Errorf("can't get files information from local file system: %w", err)
-	}
-
-	if len(localDIRFileVersions) == 0 {
-		slog.Warn("no migration files found in local file system")
-		return 0, nil
-	}
-
-	slog.Info(fmt.Sprintf("latest migration version from local file system: %d", localDIRFileVersions[0]))
-	return localDIRFileVersions[0], nil
-}
-
-func getMigrationVersionsFromDir(dir string) ([]int, error) {
-	return []int{}, nil
-}
-
-// GoToSpecificVersion migrates to a specific version
-func (migration Migration) GoToSpecificVersion(version uint) (err error) {
-	localDIRFileVersions, err := getMigrationVersionsFromDir(migration.directoryName)
-	if err != nil {
-		return fmt.Errorf("can't get files information from local file system: %w", err)
-	}
-
-	if len(localDIRFileVersions) == 0 {
-		slog.Warn("no migration files found in local file system, hence migration not required")
-		return nil
-	}
-
-	dbversion, dirty, err := migration.m.Version()
-	if err != nil {
-		if err == migrate.ErrNilVersion {
-			slog.Info("no migration found, initializing DB with latest migration")
-			err = migration.m.Migrate(version)
-			if err != migrate.ErrNoChange {
-				return err
-			}
-
-			slog.Info(fmt.Sprintf("database successfully initialized with migration: %d", version))
-			return nil
-		}
-		return err
-	}
-
-	// if the database is in dirty state, we pick the previous successfully executed migration
-	// and force the database to that version
-	if dirty {
-		index, err := getIndexOfSlice(localDIRFileVersions, int(dbversion))
-		if err != nil {
-			return errors.New("database version corresponding file not found in local file system")
-		}
-
-		if len(localDIRFileVersions) <= index+1 {
-			return errors.New("previous successfully executed migration not found in local file system")
-		}
-		forceMigrateVersion := localDIRFileVersions[index+1]
-
-		err = migration.m.Force(forceMigrateVersion)
-		if err != nil {
-			return err
-		}
-	}
-
-	err = migration.m.Migrate(version)
-	if err != migrate.ErrNoChange {
-		return err
-	}
-
-	slog.Info(fmt.Sprintf("database successfully migrated to version: %d", version))
-	return nil
-}
-
-func getIndexOfSlice(slice []int, value int) (int, error) {
-	return 0, nil
 }
 
 func main() {
