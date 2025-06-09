@@ -29,9 +29,9 @@ func InitDependencies(db *sqlx.DB, appCfg config.AppConfig, client config.Bigque
 
 	userService := user.NewService(userRepository)
 	authService := auth.NewService(userService, appCfg)
-	bigqueryService := bigquery.NewService(client)
+	bigqueryService := bigquery.NewService(client, userRepository)
 	repositoryService := repoService.NewService(repositoryRepository, appCfg)
-	contributionService := contribution.NewService(bigqueryService, contributionRepository, repositoryService)
+	contributionService := contribution.NewService(bigqueryService, contributionRepository, repositoryService, userService)
 
 	authHandler := auth.NewHandler(authService, appCfg)
 	userHandler := user.NewHandler(userService)

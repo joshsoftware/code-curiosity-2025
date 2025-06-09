@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"log/slog"
-	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/apperrors"
@@ -32,11 +31,9 @@ const (
 	contribution_score_id, 
 	contribution_type, 
 	balance_change, 
-	contributed_at, 
-	created_at,
-	updated_at
+	contributed_at
 	)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
+	VALUES ($1, $2, $3, $4, $5, $6) 
 	RETURNING *`
 )
 
@@ -51,8 +48,6 @@ func (cr *contributionRepository) CreateContribution(ctx context.Context, tx *sq
 		contributionInfo.ContributionType,
 		contributionInfo.BalanceChange,
 		contributionInfo.ContributedAt,
-		time.Now().Unix(),
-		time.Now().Unix(),
 	).Scan(
 		&contribution.Id,
 		&contribution.UserId,

@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"log/slog"
-	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/apperrors"
@@ -38,11 +37,9 @@ const (
 	languages_url,
 	repo_url,
 	owner_name, 
-	update_date, 
-	created_at, 
-	updated_at
+	update_date
 	)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+	VALUES ($1, $2, $3, $4, $5, $6, $7)
 	RETURNING *`
 )
 
@@ -87,8 +84,6 @@ func (rr *repositoryRepository) CreateRepository(ctx context.Context, tx *sqlx.T
 		repositoryInfo.RepoUrl,
 		repositoryInfo.OwnerName,
 		repositoryInfo.UpdateDate,
-		time.Now().Unix(),
-		time.Now().Unix(),
 	).Scan(
 		&repository.Id,
 		&repository.GithubRepoId,

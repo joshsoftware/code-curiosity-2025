@@ -162,7 +162,6 @@ func (ur *userRepository) UpdateUserEmail(ctx context.Context, tx *sqlx.Tx, user
 
 func (ur *userRepository) GetAllUsersGithubUsernames(ctx context.Context, tx *sqlx.Tx) ([]string, error) {
 	executer := ur.BaseRepository.initiateQueryExecuter(tx)
-
 	rows, err := executer.QueryContext(ctx, getAllUsersGithubUsernamesQuery)
 	if err != nil {
 		slog.Error("failed to get github usernames", "error", err)

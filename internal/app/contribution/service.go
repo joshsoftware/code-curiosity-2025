@@ -7,6 +7,7 @@ import (
 
 	"github.com/joshsoftware/code-curiosity-2025/internal/app/bigquery"
 	repoService "github.com/joshsoftware/code-curiosity-2025/internal/app/repository"
+	"github.com/joshsoftware/code-curiosity-2025/internal/app/user"
 	"github.com/joshsoftware/code-curiosity-2025/internal/repository"
 	"google.golang.org/api/iterator"
 )
@@ -15,18 +16,20 @@ type service struct {
 	bigqueryService        bigquery.Service
 	contributionRepository repository.ContributionRepository
 	repositoryService      repoService.Service
+	userService            user.Service
 }
 
 type Service interface {
 	ProcessFetchedContributions(ctx context.Context) error
-	CreateContribution(ctx context.Context, contributionType string, contributionDetails ContributionResponse, repositoryId int) (Contribution, error)
+	CreateContribution(ctx context.Context, contributionType string, contributionDetails ContributionResponse, repositoryId int, userId int) (Contribution, error)
 }
 
-func NewService(bigqueryService bigquery.Service, contributionRepository repository.ContributionRepository, repositoryService repoService.Service) Service {
+func NewService(bigqueryService bigquery.Service, contributionRepository repository.ContributionRepository, repositoryService repoService.Service, userService user.Service) Service {
 	return &service{
 		bigqueryService:        bigqueryService,
 		contributionRepository: contributionRepository,
 		repositoryService:      repositoryService,
+		userService:            userService,
 	}
 }
 
@@ -100,7 +103,7 @@ func (s *service) ProcessFetchedContributions(ctx context.Context) error {
 			contributionType = "PullRequestComment"
 		}
 
-		repoFetched, err := s.repositoryService.GetRepoByGithubId(ctx, contribution.RepoID)
+		repoFetched, err := s.repositoryService.GetRepoByRepoId(ctx, contribution.RepoID)
 		repositoryId := repoFetched.Id
 		if err != nil {
 			repo, err := s.repositoryService.FetchRepositoryDetails(ctx, contribution.RepoUrl)
@@ -118,7 +121,13 @@ func (s *service) ProcessFetchedContributions(ctx context.Context) error {
 			repositoryId = repositoryCreated.Id
 		}
 
-		_, err = s.CreateContribution(ctx, contributionType, contribution, repositoryId)
+		user, err := s.userService.GetUserByGithubId(ctx, contribution.ActorID)
+		if err != nil {
+			slog.Error("error getting user id", "error", err)
+			return err
+		}
+
+		_, err = s.CreateContribution(ctx, contributionType, contribution, repositoryId, user.Id)
 		if err != nil {
 			slog.Error("error creating contribution", "error", err)
 			return err
@@ -127,9 +136,9 @@ func (s *service) ProcessFetchedContributions(ctx context.Context) error {
 	return nil
 }
 
-func (s *service) CreateContribution(ctx context.Context, contributionType string, contributionDetails ContributionResponse, repositoryId int) (Contribution, error) {
+func (s *service) CreateContribution(ctx context.Context, contributionType string, contributionDetails ContributionResponse, repositoryId int, userId int) (Contribution, error) {
 	contribution := Contribution{
-		UserId:           contributionDetails.ActorID,
+		UserId:           userId,
 		RepositoryId:     repositoryId,
 		ContributionType: contributionType,
 		//get id and balance from contribution_score_id table by sending it contribution_type (hardcoded for now)
