@@ -10,9 +10,9 @@ CREATE TABLE "users"(
     "is_admin" BOOLEAN DEFAULT FALSE,
     "password" VARCHAR(255) DEFAULT '',
     "is_deleted" BOOLEAN DEFAULT FALSE,
-    "deleted_at" BIGINT,
-    "created_at" BIGINT NOT NULL,
-    "updated_at" BIGINT NOT NULL
+    "deleted_at" TIMESTAMPTZ,
+    "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE "leaderboard_hourly"(
@@ -22,8 +22,9 @@ CREATE TABLE "leaderboard_hourly"(
     "avatar_url" VARCHAR(255) NOT NULL,
     "current_balance" BIGINT NOT NULL,
     "rank" BIGINT NOT NULL,
-    "refreshed_at" BIGINT NOT NULL,
-    "created_at" BIGINT NOT NULL
+    "refreshed_at" TIMESTAMPTZ NOT NULL,
+    "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE "contributions"(
@@ -33,9 +34,9 @@ CREATE TABLE "contributions"(
     "contribution_score_id" BIGINT NOT NULL,
     "contribution_type" VARCHAR(255) NOT NULL,
     "balance_change" BIGINT NOT NULL,
-    "contributed_at" BIGINT NOT NULL,
-    "created_at" BIGINT NOT NULL,
-    "updated_at" BIGINT NOT NULL
+    "contributed_at" TIMESTAMPTZ NOT NULL,
+    "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE "repositories"(
@@ -46,17 +47,18 @@ CREATE TABLE "repositories"(
     "languages_url" VARCHAR(255) NOT NULL,
     "repo_url" VARCHAR(255) NOT NULL,
     "owner_name" VARCHAR(255) NOT NULL,
-    "update_date" BIGINT NOT NULL,
-    "created_at" BIGINT NOT NULL,
-    "updated_at" BIGINT NOT NULL
+    "update_date" TIMESTAMPTZ NOT NULL,
+    "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE "badges"(
     "id" SERIAL PRIMARY KEY,
     "user_id" BIGINT NOT NULL,
     "badge_type" VARCHAR(255) NOT NULL,
-    "earned_at" BIGINT NOT NULL,
-    "created_at" BIGINT NOT NULL
+    "earned_at" TIMESTAMPTZ NOT NULL,
+    "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE "transactions"(
@@ -66,8 +68,9 @@ CREATE TABLE "transactions"(
     "is_redeemed" BOOLEAN NOT NULL,
     "is_gained" BOOLEAN NOT NULL,
     "transacted_balance" BIGINT NOT NULL,
-    "transacted_at" BIGINT NOT NULL,
-    "created_at" BIGINT NOT NULL
+    "transacted_at" TIMESTAMPTZ NOT NULL,
+    "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE "summary"(
@@ -78,8 +81,8 @@ CREATE TABLE "summary"(
     "badges_count" BIGINT NOT NULL,
     "rank" BIGINT NOT NULL,
     "contribution_id" BIGINT NOT NULL,
-    "created_at" BIGINT NOT NULL,
-    "updated_at" BIGINT NOT NULL
+    "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE "contribution_score"(
@@ -87,15 +90,15 @@ CREATE TABLE "contribution_score"(
     "admin_id" BIGINT NOT NULL,
     "contribution_type" VARCHAR(255) NOT NULL,
     "score" BIGINT NOT NULL,
-    "created_at" BIGINT NOT NULL,
-    "updated_at" BIGINT NOT NULL
+    "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE "goal"(
     "id" SERIAL PRIMARY KEY,
     "level" VARCHAR(255) NOT NULL,
-    "created_at" BIGINT NOT NULL,
-    "updated_at" BIGINT NOT NULL
+    "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE "goal_contribution"(
@@ -105,8 +108,8 @@ CREATE TABLE "goal_contribution"(
     "target_count" BIGINT NOT NULL,
     "is_custom" BOOLEAN NOT NULL,
     "set_by_user_id" BIGINT NOT NULL,
-    "created_at" BIGINT NOT NULL,
-    "updated_at" BIGINT NOT NULL
+    "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 ALTER TABLE
