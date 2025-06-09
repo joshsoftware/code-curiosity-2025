@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -45,6 +46,7 @@ func Authentication(next http.HandlerFunc, appCfg config.AppConfig) http.Handler
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 		token, err := jwt.ParseJWT(tokenString, appCfg)
 		if err != nil {
+			slog.Error("JWT parsing error - ", "error", err)
 			response.WriteJson(w, http.StatusUnauthorized, apperrors.ErrAuthorizationFailed.Error(), nil)
 			return
 		}
