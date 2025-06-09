@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"time"
 )
 
 type User struct {
@@ -27,4 +28,10 @@ type CreateUserRequestBody struct {
 	AvatarUrl      string
 	Email          string
 	IsAdmin        bool
+}
+
+type Badge struct {
+	BadgeId   int       `db:"id"`
+	BadgeType string    `db:"badge_type"`
+	EarnedAt  time.Time `db:"earned_at"`
 }
