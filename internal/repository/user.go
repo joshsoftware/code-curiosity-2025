@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"log/slog"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/apperrors"
@@ -43,7 +44,7 @@ const (
 	VALUES ($1, $2, $3, $4) 
 	RETURNING *`
 
-	updateEmailQuery = "UPDATE users SET email=$1 where id=$2"
+	updateEmailQuery = "UPDATE users SET email=$1, updated_at=$2 where id=$3"
 )
 
 func (ur *userRepository) GetUserById(ctx context.Context, tx *sqlx.Tx, userId int) (User, error) {
@@ -144,10 +145,10 @@ func (ur *userRepository) CreateUser(ctx context.Context, tx *sqlx.Tx, userInfo 
 
 }
 
-func (ur *userRepository) UpdateUserEmail(ctx context.Context, tx *sqlx.Tx, Id int, email string) error {
+func (ur *userRepository) UpdateUserEmail(ctx context.Context, tx *sqlx.Tx, userId int, email string) error {
 	executer := ur.BaseRepository.initiateQueryExecuter(tx)
 
-	_, err := executer.ExecContext(ctx, updateEmailQuery, email, Id)
+	_, err := executer.ExecContext(ctx, updateEmailQuery, email, time.Now(), userId)
 	if err != nil {
 		slog.Error("failed to update user email", "error", err)
 		return apperrors.ErrInternalServer
