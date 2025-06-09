@@ -31,7 +31,7 @@ func NewService(bigqueryInstance config.Bigquery, userRepository repository.User
 
 func (s *service) FetchDailyContributions(ctx context.Context) (*bq.RowIterator, error) {
 	YesterdayDate := time.Now().AddDate(0, 0, -1)
-	YesterdayYearMonthDay := YesterdayDate.Format("20030101")
+	YesterdayYearMonthDay := YesterdayDate.Format("20060102")
 
 	usersNamesList, err := s.userRepository.GetAllUsersGithubUsernames(ctx, nil)
 	if err != nil {
