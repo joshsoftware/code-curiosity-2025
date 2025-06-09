@@ -23,6 +23,7 @@ type RepositoryTransaction interface {
 type QueryExecuter interface {
 	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
 	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
+	SelectContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
 }
 
 func (b *BaseRepository) BeginTx(ctx context.Context) (*sqlx.Tx, error) {
