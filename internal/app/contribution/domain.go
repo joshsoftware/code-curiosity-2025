@@ -38,3 +38,12 @@ type Contribution struct {
 	CreatedAt           time.Time
 	UpdatedAt           time.Time
 }
+
+type ContributionScore struct {
+	Id               int
+	AdminId          int
+	ContributionType string
+	Score            int
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
+}

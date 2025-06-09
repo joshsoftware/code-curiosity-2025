@@ -15,6 +15,7 @@ type contributionRepository struct {
 type ContributionRepository interface {
 	RepositoryTransaction
 	CreateContribution(ctx context.Context, tx *sqlx.Tx, contributionDetails Contribution) (Contribution, error)
+	GetContributionScoreDetailsByContributionType(ctx context.Context, tx *sqlx.Tx, contributionType string) (ContributionScore, error)
 }
 
 func NewContributionRepository(db *sqlx.DB) ContributionRepository {
@@ -35,6 +36,8 @@ const (
 	)
 	VALUES ($1, $2, $3, $4, $5, $6) 
 	RETURNING *`
+
+	getContributionScoreDetailsByContributionTypeQuery = `SELECT * from contribution_score where contribution_type=$1`
 )
 
 func (cr *contributionRepository) CreateContribution(ctx context.Context, tx *sqlx.Tx, contributionInfo Contribution) (Contribution, error) {
@@ -65,4 +68,24 @@ func (cr *contributionRepository) CreateContribution(ctx context.Context, tx *sq
 	}
 
 	return contribution, err
+}
+
+func (cr *contributionRepository) GetContributionScoreDetailsByContributionType(ctx context.Context, tx *sqlx.Tx, contributionType string) (ContributionScore, error) {
+	executer := cr.BaseRepository.initiateQueryExecuter(tx)
+
+	var contributionScoreDetails ContributionScore
+	err := executer.QueryRowContext(ctx, getContributionScoreDetailsByContributionTypeQuery, contributionType).Scan(
+		&contributionScoreDetails.Id,
+		&contributionScoreDetails.AdminId,
+		&contributionScoreDetails.ContributionType,
+		&contributionScoreDetails.Score,
+		&contributionScoreDetails.CreatedAt,
+		&contributionScoreDetails.UpdatedAt,
+	)	
+	if err != nil {
+		slog.Error("error occured while getting contribution score details", "error", err)
+		return ContributionScore{}, err
+	}
+
+	return contributionScoreDetails, nil
 }

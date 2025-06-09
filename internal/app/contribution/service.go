@@ -22,6 +22,7 @@ type service struct {
 type Service interface {
 	ProcessFetchedContributions(ctx context.Context) error
 	CreateContribution(ctx context.Context, contributionType string, contributionDetails ContributionResponse, repositoryId int, userId int) (Contribution, error)
+	GetContributionScoreDetailsByContributionType(ctx context.Context, contributionType string) (ContributionScore, error)
 }
 
 func NewService(bigqueryService bigquery.Service, contributionRepository repository.ContributionRepository, repositoryService repoService.Service, userService user.Service) Service {
@@ -137,15 +138,22 @@ func (s *service) ProcessFetchedContributions(ctx context.Context) error {
 }
 
 func (s *service) CreateContribution(ctx context.Context, contributionType string, contributionDetails ContributionResponse, repositoryId int, userId int) (Contribution, error) {
+
 	contribution := Contribution{
 		UserId:           userId,
 		RepositoryId:     repositoryId,
 		ContributionType: contributionType,
-		//get id and balance from contribution_score_id table by sending it contribution_type (hardcoded for now)
-		ContributionScoreId: 1,
-		BalanceChange:       10,
-		ContributedAt:       contributionDetails.CreatedAt,
+		ContributedAt:    contributionDetails.CreatedAt,
 	}
+
+	contributionScoreDetails, err := s.GetContributionScoreDetailsByContributionType(ctx, contributionType)
+	if err != nil {
+		slog.Error("error occured while getting contribution score details", "error", err)
+		return Contribution{}, err
+	}
+
+	contribution.ContributionScoreId = contributionScoreDetails.Id
+	contribution.BalanceChange = contributionScoreDetails.Score
 
 	contributionResponse, err := s.contributionRepository.CreateContribution(ctx, nil, repository.Contribution(contribution))
 	if err != nil {
@@ -154,4 +162,13 @@ func (s *service) CreateContribution(ctx context.Context, contributionType strin
 	}
 
 	return Contribution(contributionResponse), nil
+}
+
+func (s *service) GetContributionScoreDetailsByContributionType(ctx context.Context, contributionType string) (ContributionScore, error) {
+	contributionScoreDetails, err := s.contributionRepository.GetContributionScoreDetailsByContributionType(ctx, nil, contributionType)
+	if err != nil {
+		slog.Error("error occured while getting contribution score details", "error", err)
+		return ContributionScore{}, err
+	}
+	return ContributionScore(contributionScoreDetails), nil
 }

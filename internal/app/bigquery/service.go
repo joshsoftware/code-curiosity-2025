@@ -22,9 +22,10 @@ type Service interface {
 	FetchDailyContributions(ctx context.Context) (*bq.RowIterator, error)
 }
 
-func NewService(bigqueryInstance config.Bigquery) Service {
+func NewService(bigqueryInstance config.Bigquery, userRepository repository.UserRepository) Service {
 	return &service{
 		bigqueryInstance: bigqueryInstance,
+		userRepository:   userRepository,
 	}
 }
 
@@ -71,10 +72,9 @@ WHERE
     'PullRequestReviewCommentEvent'
   )
   AND (
-    actor.login IN (%s) OR
-    JSON_EXTRACT_SCALAR(payload, "$.pull_request.user.login") IN (%s)
+    actor.login IN (%s) 
   )
-`, YesterdayYearMonthDay, githubUsernames, githubUsernames)
+`, YesterdayYearMonthDay, githubUsernames)
 
 	bigqueryQuery := s.bigqueryInstance.Client.Query(fetchDailyContributionsQuery)
 	contributionRows, err := bigqueryQuery.Read(ctx)
