@@ -40,14 +40,12 @@ const (
 	github_id, 
 	github_username, 
 	email, 
-	avatar_url, 
-	created_at, 
-	updated_at
+	avatar_url
 	) 
-	VALUES ($1, $2, $3, $4, $5, $6) 
+	VALUES ($1, $2, $3, $4) 
 	RETURNING *`
 
-	updateEmailQuery = "UPDATE users SET email=$1 where id=$2"
+	updateEmailQuery = "UPDATE users SET email=$1, updated_at=$2 where id=$3"
 
 	getAllUsersGithubUsernamesQuery = "SELECT github_username from users"
 )
@@ -125,8 +123,6 @@ func (ur *userRepository) CreateUser(ctx context.Context, tx *sqlx.Tx, userInfo 
 		userInfo.GithubUsername,
 		userInfo.Email,
 		userInfo.AvatarUrl,
-		time.Now().Unix(),
-		time.Now().Unix(),
 	).Scan(
 		&user.Id,
 		&user.GithubId,
@@ -152,10 +148,10 @@ func (ur *userRepository) CreateUser(ctx context.Context, tx *sqlx.Tx, userInfo 
 
 }
 
-func (ur *userRepository) UpdateUserEmail(ctx context.Context, tx *sqlx.Tx, Id int, email string) error {
+func (ur *userRepository) UpdateUserEmail(ctx context.Context, tx *sqlx.Tx, userId int, email string) error {
 	executer := ur.BaseRepository.initiateQueryExecuter(tx)
 
-	_, err := executer.ExecContext(ctx, updateEmailQuery, email, Id)
+	_, err := executer.ExecContext(ctx, updateEmailQuery, email, time.Now(), userId)
 	if err != nil {
 		slog.Error("failed to update user email", "error", err)
 		return apperrors.ErrInternalServer

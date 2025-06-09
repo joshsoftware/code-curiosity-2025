@@ -17,9 +17,9 @@ type User struct {
 	IsAdmin             bool
 	Password            string
 	IsDeleted           bool
-	DeletedAt           sql.NullInt64
-	CreatedAt           int64
-	UpdatedAt           int64
+	DeletedAt           sql.NullTime
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
 }
 
 type CreateUserRequestBody struct {
