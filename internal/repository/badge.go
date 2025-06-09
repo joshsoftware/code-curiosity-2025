@@ -22,7 +22,7 @@ func NewBadgeRepository(db *sqlx.DB) BadgeRepository {
 }
 
 const (
-	getBadgeDetailsOfUserQuery = "SELECT id, badge_type, earned_at FROM badges WHERE user_id = $1"
+	getBadgeDetailsOfUserQuery = "SELECT id, badge_type, earned_at FROM badges WHERE user_id = $1 ORDER BY earned_at DESC"
 )
 
 func (br *badgeRepository) GetBadgeDetailsOfUser(ctx context.Context, tx *sqlx.Tx, userId int) ([]Badge, error) {
