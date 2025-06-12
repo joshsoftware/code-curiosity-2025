@@ -6,24 +6,24 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	
+
 	"os/signal"
 	"syscall"
 	"time"
 
 	"github.com/joshsoftware/code-curiosity-2025/internal/app"
 	"github.com/joshsoftware/code-curiosity-2025/internal/config"
+	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/jobs"
 )
 
 func main() {
 	ctx := context.Background()
 
-	cfg,err := config.LoadAppConfig()
+	cfg, err := config.LoadAppConfig()
 	if err != nil {
 		slog.Error("error loading app config", "error", err)
 		return
 	}
-
 
 	db, err := config.InitDataStore(cfg)
 	if err != nil {
@@ -32,7 +32,7 @@ func main() {
 	}
 	defer db.Close()
 
-	dependencies := app.InitDependencies(db,cfg)
+	dependencies := app.InitDependencies(db, cfg)
 
 	router := app.NewRouter(dependencies)
 
@@ -40,6 +40,9 @@ func main() {
 		Addr:    fmt.Sprintf(":%s", cfg.HTTPServer.Port),
 		Handler: router,
 	}
+
+	// backround job start
+	jobs.PermanentDeleteJob(db)
 
 	serverRunning := make(chan os.Signal, 1)
 

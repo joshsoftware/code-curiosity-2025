@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 
 	"github.com/joshsoftware/code-curiosity-2025/internal/app/user"
@@ -82,6 +83,16 @@ func (s *service) GithubOAuthLoginCallback(ctx context.Context, code string) (st
 		slog.Error("error generating jwt", "error", err)
 		return "", apperrors.ErrInternalServer
 	}
+
+	// soft delete checker
+	err = s.userService.RecoverAccountInGracePeriod(ctx, userData.Id)
+	if err != nil {
+		slog.Error("error in recovering account in grace period during login", "error", err)
+		return "", apperrors.ErrInternalServer
+	}
+	// token print
+
+	fmt.Println(jwtToken)
 
 	return jwtToken, nil
 }

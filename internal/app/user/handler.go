@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/apperrors"
+	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/middleware"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/response"
 )
 
@@ -15,6 +16,7 @@ type handler struct {
 
 type Handler interface {
 	UpdateUserEmail(w http.ResponseWriter, r *http.Request)
+	DeleteUser(w http.ResponseWriter, r *http.Request)
 }
 
 func NewHandler(userService Service) Handler {
@@ -43,4 +45,22 @@ func (h *handler) UpdateUserEmail(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.WriteJson(w, http.StatusOK, "email updated successfully", nil)
+}
+
+func (h *handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	val := ctx.Value(middleware.UserIdKey)
+
+	userID := val.(int)
+
+	user, err := h.userService.SoftDeleteUser(ctx, userID)
+	if err != nil {
+		slog.Error("failed to softdelete user", "error", err)
+		status, errorMessage := apperrors.MapError(err)
+		response.WriteJson(w, status, errorMessage, nil)
+		return
+	}
+
+	response.WriteJson(w, http.StatusOK, "user scheduled for deletion", user)
+
 }
