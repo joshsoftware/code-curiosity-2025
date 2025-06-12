@@ -21,6 +21,9 @@ type UserRepository interface {
 	GetUserByGithubId(ctx context.Context, tx *sqlx.Tx, githubId int) (User, error)
 	CreateUser(ctx context.Context, tx *sqlx.Tx, userInfo CreateUserRequestBody) (User, error)
 	UpdateUserEmail(ctx context.Context, tx *sqlx.Tx, userId int, email string) error
+	MarkUserAsDeleted(ctx context.Context, tx *sqlx.Tx, userID int, deletedAt time.Time) (User, error)
+	AccountScheduledForDelete(ctx context.Context, tx *sqlx.Tx, userID int) error
+	DeleteUser(tx *sqlx.Tx) error
 }
 
 func NewUserRepository(db *sqlx.DB) UserRepository {
@@ -120,6 +123,8 @@ func (ur *userRepository) CreateUser(ctx context.Context, tx *sqlx.Tx, userInfo 
 		userInfo.GithubUsername,
 		userInfo.Email,
 		userInfo.AvatarUrl,
+		time.Now(),
+		time.Now(),
 	).Scan(
 		&user.Id,
 		&user.GithubId,
@@ -155,4 +160,77 @@ func (ur *userRepository) UpdateUserEmail(ctx context.Context, tx *sqlx.Tx, user
 	}
 
 	return nil
+}
+
+func (ur *userRepository) MarkUserAsDeleted(ctx context.Context, tx *sqlx.Tx, userID int, deletedAt time.Time) (User, error) {
+	executer := ur.BaseRepository.initiateQueryExecuter(tx)
+	_, err := executer.ExecContext(ctx, `UPDATE users SET is_deleted = TRUE, deleted_at=$1 WHERE id = $2`, deletedAt, userID)
+	if err != nil {
+		slog.Error("unable to mark user as deleted", "error", err)
+		return User{}, apperrors.ErrInternalServer
+	}
+	var user User
+	err = executer.QueryRowContext(ctx, getUserByIdQuery, userID).Scan(
+		&user.Id,
+		&user.GithubId,
+		&user.GithubUsername,
+		&user.AvatarUrl,
+		&user.Email,
+		&user.CurrentActiveGoalId,
+		&user.CurrentBalance,
+		&user.IsBlocked,
+		&user.IsAdmin,
+		&user.Password,
+		&user.IsDeleted,
+		&user.DeletedAt,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			slog.Error("user not found", "error", err)
+			return User{}, apperrors.ErrUserNotFound
+		}
+		slog.Error("error occurred while getting user by id", "error", err)
+		return User{}, apperrors.ErrInternalServer
+	}
+	return user, nil
+}
+
+func (ur *userRepository) AccountScheduledForDelete(ctx context.Context, tx *sqlx.Tx, userID int) error {
+	var deleteGracePeriod = 90 * 24 * time.Hour
+	user, err := ur.GetUserById(ctx, tx, userID)
+
+	if err != nil {
+		slog.Error("unable to fetch user by ID ", "error", err)
+		return apperrors.ErrInternalServer
+	}
+
+	if user.IsDeleted {
+		var dlt_at time.Time
+		if !user.DeletedAt.Valid {
+			return errors.New("invalid deletion state")
+		} else {
+			dlt_at = user.DeletedAt.Time
+		}
+
+		if time.Since(dlt_at) >= deleteGracePeriod {
+			slog.Error("user is permanentaly deleted ", "error", err)
+			return apperrors.ErrInternalServer
+		} else {
+			executer := ur.BaseRepository.initiateQueryExecuter(tx)
+			_, err := executer.ExecContext(ctx, `UPDATE users SET is_deleted = false, deleted_at = NULL WHERE id = $1`, userID)
+			slog.Error("unable to reverse the soft delete ", "error", err)
+			return apperrors.ErrInternalServer
+		}
+	}
+	return nil
+}
+
+func (ur *userRepository) DeleteUser(tx *sqlx.Tx) error {
+	threshold := time.Now().Add(-90 * 1 * time.Second)
+	executer := ur.BaseRepository.initiateQueryExecuter(tx)
+	ctx := context.Background()
+	_, err := executer.ExecContext(ctx, `DELETE FROM users WHERE is_deleted = TRUE AND deleted_at <= $1 `, threshold)
+	return err
 }

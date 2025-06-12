@@ -18,8 +18,8 @@ type User struct {
 	Password            string        `json:"password"`
 	IsDeleted           bool          `json:"is_deleted"`
 	DeletedAt           sql.NullTime  `json:"deleted_at"`
-	CreatedAt           time.Time        `json:"created_at"`
-	UpdatedAt           time.Time        `json:"updated_at"`
+	CreatedAt           time.Time     `json:"created_at"`
+	UpdatedAt           time.Time     `json:"updated_at"`
 }
 
 type CreateUserRequestBody struct {
