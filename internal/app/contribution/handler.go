@@ -25,7 +25,8 @@ func (h *handler) FetchUserLatestContributions(w http.ResponseWriter, r *http.Re
 
 	ctx := r.Context()
 
-	err := h.contributionService.ProcessFetchedContributions(ctx)
+	client := &http.Client{}
+	err := h.contributionService.ProcessFetchedContributions(ctx, client)
 	if err != nil {
 		slog.Error("error fetching latest contributions")
 		return

@@ -18,7 +18,7 @@ type service struct {
 
 type Service interface {
 	GetRepoByRepoId(ctx context.Context, githubRepoId int) (Repository, error)
-	FetchRepositoryDetails(ctx context.Context, getUserRepoDetailsUrl string) (FetchRepositoryDetailsResponse, error)
+	FetchRepositoryDetails(ctx context.Context, client *http.Client, getUserRepoDetailsUrl string) (FetchRepositoryDetailsResponse, error)
 	CreateRepository(ctx context.Context, repoGithubId int, repo FetchRepositoryDetailsResponse) (Repository, error)
 }
 
@@ -39,7 +39,7 @@ func (s *service) GetRepoByRepoId(ctx context.Context, repoGithubId int) (Reposi
 	return Repository(repoDetails), nil
 }
 
-func (s *service) FetchRepositoryDetails(ctx context.Context, getUserRepoDetailsUrl string) (FetchRepositoryDetailsResponse, error) {
+func (s *service) FetchRepositoryDetails(ctx context.Context, client *http.Client, getUserRepoDetailsUrl string) (FetchRepositoryDetailsResponse, error) {
 	req, err := http.NewRequest("GET", getUserRepoDetailsUrl, nil)
 	if err != nil {
 		slog.Error("error fetching user repositories details", "error", err)
@@ -48,7 +48,6 @@ func (s *service) FetchRepositoryDetails(ctx context.Context, getUserRepoDetails
 
 	req.Header.Add("Authorization", s.appCfg.GithubPersonalAccessToken)
 
-	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
 		slog.Error("error fetching user repositories details", "error", err)
