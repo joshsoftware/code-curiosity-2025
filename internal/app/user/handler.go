@@ -64,3 +64,8 @@ func (h *handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	response.WriteJson(w, http.StatusOK, "user scheduled for deletion", user)
 
 }
+
+func (h *handler) UserSummary(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+}
