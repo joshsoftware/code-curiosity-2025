@@ -34,7 +34,8 @@ var (
 	ErrRepoNotFound       = errors.New("repository not found")
 	ErrRepoCreationFailed = errors.New("failed to create repo for user")
 
-	ErrContributionCreationFailed = errors.New("failed to create contrbitution")
+	ErrContributionCreationFailed  = errors.New("failed to create contrbitution")
+	ErrFetchingRecentContributions = errors.New("failed to fetch users five recent contributions")
 )
 
 func MapError(err error) (statusCode int, errMessage string) {
