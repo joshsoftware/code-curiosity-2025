@@ -18,6 +18,7 @@ type ContributionRepository interface {
 	CreateContribution(ctx context.Context, tx *sqlx.Tx, contributionDetails Contribution) (Contribution, error)
 	GetContributionScoreDetailsByContributionType(ctx context.Context, tx *sqlx.Tx, contributionType string) (ContributionScore, error)
 	FetchUsersFiveRecentContributions(ctx context.Context, tx *sqlx.Tx) ([]Contribution, error)
+	FetchUsersAllContributions(ctx context.Context, tx *sqlx.Tx) ([]Contribution, error)
 }
 
 func NewContributionRepository(db *sqlx.DB) ContributionRepository {
@@ -42,6 +43,8 @@ const (
 	getContributionScoreDetailsByContributionTypeQuery = `SELECT * from contribution_score where contribution_type=$1`
 
 	fetchUsersFiveRecentContributionsQuery = `SELECT * from contributions where user_id=$1 order by contributed_at desc limit 5`
+
+	fetchUsersAllContributionsQuery = `SELECT * from contributions where user_id=$1 order by contributed_at desc`
 )
 
 func (cr *contributionRepository) CreateContribution(ctx context.Context, tx *sqlx.Tx, contributionInfo Contribution) (Contribution, error) {
@@ -131,4 +134,43 @@ func (cr *contributionRepository) FetchUsersFiveRecentContributions(ctx context.
 	}
 
 	return usersFiveRecentContributions, nil
+}
+
+func (cr *contributionRepository) FetchUsersAllContributions(ctx context.Context, tx *sqlx.Tx) ([]Contribution, error) {
+	userIdValue := ctx.Value(middleware.UserIdKey)
+
+	userId, ok := userIdValue.(int)
+	if !ok {
+		slog.Error("error obtaining user id from context")
+		return nil, apperrors.ErrInternalServer
+	}
+
+	executer := cr.BaseRepository.initiateQueryExecuter(tx)
+
+	rows, err := executer.QueryContext(ctx, fetchUsersAllContributionsQuery, userId)
+	if err != nil {
+		slog.Error("error fetching all contributions for user")
+		return nil, apperrors.ErrFetchingAllContributions
+	}
+	defer rows.Close()
+
+	var usersAllContributions []Contribution
+	for rows.Next() {
+		var currentContribution Contribution
+		if err = rows.Scan(
+			&currentContribution.Id,
+			&currentContribution.UserId,
+			&currentContribution.RepositoryId,
+			&currentContribution.ContributionScoreId,
+			&currentContribution.ContributionType,
+			&currentContribution.BalanceChange,
+			&currentContribution.ContributedAt,
+			&currentContribution.CreatedAt, &currentContribution.UpdatedAt); err != nil {
+			return nil, err
+		}
+
+		usersAllContributions = append(usersAllContributions, currentContribution)
+	}
+
+	return usersAllContributions, nil
 }

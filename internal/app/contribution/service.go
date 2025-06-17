@@ -25,6 +25,7 @@ type Service interface {
 	CreateContribution(ctx context.Context, contributionType string, contributionDetails ContributionResponse, repositoryId int, userId int) (Contribution, error)
 	GetContributionScoreDetailsByContributionType(ctx context.Context, contributionType string) (ContributionScore, error)
 	FetchUsersFiveRecentContributions(ctx context.Context) ([]Contribution, error)
+	FetchUsersAllContributions(ctx context.Context) ([]Contribution, error)
 }
 
 func NewService(bigqueryService bigquery.Service, contributionRepository repository.ContributionRepository, repositoryService repoService.Service, userService user.Service) Service {
@@ -195,9 +196,24 @@ func (s *service) FetchUsersFiveRecentContributions(ctx context.Context) ([]Cont
 		slog.Error("error occured while fetching users five recent contributions", "error", err)
 		return nil, err
 	}
-	
+
 	serviceContributions := make([]Contribution, len(usersFiveRecentContributions))
 	for i, c := range usersFiveRecentContributions {
+		serviceContributions[i] = Contribution((c))
+	}
+
+	return serviceContributions, nil
+}
+
+func (s *service) FetchUsersAllContributions(ctx context.Context) ([]Contribution, error) {
+	usersAllContributions, err := s.contributionRepository.FetchUsersAllContributions(ctx, nil)
+	if err != nil {
+		slog.Error("error occured while fetching all contributions for user", "error", err)
+		return nil, err
+	}
+
+	serviceContributions := make([]Contribution, len(usersAllContributions))
+	for i, c := range usersAllContributions {
 		serviceContributions[i] = Contribution((c))
 	}
 

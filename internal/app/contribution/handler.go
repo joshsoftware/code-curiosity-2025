@@ -15,6 +15,7 @@ type handler struct {
 type Handler interface {
 	FetchUserLatestContributions(w http.ResponseWriter, r *http.Request)
 	FetchUsersFiveRecentContributions(w http.ResponseWriter, r *http.Request)
+	FetchUsersAllContributions(w http.ResponseWriter, r *http.Request)
 }
 
 func NewHandler(contributionService Service) Handler {
@@ -52,4 +53,19 @@ func (h *handler) FetchUsersFiveRecentContributions(w http.ResponseWriter, r *ht
 	}
 
 	response.WriteJson(w, http.StatusOK, "users five recent contributions fetched successfully", usersFiveRecentContributions)
+}
+
+func (h *handler) FetchUsersAllContributions(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	usersAllContributions, err := h.contributionService.FetchUsersAllContributions(ctx)
+	if err != nil {
+		slog.Error("error fetching all contributions for user")
+		status, errorMessage := apperrors.MapError(err)
+		response.WriteJson(w, status, errorMessage, nil)
+		return
+	}
+
+	response.WriteJson(w, http.StatusOK, "all contributions for user fetched successfully", usersAllContributions)
 }
