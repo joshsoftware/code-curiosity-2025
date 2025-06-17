@@ -4,8 +4,6 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/apperrors"
-	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/middleware"
 	"github.com/joshsoftware/code-curiosity-2025/internal/repository"
 )
 
@@ -14,7 +12,7 @@ type badgeService struct {
 }
 
 type BadgeService interface {
-	GetBadgeDetailsOfUser(ctx context.Context) ([]Badge, error)
+	GetBadgeDetailsOfUser(ctx context.Context, userId int) ([]Badge, error)
 }
 
 func NewBadgeService(badgeRepository repository.BadgeRepository) BadgeService {
@@ -23,15 +21,7 @@ func NewBadgeService(badgeRepository repository.BadgeRepository) BadgeService {
 	}
 }
 
-func (bs *badgeService) GetBadgeDetailsOfUser(ctx context.Context) ([]Badge, error) {
-	userIdValue := ctx.Value(middleware.UserIdKey)
-
-	userId, ok := userIdValue.(int)
-	if !ok {
-		slog.Error("(service) error obtaining user id from context")
-		return nil, apperrors.ErrInternalServer
-	}
-
+func (bs *badgeService) GetBadgeDetailsOfUser(ctx context.Context, userId int) ([]Badge, error) {
 	badges, err := bs.badgeRepository.GetBadgeDetailsOfUser(ctx, nil, userId)
 
 	if err != nil {

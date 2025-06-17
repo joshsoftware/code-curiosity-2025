@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/apperrors"
+	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/middleware"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/response"
 )
 
@@ -25,7 +26,17 @@ func NewBadgeHandler(badgeService BadgeService) BadgeHandler {
 func (bh *badgeHandler) GetBadgeDetailsOfUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	badges, err := bh.badgeService.GetBadgeDetailsOfUser(ctx)
+	userIdValue := ctx.Value(middleware.UserIdKey)
+
+	userId, ok := userIdValue.(int)
+	if !ok {
+		slog.Error("(handler) error obtaining user id from context")
+		status, errorMsg := apperrors.MapError(apperrors.ErrInternalServer)
+		response.WriteJson(w, status, errorMsg, nil)
+		return
+	}
+
+	badges, err := bh.badgeService.GetBadgeDetailsOfUser(ctx, userId)
 
 	if err != nil {
 		slog.Error("(handler) Failed to get badge details of user", "Error", err)
