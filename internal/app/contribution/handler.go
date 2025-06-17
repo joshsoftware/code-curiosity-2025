@@ -25,7 +25,6 @@ func NewHandler(contributionService Service) Handler {
 }
 
 func (h *handler) FetchUserLatestContributions(w http.ResponseWriter, r *http.Request) {
-
 	ctx := r.Context()
 
 	client := &http.Client{}
@@ -41,7 +40,6 @@ func (h *handler) FetchUserLatestContributions(w http.ResponseWriter, r *http.Re
 }
 
 func (h *handler) FetchUsersFiveRecentContributions(w http.ResponseWriter, r *http.Request) {
-
 	ctx := r.Context()
 
 	usersFiveRecentContributions, err := h.contributionService.FetchUsersFiveRecentContributions(ctx)
@@ -56,7 +54,6 @@ func (h *handler) FetchUsersFiveRecentContributions(w http.ResponseWriter, r *ht
 }
 
 func (h *handler) FetchUsersAllContributions(w http.ResponseWriter, r *http.Request) {
-
 	ctx := r.Context()
 
 	usersAllContributions, err := h.contributionService.FetchUsersAllContributions(ctx)
