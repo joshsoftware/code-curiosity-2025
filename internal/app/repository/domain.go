@@ -29,13 +29,10 @@ type Repository struct {
 	UpdatedAt    time.Time
 }
 
-
 type RepoLanguages map[string]int
 
 type FetchUsersContributedReposResponse struct {
-	RepoName         string
-	Description      string
+	Repository
 	Languages        []string
-	UpdateDate       time.Time
 	TotalCoinsEarned int
 }

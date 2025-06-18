@@ -130,9 +130,7 @@ func (s *service) FetchUsersContributedRepos(ctx context.Context, client *http.C
 	fetchUsersContributedReposResponse := make([]FetchUsersContributedReposResponse, len(usersContributedRepos))
 
 	for i, usersContributedRepo := range usersContributedRepos {
-		fetchUsersContributedReposResponse[i].RepoName = usersContributedRepo.RepoName
-		fetchUsersContributedReposResponse[i].Description = usersContributedRepo.Description
-		fetchUsersContributedReposResponse[i].UpdateDate = usersContributedRepo.UpdateDate
+		fetchUsersContributedReposResponse[i].Repository = Repository(usersContributedRepo)
 
 		contributedRepoLanguages, err := s.FetchRepositoryLanguages(ctx, client, usersContributedRepo.LanguagesUrl)
 		if err != nil {
