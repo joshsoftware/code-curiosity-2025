@@ -9,11 +9,14 @@ import (
 )
 
 type Dependencies struct {
-	AuthService auth.Service
-	UserService user.Service
-	AuthHandler auth.Handler
-	UserHandler user.Handler
-	AppCfg      config.AppConfig
+	AuthService         auth.Service
+	UserService         user.Service
+	AuthHandler         auth.Handler
+	UserHandler         user.Handler
+	ContributionHandler contribution.Handler
+	RepositoryHandler   repoService.Handler
+	AppCfg              config.AppConfig
+	Client              config.Bigquery
 }
 
 func InitDependencies(db *sqlx.DB, appCfg config.AppConfig) Dependencies {
@@ -24,12 +27,17 @@ func InitDependencies(db *sqlx.DB, appCfg config.AppConfig) Dependencies {
 
 	authHandler := auth.NewHandler(authService, appCfg)
 	userHandler := user.NewHandler(userService)
+	repositoryHandler := repoService.NewHandler(repositoryService)
+	contributionHandler := contribution.NewHandler(contributionService)
 
 	return Dependencies{
-		AuthService: authService,
-		UserService: userService,
-		AuthHandler: authHandler,
-		UserHandler: userHandler,
-		AppCfg:      appCfg,
+		AuthService:         authService,
+		UserService:         userService,
+		AuthHandler:         authHandler,
+		UserHandler:         userHandler,
+		RepositoryHandler:   repositoryHandler,
+		ContributionHandler: contributionHandler,
+		AppCfg:              appCfg,
+		Client:              client,
 	}
 }
