@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"time"
 )
 
 type User struct {
@@ -16,9 +17,9 @@ type User struct {
 	IsAdmin             bool
 	Password            string
 	IsDeleted           bool
-	DeletedAt           sql.NullInt64
-	CreatedAt           int64
-	UpdatedAt           int64
+	DeletedAt           sql.NullTime
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
 }
 
 type CreateUserRequestBody struct {
@@ -27,4 +28,38 @@ type CreateUserRequestBody struct {
 	AvatarUrl      string
 	Email          string
 	IsAdmin        bool
+}
+
+type Contribution struct {
+	Id                  int
+	UserId              int
+	RepositoryId        int
+	ContributionScoreId int
+	ContributionType    string
+	BalanceChange       int
+	ContributedAt       time.Time
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
+}
+
+type Repository struct {
+	Id           int
+	GithubRepoId int
+	RepoName     string
+	Description  string
+	LanguagesUrl string
+	RepoUrl      string
+	OwnerName    string
+	UpdateDate   time.Time
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+}
+
+type ContributionScore struct {
+	Id               int
+	AdminId          int
+	ContributionType string
+	Score            int
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
 }
