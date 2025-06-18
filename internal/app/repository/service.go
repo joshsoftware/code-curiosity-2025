@@ -22,6 +22,7 @@ type Service interface {
 	CreateRepository(ctx context.Context, repoGithubId int, repo FetchRepositoryDetailsResponse) (Repository, error)
 	FetchRepositoryLanguages(ctx context.Context, client *http.Client, getRepoLanguagesURL string) (RepoLanguages, error)
 	FetchUsersContributedRepos(ctx context.Context, client *http.Client) ([]FetchUsersContributedReposResponse, error)
+	FetchRepositoryContributors(ctx context.Context, client *http.Client, getRepoContributorsURl string) ([]FetchRepoContributorsResponse, error)
 }
 
 func NewService(repositoryRepository repository.RepositoryRepository, appCfg config.AppConfig) Service {
@@ -152,4 +153,33 @@ func (s *service) FetchUsersContributedRepos(ctx context.Context, client *http.C
 	}
 
 	return fetchUsersContributedReposResponse, nil
+}
+
+func (s *service) FetchRepositoryContributors(ctx context.Context, client *http.Client, getRepoContributorsURl string) ([]FetchRepoContributorsResponse, error) {
+	req, err := http.NewRequest("GET", getRepoContributorsURl, nil)
+	if err != nil {
+		slog.Error("error fetching contributors for repository", "error", err)
+		return nil, err
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		slog.Error("error fetching contributors for repository", "error", err)
+		return nil, err
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		slog.Error("error reading body", "error", err)
+		return nil, err
+	}
+
+	var repoContributors []FetchRepoContributorsResponse
+	err = json.Unmarshal(body, &repoContributors)
+	if err != nil {
+		slog.Error("error unmarshalling fetch contributors body", "error", err)
+		return nil, err
+	}
+
+	return repoContributors, nil
 }

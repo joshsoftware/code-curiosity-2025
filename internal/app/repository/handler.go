@@ -61,3 +61,36 @@ func (h *handler) FetchParticularRepoDetails(w http.ResponseWriter, r *http.Requ
 
 	response.WriteJson(w, http.StatusOK, "repository details fetched successfully", repoDetails)
 }
+
+func (h *handler) FetchParticularRepoContributors(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	client := &http.Client{}
+
+	repoIdPath := r.PathValue("repo_id")
+	repoId, err := strconv.Atoi(repoIdPath)
+	if err != nil {
+		slog.Error("error getting repo id from request url")
+		status, errorMessage := apperrors.MapError(err)
+		response.WriteJson(w, status, errorMessage, nil)
+		return
+	}
+
+	repoDetails, err := h.repositoryService.GetRepoByRepoId(ctx, repoId)
+	if err != nil {
+		slog.Error("error fetching particular repo details")
+		status, errorMessage := apperrors.MapError(err)
+		response.WriteJson(w, status, errorMessage, nil)
+		return
+	}
+
+	repoContributors, err := h.repositoryService.FetchRepositoryContributors(ctx, client, repoDetails.ContributorsUrl)
+	if err != nil {
+		slog.Error("error fetching repo contributors")
+		status, errorMessage := apperrors.MapError(err)
+		response.WriteJson(w, status, errorMessage, nil)
+		return
+	}
+
+	response.WriteJson(w, http.StatusOK, "contributors for repo fetched successfully", repoContributors)
+}
