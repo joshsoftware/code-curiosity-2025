@@ -21,6 +21,7 @@ type RepositoryRepository interface {
 	CreateRepository(ctx context.Context, tx *sqlx.Tx, repository Repository) (Repository, error)
 	GetUserRepoTotalCoins(ctx context.Context, tx *sqlx.Tx, repoId int) (int, error)
 	FetchUsersContributedRepos(ctx context.Context, tx *sqlx.Tx) ([]Repository, error)
+	FetchUserContributionsInRepo(ctx context.Context, tx *sqlx.Tx, repoGithubId int) ([]Contribution, error)
 }
 
 func NewRepositoryRepository(db *sqlx.DB) RepositoryRepository {
@@ -48,6 +49,8 @@ const (
 	getUserRepoTotalCoinsQuery = `SELECT sum(balance_change) from contributions where user_id = $1 and repository_id = $2;`
 
 	fetchUsersContributedReposQuery = `SELECT * from repositories where id in (SELECT repository_id from contributions where user_id=$1);`
+
+	fetchUserContributionsInRepoQuery = `SELECT * from contributions where repository_id in (SELECT id from repositories where github_repo_id=$1) and user_id=$2;`
 )
 
 func (rr *repositoryRepository) GetRepoByGithubId(ctx context.Context, tx *sqlx.Tx, repoGithubId int) (Repository, error) {
@@ -173,4 +176,44 @@ func (r *repositoryRepository) FetchUsersContributedRepos(ctx context.Context, t
 	}
 
 	return usersContributedRepos, nil
+}
+
+func (r *repositoryRepository) FetchUserContributionsInRepo(ctx context.Context, tx *sqlx.Tx, repoGithubId int) ([]Contribution, error) {
+	userIdValue := ctx.Value(middleware.UserIdKey)
+
+	userId, ok := userIdValue.(int)
+	if !ok {
+		slog.Error("error obtaining user id from context")
+		return nil, apperrors.ErrInternalServer
+	}
+
+	executer := r.BaseRepository.initiateQueryExecuter(tx)
+
+	rows, err := executer.QueryContext(ctx, fetchUserContributionsInRepoQuery, repoGithubId, userId)
+	if err != nil {
+		slog.Error("error fetching users contribution in repository")
+		return nil, apperrors.ErrFetchingUserContributionsInRepo
+	}
+	defer rows.Close()
+
+	var userContributionsInRepo []Contribution
+	for rows.Next() {
+		var userContributionInRepo Contribution
+		if err = rows.Scan(
+			&userContributionInRepo.Id,
+			&userContributionInRepo.UserId,
+			&userContributionInRepo.RepositoryId,
+			&userContributionInRepo.ContributionScoreId,
+			&userContributionInRepo.ContributionType,
+			&userContributionInRepo.BalanceChange,
+			&userContributionInRepo.ContributedAt,
+			&userContributionInRepo.CreatedAt,
+			&userContributionInRepo.UpdatedAt); err != nil {
+			return nil, err
+		}
+
+		userContributionsInRepo = append(userContributionsInRepo, userContributionInRepo)
+	}
+
+	return userContributionsInRepo, nil
 }

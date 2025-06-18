@@ -16,6 +16,7 @@ type handler struct {
 type Handler interface {
 	FetchUsersContributedRepos(w http.ResponseWriter, r *http.Request)
 	FetchParticularRepoDetails(w http.ResponseWriter, r *http.Request)
+	FetchUserContributionsInRepo(w http.ResponseWriter, r *http.Request)
 }
 
 func NewHandler(repositoryService Service) Handler {
@@ -93,4 +94,27 @@ func (h *handler) FetchParticularRepoContributors(w http.ResponseWriter, r *http
 	}
 
 	response.WriteJson(w, http.StatusOK, "contributors for repo fetched successfully", repoContributors)
+}
+
+func (h *handler) FetchUserContributionsInRepo(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	repoIdPath := r.PathValue("repo_id")
+	repoId, err := strconv.Atoi(repoIdPath)
+	if err != nil {
+		slog.Error("error getting repo id from request url")
+		status, errorMessage := apperrors.MapError(err)
+		response.WriteJson(w, status, errorMessage, nil)
+		return
+	}
+
+	usersContributionsInRepo, err := h.repositoryService.FetchUserContributionsInRepo(ctx, repoId)
+	if err != nil {
+		slog.Error("error fetching users contribution in repository")
+		status, errorMessage := apperrors.MapError(err)
+		response.WriteJson(w, status, errorMessage, nil)
+		return
+	}
+
+	response.WriteJson(w, http.StatusOK, "users contribution for repository fetched successfully", usersContributionsInRepo)
 }

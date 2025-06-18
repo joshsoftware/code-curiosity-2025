@@ -23,6 +23,7 @@ type Service interface {
 	FetchRepositoryLanguages(ctx context.Context, client *http.Client, getRepoLanguagesURL string) (RepoLanguages, error)
 	FetchUsersContributedRepos(ctx context.Context, client *http.Client) ([]FetchUsersContributedReposResponse, error)
 	FetchRepositoryContributors(ctx context.Context, client *http.Client, getRepoContributorsURl string) ([]FetchRepoContributorsResponse, error)
+	FetchUserContributionsInRepo(ctx context.Context, githubRepoId int) ([]Contribution, error)
 }
 
 func NewService(repositoryRepository repository.RepositoryRepository, appCfg config.AppConfig) Service {
@@ -182,4 +183,19 @@ func (s *service) FetchRepositoryContributors(ctx context.Context, client *http.
 	}
 
 	return repoContributors, nil
+}
+
+func (s *service) FetchUserContributionsInRepo(ctx context.Context, githubRepoId int) ([]Contribution, error) {
+	userContributionsInRepo, err := s.repositoryRepository.FetchUserContributionsInRepo(ctx, nil, githubRepoId)
+	if err != nil {
+		slog.Error("error fetching users contribution in repository")
+		return nil, err
+	}
+
+	serviceUserContributionsInRepo := make([]Contribution, len(userContributionsInRepo))
+	for i, c := range userContributionsInRepo {
+		serviceUserContributionsInRepo[i] = Contribution(c)
+	}
+
+	return serviceUserContributionsInRepo, nil
 }

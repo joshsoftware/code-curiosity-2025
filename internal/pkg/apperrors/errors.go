@@ -31,10 +31,11 @@ var (
 	ErrJWTCreationFailed   = errors.New("failed to create jwt token")
 	ErrAuthorizationFailed = errors.New("failed to authorize user")
 
-	ErrRepoNotFound                  = errors.New("repository not found")
-	ErrRepoCreationFailed            = errors.New("failed to create repo for user")
-	ErrCalculatingUserRepoTotalCoins = errors.New("error calculating total coins earned by user for the repository")
-	ErrFetchingUsersContributedRepos = errors.New("error fetching users contributed repositories")
+	ErrRepoNotFound                    = errors.New("repository not found")
+	ErrRepoCreationFailed              = errors.New("failed to create repo for user")
+	ErrCalculatingUserRepoTotalCoins   = errors.New("error calculating total coins earned by user for the repository")
+	ErrFetchingUsersContributedRepos   = errors.New("error fetching users contributed repositories")
+	ErrFetchingUserContributionsInRepo = errors.New("error fetching users contribution in repository")
 
 	ErrContributionCreationFailed  = errors.New("failed to create contrbitution")
 	ErrFetchingRecentContributions = errors.New("failed to fetch users five recent contributions")

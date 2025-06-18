@@ -26,6 +26,6 @@ func NewRouter(deps Dependencies) http.Handler {
 
 	router.HandleFunc("GET /api/v1/user/repositories", middleware.Authentication(deps.RepositoryHandler.FetchUsersContributedRepos, deps.AppCfg))
 	router.HandleFunc("GET /api/v1/user/repositories/{repo_id}", middleware.Authentication(deps.RepositoryHandler.FetchParticularRepoDetails, deps.AppCfg))
-
+	router.HandleFunc("GET /api/v1/user/repositories/contributions/recent/{repo_id}", middleware.Authentication(deps.RepositoryHandler.FetchUserContributionsInRepo, deps.AppCfg))
 	return middleware.CorsMiddleware(router, deps.AppCfg)
 }

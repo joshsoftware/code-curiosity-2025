@@ -51,3 +51,15 @@ type FetchParticularRepoDetails struct {
 	Repository
 	Contributors []FetchRepoContributorsResponse
 }
+
+type Contribution struct {
+	Id                  int
+	UserId              int
+	RepositoryId        int
+	ContributionScoreId int
+	ContributionType    string
+	BalanceChange       int
+	ContributedAt       time.Time
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
+}
