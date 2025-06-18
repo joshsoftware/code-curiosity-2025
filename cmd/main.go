@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	
+
 	"os/signal"
 	"syscall"
 	"time"
@@ -18,12 +18,11 @@ import (
 func main() {
 	ctx := context.Background()
 
-	cfg,err := config.LoadAppConfig()
+	cfg, err := config.LoadAppConfig()
 	if err != nil {
 		slog.Error("error loading app config", "error", err)
 		return
 	}
-
 
 	db, err := config.InitDataStore(cfg)
 	if err != nil {
@@ -32,7 +31,13 @@ func main() {
 	}
 	defer db.Close()
 
-	dependencies := app.InitDependencies(db,cfg)
+	bigqueryInstance, err := config.BigqueryInit(ctx, cfg)
+	if err != nil {
+		slog.Error("error initializing bigquery", "error", err)
+		return
+	}
+
+	dependencies := app.InitDependencies(db, cfg, bigqueryInstance)
 
 	router := app.NewRouter(dependencies)
 
