@@ -27,8 +27,7 @@ func NewHandler(contributionService Service) Handler {
 func (h *handler) FetchUserLatestContributions(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	client := &http.Client{}
-	err := h.contributionService.ProcessFetchedContributions(ctx, client)
+	err := h.contributionService.ProcessFetchedContributions(ctx)
 	if err != nil {
 		slog.Error("error fetching latest contributions")
 		status, errorMessage := apperrors.MapError(err)

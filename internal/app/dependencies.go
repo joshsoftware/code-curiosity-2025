@@ -1,6 +1,8 @@
 package app
 
 import (
+	"net/http"
+
 	"github.com/jmoiron/sqlx"
 	"github.com/joshsoftware/code-curiosity-2025/internal/app/auth"
 	"github.com/joshsoftware/code-curiosity-2025/internal/app/bigquery"
@@ -22,7 +24,7 @@ type Dependencies struct {
 	Client              config.Bigquery
 }
 
-func InitDependencies(db *sqlx.DB, appCfg config.AppConfig, client config.Bigquery) Dependencies {
+func InitDependencies(db *sqlx.DB, appCfg config.AppConfig, client config.Bigquery, httpClient *http.Client) Dependencies {
 	userRepository := repository.NewUserRepository(db)
 	contributionRepository := repository.NewContributionRepository(db)
 	repositoryRepository := repository.NewRepositoryRepository(db)
@@ -30,8 +32,8 @@ func InitDependencies(db *sqlx.DB, appCfg config.AppConfig, client config.Bigque
 	userService := user.NewService(userRepository)
 	authService := auth.NewService(userService, appCfg)
 	bigqueryService := bigquery.NewService(client, userRepository)
-	repositoryService := repoService.NewService(repositoryRepository, appCfg)
-	contributionService := contribution.NewService(bigqueryService, contributionRepository, repositoryService, userService)
+	repositoryService := repoService.NewService(repositoryRepository, appCfg, httpClient)
+	contributionService := contribution.NewService(bigqueryService, contributionRepository, repositoryService, userService, httpClient)
 
 	authHandler := auth.NewHandler(authService, appCfg)
 	userHandler := user.NewHandler(userService)

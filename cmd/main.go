@@ -37,7 +37,9 @@ func main() {
 		return
 	}
 
-	dependencies := app.InitDependencies(db, cfg, bigqueryInstance)
+	httpClient := &http.Client{}
+
+	dependencies := app.InitDependencies(db, cfg, bigqueryInstance, httpClient)
 
 	router := app.NewRouter(dependencies)
 
