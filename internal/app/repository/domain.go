@@ -63,3 +63,9 @@ type Contribution struct {
 	CreatedAt           time.Time
 	UpdatedAt           time.Time
 }
+
+type LanguagePercent struct {
+	Name       string
+	Bytes      int
+	Percentage float64
+}

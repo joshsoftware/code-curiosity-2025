@@ -17,6 +17,7 @@ type Handler interface {
 	FetchUsersContributedRepos(w http.ResponseWriter, r *http.Request)
 	FetchParticularRepoDetails(w http.ResponseWriter, r *http.Request)
 	FetchUserContributionsInRepo(w http.ResponseWriter, r *http.Request)
+	FetchLanguagePercentInRepo(w http.ResponseWriter, r *http.Request)
 }
 
 func NewHandler(repositoryService Service) Handler {
@@ -117,4 +118,45 @@ func (h *handler) FetchUserContributionsInRepo(w http.ResponseWriter, r *http.Re
 	}
 
 	response.WriteJson(w, http.StatusOK, "users contribution for repository fetched successfully", usersContributionsInRepo)
+}
+
+func (h *handler) FetchLanguagePercentInRepo(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	client := &http.Client{}
+
+	repoIdPath := r.PathValue("repo_id")
+	repoId, err := strconv.Atoi(repoIdPath)
+	if err != nil {
+		slog.Error("error getting repo id from request url")
+		status, errorMessage := apperrors.MapError(err)
+		response.WriteJson(w, status, errorMessage, nil)
+		return
+	}
+
+	repoDetails, err := h.repositoryService.GetRepoByRepoId(ctx, repoId)
+	if err != nil {
+		slog.Error("error fetching particular repo details")
+		status, errorMessage := apperrors.MapError(err)
+		response.WriteJson(w, status, errorMessage, nil)
+		return
+	}
+
+	repoLanguages, err := h.repositoryService.FetchRepositoryLanguages(ctx, client, repoDetails.LanguagesUrl)
+	if err != nil {
+		slog.Error("error fetching particular repo languages")
+		status, errorMessage := apperrors.MapError(err)
+		response.WriteJson(w, status, errorMessage, nil)
+		return
+	}
+
+	langPercent, err := h.repositoryService.CalculateLanguagePercentInRepo(ctx, repoLanguages)
+	if err != nil {
+		slog.Error("error fetching particular repo languages")
+		status, errorMessage := apperrors.MapError(err)
+		response.WriteJson(w, status, errorMessage, nil)
+		return
+	}
+
+	response.WriteJson(w, http.StatusOK, "language percentages for repo fetched successfully", langPercent)
 }

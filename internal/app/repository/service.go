@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"log/slog"
+	"math"
 	"net/http"
 
 	"github.com/joshsoftware/code-curiosity-2025/internal/config"
@@ -24,6 +25,7 @@ type Service interface {
 	FetchUsersContributedRepos(ctx context.Context, client *http.Client) ([]FetchUsersContributedReposResponse, error)
 	FetchRepositoryContributors(ctx context.Context, client *http.Client, getRepoContributorsURl string) ([]FetchRepoContributorsResponse, error)
 	FetchUserContributionsInRepo(ctx context.Context, githubRepoId int) ([]Contribution, error)
+	CalculateLanguagePercentInRepo(ctx context.Context, repoLanguages RepoLanguages) ([]LanguagePercent, error)
 }
 
 func NewService(repositoryRepository repository.RepositoryRepository, appCfg config.AppConfig) Service {
@@ -198,4 +200,24 @@ func (s *service) FetchUserContributionsInRepo(ctx context.Context, githubRepoId
 	}
 
 	return serviceUserContributionsInRepo, nil
+}
+
+func (s *service) CalculateLanguagePercentInRepo(ctx context.Context, repoLanguages RepoLanguages) ([]LanguagePercent, error) {
+	var total int
+	for _, bytes := range repoLanguages {
+		total += bytes
+	}
+
+	var langPercent []LanguagePercent
+
+	for lang, bytes := range repoLanguages {
+		percentage := (float64(bytes) / float64(total)) * 100
+		langPercent = append(langPercent, LanguagePercent{
+			Name:       lang,
+			Bytes:      bytes,
+			Percentage: math.Round(percentage*10) / 10,
+		})
+	}
+
+	return langPercent, nil
 }
