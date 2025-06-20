@@ -25,7 +25,6 @@ type Service interface {
 	ProcessFetchedContributions(ctx context.Context) error
 	CreateContribution(ctx context.Context, contributionType string, contributionDetails ContributionResponse, repositoryId int, userId int) (Contribution, error)
 	GetContributionScoreDetailsByContributionType(ctx context.Context, contributionType string) (ContributionScore, error)
-	FetchUsersFiveRecentContributions(ctx context.Context) ([]Contribution, error)
 	FetchUsersAllContributions(ctx context.Context) ([]Contribution, error)
 }
 
@@ -190,21 +189,6 @@ func (s *service) GetContributionScoreDetailsByContributionType(ctx context.Cont
 	}
 
 	return ContributionScore(contributionScoreDetails), nil
-}
-
-func (s *service) FetchUsersFiveRecentContributions(ctx context.Context) ([]Contribution, error) {
-	usersFiveRecentContributions, err := s.contributionRepository.FetchUsersFiveRecentContributions(ctx, nil)
-	if err != nil {
-		slog.Error("error occured while fetching users five recent contributions", "error", err)
-		return nil, err
-	}
-
-	serviceContributions := make([]Contribution, len(usersFiveRecentContributions))
-	for i, c := range usersFiveRecentContributions {
-		serviceContributions[i] = Contribution((c))
-	}
-
-	return serviceContributions, nil
 }
 
 func (s *service) FetchUsersAllContributions(ctx context.Context) ([]Contribution, error) {
