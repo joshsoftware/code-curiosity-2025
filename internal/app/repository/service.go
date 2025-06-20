@@ -19,7 +19,8 @@ type service struct {
 }
 
 type Service interface {
-	GetRepoByRepoId(ctx context.Context, githubRepoId int) (Repository, error)
+	GetRepoByGithubId(ctx context.Context, githubRepoId int) (Repository, error)
+	GetRepoByRepoId(ctx context.Context, repoId int) (Repository, error)
 	FetchRepositoryDetails(ctx context.Context, getUserRepoDetailsUrl string) (FetchRepositoryDetailsResponse, error)
 	CreateRepository(ctx context.Context, repoGithubId int, repo FetchRepositoryDetailsResponse) (Repository, error)
 	FetchRepositoryLanguages(ctx context.Context, client *http.Client, getRepoLanguagesURL string) (RepoLanguages, error)
@@ -37,10 +38,20 @@ func NewService(repositoryRepository repository.RepositoryRepository, appCfg con
 	}
 }
 
-func (s *service) GetRepoByRepoId(ctx context.Context, repoGithubId int) (Repository, error) {
+func (s *service) GetRepoByGithubId(ctx context.Context, repoGithubId int) (Repository, error) {
 	repoDetails, err := s.repositoryRepository.GetRepoByGithubId(ctx, nil, repoGithubId)
 	if err != nil {
-		slog.Error("failed to get repository by github id")
+		slog.Error("failed to get repository by repo github id")
+		return Repository{}, err
+	}
+
+	return Repository(repoDetails), nil
+}
+
+func (s *service) GetRepoByRepoId(ctx context.Context, repobId int) (Repository, error) {
+	repoDetails, err := s.repositoryRepository.GetRepoByRepoId(ctx, nil, repobId)
+	if err != nil {
+		slog.Error("failed to get repository by repo id")
 		return Repository{}, err
 	}
 
