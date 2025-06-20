@@ -74,13 +74,14 @@ func (s *service) FetchRepositoryDetails(ctx context.Context, getUserRepoDetails
 
 func (s *service) CreateRepository(ctx context.Context, repoGithubId int, repo FetchRepositoryDetailsResponse) (Repository, error) {
 	createRepo := Repository{
-		GithubRepoId: repoGithubId,
-		RepoName:     repo.Name,
-		RepoUrl:      repo.RepoUrl,
-		Description:  repo.Description,
-		LanguagesUrl: repo.LanguagesURL,
-		OwnerName:    repo.RepoOwnerName.Login,
-		UpdateDate:   repo.UpdateDate,
+		GithubRepoId:    repoGithubId,
+		RepoName:        repo.Name,
+		RepoUrl:         repo.RepoUrl,
+		Description:     repo.Description,
+		LanguagesUrl:    repo.LanguagesURL,
+		OwnerName:       repo.RepoOwnerName.Login,
+		UpdateDate:      repo.UpdateDate,
+		ContributorsUrl: repo.ContributorsUrl,
 	}
 	repositoryCreated, err := s.repositoryRepository.CreateRepository(ctx, nil, repository.Repository(createRepo))
 	if err != nil {

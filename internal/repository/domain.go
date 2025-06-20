@@ -43,16 +43,17 @@ type Contribution struct {
 }
 
 type Repository struct {
-	Id           int
-	GithubRepoId int
-	RepoName     string
-	Description  string
-	LanguagesUrl string
-	RepoUrl      string
-	OwnerName    string
-	UpdateDate   time.Time
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	Id              int
+	GithubRepoId    int
+	RepoName        string
+	Description     string
+	LanguagesUrl    string
+	RepoUrl         string
+	OwnerName       string
+	UpdateDate      time.Time
+	ContributorsUrl string
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
 }
 
 type ContributionScore struct {
