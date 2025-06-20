@@ -17,7 +17,6 @@ type ContributionRepository interface {
 	RepositoryTransaction
 	CreateContribution(ctx context.Context, tx *sqlx.Tx, contributionDetails Contribution) (Contribution, error)
 	GetContributionScoreDetailsByContributionType(ctx context.Context, tx *sqlx.Tx, contributionType string) (ContributionScore, error)
-	FetchUsersFiveRecentContributions(ctx context.Context, tx *sqlx.Tx) ([]Contribution, error)
 	FetchUsersAllContributions(ctx context.Context, tx *sqlx.Tx) ([]Contribution, error)
 }
 
@@ -41,8 +40,6 @@ const (
 	RETURNING *`
 
 	getContributionScoreDetailsByContributionTypeQuery = `SELECT * from contribution_score where contribution_type=$1`
-
-	fetchUsersFiveRecentContributionsQuery = `SELECT * from contributions where user_id=$1 order by contributed_at desc limit 5`
 
 	fetchUsersAllContributionsQuery = `SELECT * from contributions where user_id=$1 order by contributed_at desc`
 )
@@ -95,45 +92,6 @@ func (cr *contributionRepository) GetContributionScoreDetailsByContributionType(
 	}
 
 	return contributionScoreDetails, nil
-}
-
-func (cr *contributionRepository) FetchUsersFiveRecentContributions(ctx context.Context, tx *sqlx.Tx) ([]Contribution, error) {
-	userIdValue := ctx.Value(middleware.UserIdKey)
-
-	userId, ok := userIdValue.(int)
-	if !ok {
-		slog.Error("error obtaining user id from context")
-		return nil, apperrors.ErrInternalServer
-	}
-
-	executer := cr.BaseRepository.initiateQueryExecuter(tx)
-
-	rows, err := executer.QueryContext(ctx, fetchUsersFiveRecentContributionsQuery, userId)
-	if err != nil {
-		slog.Error("error fetching users five recent contributions")
-		return nil, apperrors.ErrFetchingRecentContributions
-	}
-	defer rows.Close()
-
-	var usersFiveRecentContributions []Contribution
-	for rows.Next() {
-		var recentContribution Contribution
-		if err = rows.Scan(
-			&recentContribution.Id,
-			&recentContribution.UserId,
-			&recentContribution.RepositoryId,
-			&recentContribution.ContributionScoreId,
-			&recentContribution.ContributionType,
-			&recentContribution.BalanceChange,
-			&recentContribution.ContributedAt,
-			&recentContribution.CreatedAt, &recentContribution.UpdatedAt); err != nil {
-			return nil, err
-		}
-
-		usersFiveRecentContributions = append(usersFiveRecentContributions, recentContribution)
-	}
-
-	return usersFiveRecentContributions, nil
 }
 
 func (cr *contributionRepository) FetchUsersAllContributions(ctx context.Context, tx *sqlx.Tx) ([]Contribution, error) {

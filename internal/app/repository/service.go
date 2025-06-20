@@ -15,11 +15,12 @@ import (
 type service struct {
 	repositoryRepository repository.RepositoryRepository
 	appCfg               config.AppConfig
+	httpClient           *http.Client
 }
 
 type Service interface {
 	GetRepoByRepoId(ctx context.Context, githubRepoId int) (Repository, error)
-	FetchRepositoryDetails(ctx context.Context, client *http.Client, getUserRepoDetailsUrl string) (FetchRepositoryDetailsResponse, error)
+	FetchRepositoryDetails(ctx context.Context, getUserRepoDetailsUrl string) (FetchRepositoryDetailsResponse, error)
 	CreateRepository(ctx context.Context, repoGithubId int, repo FetchRepositoryDetailsResponse) (Repository, error)
 	FetchRepositoryLanguages(ctx context.Context, client *http.Client, getRepoLanguagesURL string) (RepoLanguages, error)
 	FetchUsersContributedRepos(ctx context.Context, client *http.Client) ([]FetchUsersContributedReposResponse, error)
@@ -28,10 +29,11 @@ type Service interface {
 	CalculateLanguagePercentInRepo(ctx context.Context, repoLanguages RepoLanguages) ([]LanguagePercent, error)
 }
 
-func NewService(repositoryRepository repository.RepositoryRepository, appCfg config.AppConfig) Service {
+func NewService(repositoryRepository repository.RepositoryRepository, appCfg config.AppConfig, httpClient *http.Client) Service {
 	return &service{
 		repositoryRepository: repositoryRepository,
 		appCfg:               appCfg,
+		httpClient:           httpClient,
 	}
 }
 
@@ -45,7 +47,7 @@ func (s *service) GetRepoByRepoId(ctx context.Context, repoGithubId int) (Reposi
 	return Repository(repoDetails), nil
 }
 
-func (s *service) FetchRepositoryDetails(ctx context.Context, client *http.Client, getUserRepoDetailsUrl string) (FetchRepositoryDetailsResponse, error) {
+func (s *service) FetchRepositoryDetails(ctx context.Context, getUserRepoDetailsUrl string) (FetchRepositoryDetailsResponse, error) {
 	req, err := http.NewRequest("GET", getUserRepoDetailsUrl, nil)
 	if err != nil {
 		slog.Error("error fetching user repositories details", "error", err)
@@ -54,7 +56,7 @@ func (s *service) FetchRepositoryDetails(ctx context.Context, client *http.Clien
 
 	req.Header.Add("Authorization", s.appCfg.GithubPersonalAccessToken)
 
-	resp, err := client.Do(req)
+	resp, err := s.httpClient.Do(req)
 	if err != nil {
 		slog.Error("error fetching user repositories details", "error", err)
 		return FetchRepositoryDetailsResponse{}, err
@@ -78,13 +80,14 @@ func (s *service) FetchRepositoryDetails(ctx context.Context, client *http.Clien
 
 func (s *service) CreateRepository(ctx context.Context, repoGithubId int, repo FetchRepositoryDetailsResponse) (Repository, error) {
 	createRepo := Repository{
-		GithubRepoId: repoGithubId,
-		RepoName:     repo.Name,
-		RepoUrl:      repo.RepoUrl,
-		Description:  repo.Description,
-		LanguagesUrl: repo.LanguagesURL,
-		OwnerName:    repo.RepoOwnerName.Login,
-		UpdateDate:   repo.UpdateDate,
+		GithubRepoId:    repoGithubId,
+		RepoName:        repo.Name,
+		RepoUrl:         repo.RepoUrl,
+		Description:     repo.Description,
+		LanguagesUrl:    repo.LanguagesURL,
+		OwnerName:       repo.RepoOwnerName.Login,
+		UpdateDate:      repo.UpdateDate,
+		ContributorsUrl: repo.ContributorsUrl,
 	}
 	repositoryCreated, err := s.repositoryRepository.CreateRepository(ctx, nil, repository.Repository(createRepo))
 	if err != nil {

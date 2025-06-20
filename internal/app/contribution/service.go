@@ -18,26 +18,27 @@ type service struct {
 	contributionRepository repository.ContributionRepository
 	repositoryService      repoService.Service
 	userService            user.Service
+	httpClient             *http.Client
 }
 
 type Service interface {
-	ProcessFetchedContributions(ctx context.Context, client *http.Client) error
+	ProcessFetchedContributions(ctx context.Context) error
 	CreateContribution(ctx context.Context, contributionType string, contributionDetails ContributionResponse, repositoryId int, userId int) (Contribution, error)
 	GetContributionScoreDetailsByContributionType(ctx context.Context, contributionType string) (ContributionScore, error)
-	FetchUsersFiveRecentContributions(ctx context.Context) ([]Contribution, error)
 	FetchUsersAllContributions(ctx context.Context) ([]Contribution, error)
 }
 
-func NewService(bigqueryService bigquery.Service, contributionRepository repository.ContributionRepository, repositoryService repoService.Service, userService user.Service) Service {
+func NewService(bigqueryService bigquery.Service, contributionRepository repository.ContributionRepository, repositoryService repoService.Service, userService user.Service, httpClient *http.Client) Service {
 	return &service{
 		bigqueryService:        bigqueryService,
 		contributionRepository: contributionRepository,
 		repositoryService:      repositoryService,
 		userService:            userService,
+		httpClient:             httpClient,
 	}
 }
 
-func (s *service) ProcessFetchedContributions(ctx context.Context, client *http.Client) error {
+func (s *service) ProcessFetchedContributions(ctx context.Context) error {
 	contributions, err := s.bigqueryService.FetchDailyContributions(ctx)
 	if err != nil {
 		slog.Error("error fetching daily contributions", "error", err)
@@ -60,9 +61,9 @@ func (s *service) ProcessFetchedContributions(ctx context.Context, client *http.
 		}
 
 		var repositoryId int
-		repoFetched, err := s.repositoryService.GetRepoByRepoId(ctx, contribution.RepoID)
+		repoFetched, err := s.repositoryService.GetRepoByRepoId(ctx, contribution.RepoID) //err no rows
 		if err != nil {
-			repo, err := s.repositoryService.FetchRepositoryDetails(ctx, client, contribution.RepoUrl)
+			repo, err := s.repositoryService.FetchRepositoryDetails(ctx, contribution.RepoUrl)
 			if err != nil {
 				slog.Error("error fetching repository details")
 				return err
@@ -188,21 +189,6 @@ func (s *service) GetContributionScoreDetailsByContributionType(ctx context.Cont
 	}
 
 	return ContributionScore(contributionScoreDetails), nil
-}
-
-func (s *service) FetchUsersFiveRecentContributions(ctx context.Context) ([]Contribution, error) {
-	usersFiveRecentContributions, err := s.contributionRepository.FetchUsersFiveRecentContributions(ctx, nil)
-	if err != nil {
-		slog.Error("error occured while fetching users five recent contributions", "error", err)
-		return nil, err
-	}
-
-	serviceContributions := make([]Contribution, len(usersFiveRecentContributions))
-	for i, c := range usersFiveRecentContributions {
-		serviceContributions[i] = Contribution((c))
-	}
-
-	return serviceContributions, nil
 }
 
 func (s *service) FetchUsersAllContributions(ctx context.Context) ([]Contribution, error) {

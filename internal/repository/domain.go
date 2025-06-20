@@ -49,9 +49,9 @@ type Repository struct {
 	Description     string
 	LanguagesUrl    string
 	RepoUrl         string
-	ContributorsUrl string
 	OwnerName       string
 	UpdateDate      time.Time
+	ContributorsUrl string
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 }

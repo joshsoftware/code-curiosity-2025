@@ -41,9 +41,10 @@ const (
 	languages_url,
 	repo_url,
 	owner_name, 
-	update_date
+	update_date,
+	contributors_url
 	)
-	VALUES ($1, $2, $3, $4, $5, $6, $7)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	RETURNING *`
 
 	getUserRepoTotalCoinsQuery = `SELECT sum(balance_change) from contributions where user_id = $1 and repository_id = $2;`
@@ -68,6 +69,7 @@ func (rr *repositoryRepository) GetRepoByGithubId(ctx context.Context, tx *sqlx.
 		&repository.UpdateDate,
 		&repository.CreatedAt,
 		&repository.UpdatedAt,
+		&repository.ContributorsUrl,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -94,6 +96,7 @@ func (rr *repositoryRepository) CreateRepository(ctx context.Context, tx *sqlx.T
 		repositoryInfo.RepoUrl,
 		repositoryInfo.OwnerName,
 		repositoryInfo.UpdateDate,
+		repositoryInfo.ContributorsUrl,
 	).Scan(
 		&repository.Id,
 		&repository.GithubRepoId,
@@ -105,6 +108,7 @@ func (rr *repositoryRepository) CreateRepository(ctx context.Context, tx *sqlx.T
 		&repository.UpdateDate,
 		&repository.CreatedAt,
 		&repository.UpdatedAt,
+		&repository.ContributorsUrl,
 	)
 	if err != nil {
 		slog.Error("error occured while creating repository", "error", err)
