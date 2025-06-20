@@ -172,7 +172,8 @@ func (r *repositoryRepository) FetchUsersContributedRepos(ctx context.Context, t
 			&usersContributedRepo.OwnerName,
 			&usersContributedRepo.UpdateDate,
 			&usersContributedRepo.CreatedAt,
-			&usersContributedRepo.UpdatedAt); err != nil {
+			&usersContributedRepo.UpdatedAt,
+			&usersContributedRepo.ContributorsUrl); err != nil {
 			return nil, err
 		}
 
