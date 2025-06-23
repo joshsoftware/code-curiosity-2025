@@ -166,7 +166,7 @@ func (r *repositoryRepository) GetUserRepoTotalCoins(ctx context.Context, tx *sq
 
 	err := executer.QueryRowContext(ctx, getUserRepoTotalCoinsQuery, userId, repoId).Scan(&totalCoins)
 	if err != nil {
-		slog.Error("error calculating total coins earned by user for the repository")
+		slog.Error("error calculating total coins earned by user for the repository", "error", err)
 		return 0, apperrors.ErrCalculatingUserRepoTotalCoins
 	}
 
@@ -186,7 +186,7 @@ func (r *repositoryRepository) FetchUsersContributedRepos(ctx context.Context, t
 
 	rows, err := executer.QueryContext(ctx, fetchUsersContributedReposQuery, userId)
 	if err != nil {
-		slog.Error("error fetching users contributed repositories")
+		slog.Error("error fetching users contributed repositories", "error", err)
 		return nil, apperrors.ErrFetchingUsersContributedRepos
 	}
 	defer rows.Close()
@@ -228,7 +228,7 @@ func (r *repositoryRepository) FetchUserContributionsInRepo(ctx context.Context,
 
 	rows, err := executer.QueryContext(ctx, fetchUserContributionsInRepoQuery, repoGithubId, userId)
 	if err != nil {
-		slog.Error("error fetching users contribution in repository")
+		slog.Error("error fetching users contribution in repository", "error", err)
 		return nil, apperrors.ErrFetchingUserContributionsInRepo
 	}
 	defer rows.Close()
