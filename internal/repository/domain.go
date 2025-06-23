@@ -6,28 +6,28 @@ import (
 )
 
 type User struct {
-	Id                  int
-	GithubId            int
-	GithubUsername      string
-	Email               string
-	AvatarUrl           string
-	CurrentBalance      int
-	CurrentActiveGoalId sql.NullInt64
-	IsBlocked           bool
-	IsAdmin             bool
-	Password            string
-	IsDeleted           bool
-	DeletedAt           sql.NullTime
-	CreatedAt           time.Time
-	UpdatedAt           time.Time
+	Id                  int           `db:"id"`
+	GithubId            int           `db:"github_id"`
+	GithubUsername      string        `db:"github_username"`
+	Email               string        `db:"email"`
+	AvatarUrl           string        `db:"avatar_url"`
+	CurrentBalance      int           `db:"current_balance"`
+	CurrentActiveGoalId sql.NullInt64 `db:"current_active_goal_id"`
+	IsBlocked           bool          `db:"is_blocked"`
+	IsAdmin             bool          `db:"is_admin"`
+	Password            string        `db:"password"`
+	IsDeleted           bool          `db:"is_deleted"`
+	DeletedAt           sql.NullTime  `db:"deleted_at"`
+	CreatedAt           time.Time     `db:"created_at"`
+	UpdatedAt           time.Time     `db:"updated_at"`
 }
 
 type CreateUserRequestBody struct {
-	GithubId       int
-	GithubUsername string
-	AvatarUrl      string
-	Email          string
-	IsAdmin        bool
+	GithubId       int    `db:"github_id"`
+	GithubUsername string `db:"github_username"`
+	AvatarUrl      string `db:"avatar_url"`
+	Email          string `db:"email"`
+	IsAdmin        bool   `db:"is_admin"`
 }
 
 type Contribution struct {
