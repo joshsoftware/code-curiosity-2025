@@ -31,29 +31,29 @@ type CreateUserRequestBody struct {
 }
 
 type Contribution struct {
-	Id                  int
-	UserId              int
-	RepositoryId        int
-	ContributionScoreId int
-	ContributionType    string
-	BalanceChange       int
-	ContributedAt       time.Time
-	CreatedAt           time.Time
-	UpdatedAt           time.Time
+	Id                  int       `db:"id"`
+	UserId              int       `db:"user_id"`
+	RepositoryId        int       `db:"repository_id"`
+	ContributionScoreId int       `db:"contribution_score_id"`
+	ContributionType    string    `db:"contribution_type"`
+	BalanceChange       int       `db:"balance_change"`
+	ContributedAt       time.Time `db:"contributed_at"`
+	CreatedAt           time.Time `db:"created_at"`
+	UpdatedAt           time.Time `db:"updated_at"`
 }
 
 type Repository struct {
-	Id              int
-	GithubRepoId    int
-	RepoName        string
-	Description     string
-	LanguagesUrl    string
-	RepoUrl         string
-	OwnerName       string
-	UpdateDate      time.Time
-	ContributorsUrl string
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
+	Id              int       `db:"id"`
+	GithubRepoId    int       `db:"github_repo_id"`
+	RepoName        string    `db:"repo_name"`
+	Description     string    `db:"description"`
+	LanguagesUrl    string    `db:"languages_url"`
+	RepoUrl         string    `db:"repo_url"`
+	OwnerName       string    `db:"owner_name"`
+	UpdateDate      time.Time `db:"update_date"`
+	ContributorsUrl string    `db:"contributors_url"`
+	CreatedAt       time.Time `db:"created_at"`
+	UpdatedAt       time.Time `db:"updated_at"`
 }
 
 type ContributionScore struct {

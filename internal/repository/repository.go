@@ -61,19 +61,7 @@ func (rr *repositoryRepository) GetRepoByGithubId(ctx context.Context, tx *sqlx.
 	executer := rr.BaseRepository.initiateQueryExecuter(tx)
 
 	var repository Repository
-	err := executer.QueryRowContext(ctx, getRepoByGithubIdQuery, repoGithubId).Scan(
-		&repository.Id,
-		&repository.GithubRepoId,
-		&repository.RepoName,
-		&repository.Description,
-		&repository.LanguagesUrl,
-		&repository.RepoUrl,
-		&repository.OwnerName,
-		&repository.UpdateDate,
-		&repository.CreatedAt,
-		&repository.UpdatedAt,
-		&repository.ContributorsUrl,
-	)
+	err := executer.GetContext(ctx, &repository, getRepoByGithubIdQuery, repoGithubId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			slog.Error("repository not found", "error", err)
@@ -91,19 +79,7 @@ func (rr *repositoryRepository) GetRepoByRepoId(ctx context.Context, tx *sqlx.Tx
 	executer := rr.BaseRepository.initiateQueryExecuter(tx)
 
 	var repository Repository
-	err := executer.QueryRowContext(ctx, getrepoByRepoIdQuery, repoId).Scan(
-		&repository.Id,
-		&repository.GithubRepoId,
-		&repository.RepoName,
-		&repository.Description,
-		&repository.LanguagesUrl,
-		&repository.RepoUrl,
-		&repository.OwnerName,
-		&repository.UpdateDate,
-		&repository.CreatedAt,
-		&repository.UpdatedAt,
-		&repository.ContributorsUrl,
-	)
+	err := executer.GetContext(ctx, &repository, getrepoByRepoIdQuery, repoId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			slog.Error("repository not found", "error", err)
@@ -120,7 +96,7 @@ func (rr *repositoryRepository) CreateRepository(ctx context.Context, tx *sqlx.T
 	executer := rr.BaseRepository.initiateQueryExecuter(tx)
 
 	var repository Repository
-	err := executer.QueryRowContext(ctx, createRepositoryQuery,
+	err := executer.GetContext(ctx, &repository, createRepositoryQuery,
 		repositoryInfo.GithubRepoId,
 		repositoryInfo.RepoName,
 		repositoryInfo.Description,
@@ -129,18 +105,6 @@ func (rr *repositoryRepository) CreateRepository(ctx context.Context, tx *sqlx.T
 		repositoryInfo.OwnerName,
 		repositoryInfo.UpdateDate,
 		repositoryInfo.ContributorsUrl,
-	).Scan(
-		&repository.Id,
-		&repository.GithubRepoId,
-		&repository.RepoName,
-		&repository.Description,
-		&repository.LanguagesUrl,
-		&repository.RepoUrl,
-		&repository.OwnerName,
-		&repository.UpdateDate,
-		&repository.CreatedAt,
-		&repository.UpdatedAt,
-		&repository.ContributorsUrl,
 	)
 	if err != nil {
 		slog.Error("error occured while creating repository", "error", err)
@@ -164,7 +128,7 @@ func (r *repositoryRepository) GetUserRepoTotalCoins(ctx context.Context, tx *sq
 
 	var totalCoins int
 
-	err := executer.QueryRowContext(ctx, getUserRepoTotalCoinsQuery, userId, repoId).Scan(&totalCoins)
+	err := executer.GetContext(ctx, &totalCoins, getUserRepoTotalCoinsQuery, userId, repoId)
 	if err != nil {
 		slog.Error("error calculating total coins earned by user for the repository")
 		return 0, apperrors.ErrCalculatingUserRepoTotalCoins
@@ -184,32 +148,11 @@ func (r *repositoryRepository) FetchUsersContributedRepos(ctx context.Context, t
 
 	executer := r.BaseRepository.initiateQueryExecuter(tx)
 
-	rows, err := executer.QueryContext(ctx, fetchUsersContributedReposQuery, userId)
+	var usersContributedRepos []Repository
+	err := executer.SelectContext(ctx, &usersContributedRepos, fetchUsersContributedReposQuery, userId)
 	if err != nil {
 		slog.Error("error fetching users contributed repositories")
 		return nil, apperrors.ErrFetchingUsersContributedRepos
-	}
-	defer rows.Close()
-
-	var usersContributedRepos []Repository
-	for rows.Next() {
-		var usersContributedRepo Repository
-		if err = rows.Scan(
-			&usersContributedRepo.Id,
-			&usersContributedRepo.GithubRepoId,
-			&usersContributedRepo.RepoName,
-			&usersContributedRepo.Description,
-			&usersContributedRepo.LanguagesUrl,
-			&usersContributedRepo.RepoUrl,
-			&usersContributedRepo.OwnerName,
-			&usersContributedRepo.UpdateDate,
-			&usersContributedRepo.CreatedAt,
-			&usersContributedRepo.UpdatedAt,
-			&usersContributedRepo.ContributorsUrl); err != nil {
-			return nil, err
-		}
-
-		usersContributedRepos = append(usersContributedRepos, usersContributedRepo)
 	}
 
 	return usersContributedRepos, nil
@@ -226,30 +169,11 @@ func (r *repositoryRepository) FetchUserContributionsInRepo(ctx context.Context,
 
 	executer := r.BaseRepository.initiateQueryExecuter(tx)
 
-	rows, err := executer.QueryContext(ctx, fetchUserContributionsInRepoQuery, repoGithubId, userId)
+	var userContributionsInRepo []Contribution
+	err := executer.SelectContext(ctx, &userContributionsInRepo, fetchUserContributionsInRepoQuery, repoGithubId, userId)
 	if err != nil {
 		slog.Error("error fetching users contribution in repository")
 		return nil, apperrors.ErrFetchingUserContributionsInRepo
-	}
-	defer rows.Close()
-
-	var userContributionsInRepo []Contribution
-	for rows.Next() {
-		var userContributionInRepo Contribution
-		if err = rows.Scan(
-			&userContributionInRepo.Id,
-			&userContributionInRepo.UserId,
-			&userContributionInRepo.RepositoryId,
-			&userContributionInRepo.ContributionScoreId,
-			&userContributionInRepo.ContributionType,
-			&userContributionInRepo.BalanceChange,
-			&userContributionInRepo.ContributedAt,
-			&userContributionInRepo.CreatedAt,
-			&userContributionInRepo.UpdatedAt); err != nil {
-			return nil, err
-		}
-
-		userContributionsInRepo = append(userContributionsInRepo, userContributionInRepo)
 	}
 
 	return userContributionsInRepo, nil
