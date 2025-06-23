@@ -57,10 +57,10 @@ type Repository struct {
 }
 
 type ContributionScore struct {
-	Id               int
-	AdminId          int
-	ContributionType string
-	Score            int
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
+	Id               int       `db:"id"`
+	AdminId          int       `db:"admin_id"`
+	ContributionType string    `db:"contribution_type"`
+	Score            int       `db:"score"`
+	CreatedAt        time.Time `db:"created_at"`
+	UpdatedAt        time.Time `db:"updated_at"`
 }

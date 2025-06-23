@@ -48,23 +48,13 @@ func (cr *contributionRepository) CreateContribution(ctx context.Context, tx *sq
 	executer := cr.BaseRepository.initiateQueryExecuter(tx)
 
 	var contribution Contribution
-	err := executer.QueryRowContext(ctx, createContributionQuery,
+	err := executer.GetContext(ctx, &contribution, createContributionQuery,
 		contributionInfo.UserId,
 		contributionInfo.RepositoryId,
 		contributionInfo.ContributionScoreId,
 		contributionInfo.ContributionType,
 		contributionInfo.BalanceChange,
 		contributionInfo.ContributedAt,
-	).Scan(
-		&contribution.Id,
-		&contribution.UserId,
-		&contribution.RepositoryId,
-		&contribution.ContributionScoreId,
-		&contribution.ContributionType,
-		&contribution.BalanceChange,
-		&contribution.ContributedAt,
-		&contribution.CreatedAt,
-		&contribution.UpdatedAt,
 	)
 	if err != nil {
 		slog.Error("error occured while inserting contributions", "error", err)
@@ -78,14 +68,7 @@ func (cr *contributionRepository) GetContributionScoreDetailsByContributionType(
 	executer := cr.BaseRepository.initiateQueryExecuter(tx)
 
 	var contributionScoreDetails ContributionScore
-	err := executer.QueryRowContext(ctx, getContributionScoreDetailsByContributionTypeQuery, contributionType).Scan(
-		&contributionScoreDetails.Id,
-		&contributionScoreDetails.AdminId,
-		&contributionScoreDetails.ContributionType,
-		&contributionScoreDetails.Score,
-		&contributionScoreDetails.CreatedAt,
-		&contributionScoreDetails.UpdatedAt,
-	)
+	err := executer.GetContext(ctx, &contributionScoreDetails, getContributionScoreDetailsByContributionTypeQuery, contributionType)
 	if err != nil {
 		slog.Error("error occured while getting contribution score details", "error", err)
 		return ContributionScore{}, err
@@ -105,29 +88,11 @@ func (cr *contributionRepository) FetchUsersAllContributions(ctx context.Context
 
 	executer := cr.BaseRepository.initiateQueryExecuter(tx)
 
-	rows, err := executer.QueryContext(ctx, fetchUsersAllContributionsQuery, userId)
+	var usersAllContributions []Contribution
+	err := executer.SelectContext(ctx, &usersAllContributions, fetchUsersAllContributionsQuery, userId)
 	if err != nil {
 		slog.Error("error fetching all contributions for user")
 		return nil, apperrors.ErrFetchingAllContributions
-	}
-	defer rows.Close()
-
-	var usersAllContributions []Contribution
-	for rows.Next() {
-		var currentContribution Contribution
-		if err = rows.Scan(
-			&currentContribution.Id,
-			&currentContribution.UserId,
-			&currentContribution.RepositoryId,
-			&currentContribution.ContributionScoreId,
-			&currentContribution.ContributionType,
-			&currentContribution.BalanceChange,
-			&currentContribution.ContributedAt,
-			&currentContribution.CreatedAt, &currentContribution.UpdatedAt); err != nil {
-			return nil, err
-		}
-
-		usersAllContributions = append(usersAllContributions, currentContribution)
 	}
 
 	return usersAllContributions, nil
