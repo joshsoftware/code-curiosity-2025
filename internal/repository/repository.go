@@ -54,7 +54,7 @@ const (
 
 	fetchUsersContributedReposQuery = `SELECT * from repositories where id in (SELECT repository_id from contributions where user_id=$1);`
 
-	fetchUserContributionsInRepoQuery = `SELECT * from contributions where repository_id in (SELECT id from repositories where github_repo_id=$1) and user_id=$2;`
+	fetchUserContributionsInRepoQuery = `SELECT * from contributions where repository_id=$1 and user_id=$2;`
 )
 
 func (rr *repositoryRepository) GetRepoByGithubId(ctx context.Context, tx *sqlx.Tx, repoGithubId int) (Repository, error) {
