@@ -41,7 +41,7 @@ func NewService(repositoryRepository repository.RepositoryRepository, appCfg con
 func (s *service) GetRepoByGithubId(ctx context.Context, repoGithubId int) (Repository, error) {
 	repoDetails, err := s.repositoryRepository.GetRepoByGithubId(ctx, nil, repoGithubId)
 	if err != nil {
-		slog.Error("failed to get repository by repo github id")
+		slog.Error("failed to get repository by repo github id", "error", err)
 		return Repository{}, err
 	}
 
@@ -51,7 +51,7 @@ func (s *service) GetRepoByGithubId(ctx context.Context, repoGithubId int) (Repo
 func (s *service) GetRepoByRepoId(ctx context.Context, repobId int) (Repository, error) {
 	repoDetails, err := s.repositoryRepository.GetRepoByRepoId(ctx, nil, repobId)
 	if err != nil {
-		slog.Error("failed to get repository by repo id")
+		slog.Error("failed to get repository by repo id", "error", err)
 		return Repository{}, err
 	}
 
@@ -141,7 +141,7 @@ func (s *service) FetchRepositoryLanguages(ctx context.Context, client *http.Cli
 func (s *service) FetchUsersContributedRepos(ctx context.Context, client *http.Client) ([]FetchUsersContributedReposResponse, error) {
 	usersContributedRepos, err := s.repositoryRepository.FetchUsersContributedRepos(ctx, nil)
 	if err != nil {
-		slog.Error("error fetching users conributed repos")
+		slog.Error("error fetching users conributed repos", "error", err)
 		return nil, err
 	}
 
@@ -162,7 +162,7 @@ func (s *service) FetchUsersContributedRepos(ctx context.Context, client *http.C
 
 		userRepoTotalCoins, err := s.repositoryRepository.GetUserRepoTotalCoins(ctx, nil, usersContributedRepo.Id)
 		if err != nil {
-			slog.Error("error calculating total coins earned by user for the repository")
+			slog.Error("error calculating total coins earned by user for the repository", "error", err)
 			return nil, err
 		}
 
@@ -204,7 +204,7 @@ func (s *service) FetchRepositoryContributors(ctx context.Context, client *http.
 func (s *service) FetchUserContributionsInRepo(ctx context.Context, githubRepoId int) ([]Contribution, error) {
 	userContributionsInRepo, err := s.repositoryRepository.FetchUserContributionsInRepo(ctx, nil, githubRepoId)
 	if err != nil {
-		slog.Error("error fetching users contribution in repository")
+		slog.Error("error fetching users contribution in repository", "error", err)
 		return nil, err
 	}
 

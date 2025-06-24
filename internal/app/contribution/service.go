@@ -56,7 +56,7 @@ func (s *service) ProcessFetchedContributions(ctx context.Context) error {
 
 		contributionType, err := s.GetContributionType(ctx, contribution)
 		if err != nil {
-			slog.Error("error getting contribution type")
+			slog.Error("error getting contribution type", "error", err)
 			return err
 		}
 
@@ -65,7 +65,7 @@ func (s *service) ProcessFetchedContributions(ctx context.Context) error {
 		if err != nil {
 			repo, err := s.repositoryService.FetchRepositoryDetails(ctx, contribution.RepoUrl)
 			if err != nil {
-				slog.Error("error fetching repository details")
+				slog.Error("error fetching repository details", "error", err)
 				return err
 			}
 

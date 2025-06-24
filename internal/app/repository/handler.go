@@ -33,7 +33,7 @@ func (h *handler) FetchUsersContributedRepos(w http.ResponseWriter, r *http.Requ
 
 	usersContributedRepos, err := h.repositoryService.FetchUsersContributedRepos(ctx, client)
 	if err != nil {
-		slog.Error("error fetching users conributed repos")
+		slog.Error("error fetching users conributed repos", "error", err)
 		status, errorMessage := apperrors.MapError(err)
 		response.WriteJson(w, status, errorMessage, nil)
 		return
@@ -47,7 +47,7 @@ func (h *handler) FetchParticularRepoDetails(w http.ResponseWriter, r *http.Requ
 	repoIdPath := r.PathValue("repo_id")
 	repoId, err := strconv.Atoi(repoIdPath)
 	if err != nil {
-		slog.Error("error getting repo id from request url")
+		slog.Error("error getting repo id from request url", "error", err)
 		status, errorMessage := apperrors.MapError(err)
 		response.WriteJson(w, status, errorMessage, nil)
 		return
@@ -55,7 +55,7 @@ func (h *handler) FetchParticularRepoDetails(w http.ResponseWriter, r *http.Requ
 
 	repoDetails, err := h.repositoryService.GetRepoByRepoId(ctx, repoId)
 	if err != nil {
-		slog.Error("error fetching particular repo details")
+		slog.Error("error fetching particular repo details", "error", err)
 		status, errorMessage := apperrors.MapError(err)
 		response.WriteJson(w, status, errorMessage, nil)
 		return
@@ -72,7 +72,7 @@ func (h *handler) FetchParticularRepoContributors(w http.ResponseWriter, r *http
 	repoIdPath := r.PathValue("repo_id")
 	repoId, err := strconv.Atoi(repoIdPath)
 	if err != nil {
-		slog.Error("error getting repo id from request url")
+		slog.Error("error getting repo id from request url", "error", err)
 		status, errorMessage := apperrors.MapError(err)
 		response.WriteJson(w, status, errorMessage, nil)
 		return
@@ -80,7 +80,7 @@ func (h *handler) FetchParticularRepoContributors(w http.ResponseWriter, r *http
 
 	repoDetails, err := h.repositoryService.GetRepoByRepoId(ctx, repoId)
 	if err != nil {
-		slog.Error("error fetching particular repo details")
+		slog.Error("error fetching particular repo details", "error", err)
 		status, errorMessage := apperrors.MapError(err)
 		response.WriteJson(w, status, errorMessage, nil)
 		return
@@ -88,7 +88,7 @@ func (h *handler) FetchParticularRepoContributors(w http.ResponseWriter, r *http
 
 	repoContributors, err := h.repositoryService.FetchRepositoryContributors(ctx, client, repoDetails.ContributorsUrl)
 	if err != nil {
-		slog.Error("error fetching repo contributors")
+		slog.Error("error fetching repo contributors", "error", err)
 		status, errorMessage := apperrors.MapError(err)
 		response.WriteJson(w, status, errorMessage, nil)
 		return
@@ -103,7 +103,7 @@ func (h *handler) FetchUserContributionsInRepo(w http.ResponseWriter, r *http.Re
 	repoIdPath := r.PathValue("repo_id")
 	repoId, err := strconv.Atoi(repoIdPath)
 	if err != nil {
-		slog.Error("error getting repo id from request url")
+		slog.Error("error getting repo id from request url", "error", err)
 		status, errorMessage := apperrors.MapError(err)
 		response.WriteJson(w, status, errorMessage, nil)
 		return
@@ -111,7 +111,7 @@ func (h *handler) FetchUserContributionsInRepo(w http.ResponseWriter, r *http.Re
 
 	usersContributionsInRepo, err := h.repositoryService.FetchUserContributionsInRepo(ctx, repoId)
 	if err != nil {
-		slog.Error("error fetching users contribution in repository")
+		slog.Error("error fetching users contribution in repository", "error", err)
 		status, errorMessage := apperrors.MapError(err)
 		response.WriteJson(w, status, errorMessage, nil)
 		return
@@ -128,7 +128,7 @@ func (h *handler) FetchLanguagePercentInRepo(w http.ResponseWriter, r *http.Requ
 	repoIdPath := r.PathValue("repo_id")
 	repoId, err := strconv.Atoi(repoIdPath)
 	if err != nil {
-		slog.Error("error getting repo id from request url")
+		slog.Error("error getting repo id from request url", "error", err)
 		status, errorMessage := apperrors.MapError(err)
 		response.WriteJson(w, status, errorMessage, nil)
 		return
@@ -136,7 +136,7 @@ func (h *handler) FetchLanguagePercentInRepo(w http.ResponseWriter, r *http.Requ
 
 	repoDetails, err := h.repositoryService.GetRepoByRepoId(ctx, repoId)
 	if err != nil {
-		slog.Error("error fetching particular repo details")
+		slog.Error("error fetching particular repo details", "error", err)
 		status, errorMessage := apperrors.MapError(err)
 		response.WriteJson(w, status, errorMessage, nil)
 		return
@@ -144,7 +144,7 @@ func (h *handler) FetchLanguagePercentInRepo(w http.ResponseWriter, r *http.Requ
 
 	repoLanguages, err := h.repositoryService.FetchRepositoryLanguages(ctx, client, repoDetails.LanguagesUrl)
 	if err != nil {
-		slog.Error("error fetching particular repo languages")
+		slog.Error("error fetching particular repo languages", "error", err)
 		status, errorMessage := apperrors.MapError(err)
 		response.WriteJson(w, status, errorMessage, nil)
 		return
@@ -152,7 +152,7 @@ func (h *handler) FetchLanguagePercentInRepo(w http.ResponseWriter, r *http.Requ
 
 	langPercent, err := h.repositoryService.CalculateLanguagePercentInRepo(ctx, repoLanguages)
 	if err != nil {
-		slog.Error("error fetching particular repo languages")
+		slog.Error("error fetching particular repo languages", "error", err)
 		status, errorMessage := apperrors.MapError(err)
 		response.WriteJson(w, status, errorMessage, nil)
 		return
