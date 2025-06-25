@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -41,8 +42,7 @@ func InitMainDBMigrations(config config.AppConfig) (migration Migration, er erro
 	return
 }
 
-// MigrationsUp used to make migrations up
-func (migration Migration) MigrationsUp() {
+func (migration Migration) MigrationsUpAll(){
 	err := migration.m.Up()
 	if err != nil {
 		if err == migrate.ErrNoChange {
@@ -54,6 +54,25 @@ func (migration Migration) MigrationsUp() {
 	}
 	migration.MigrationVersion()
 	slog.Info("Migration up completed")
+}
+
+func (migration Migration) MigrationsUpWithSteps(steps int){
+
+}
+
+// MigrationsUp used to make migrations up
+func (migration Migration) MigrationsUp(steps string) {
+	if len(steps) == 0 {
+		migration.MigrationsUpAll()
+	} else {
+		stepsCnt, err := strconv.Atoi(steps)
+		if err != nil {
+			slog.Error("Failed to parse steps argument to integer", "error", err)
+			return
+		}
+
+		migration.MigrationsUpWithSteps(stepsCnt)
+	}
 }
 
 // MigrationsDown used to make migrations down
@@ -136,7 +155,7 @@ func main() {
 	}
 
 	if len(os.Args) < 2 {
-		slog.Error("Missing action argument. Use 'up' or 'down' or 'create.")
+		slog.Error("Missing action argument. Use 'up' or 'down' or 'create'.")
 		os.Exit(1)
 	}
 
@@ -149,12 +168,12 @@ func main() {
 	action := os.Args[1]
 	switch action {
 	case "up":
-		migration.MigrationsUp()
+		migration.MigrationsUp(os.Args[2])
 	case "down":
 		migration.MigrationsDown()
 	case "create":
 		migration.CreateMigrationFile(os.Args[2])
 	default:
-		slog.Info("Invalid action. Use 'up' or 'down'.")
+		slog.Info("Invalid action. Use 'up' or 'down' or 'create'.")
 	}
 }
