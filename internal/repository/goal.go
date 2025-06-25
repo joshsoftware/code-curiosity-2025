@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	fetchGoalIdByGoalNameQuery = "SELECT id FROM goal where level=$1"
+	fetchGoalIdByGoalNameQuery = "SELECT id FROM goal where level ilike '%$1%'"
 )
 
 type goalRepository struct {

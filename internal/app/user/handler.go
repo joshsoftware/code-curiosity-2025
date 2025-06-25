@@ -53,6 +53,7 @@ func (h *handler) UpdateCurrentActiveGoalId(w http.ResponseWriter, r *http.Reque
 	var reqBody goal.GoalLevel
 
 	err := json.NewDecoder(r.Body).Decode(&reqBody)
+	slog.Info(reqBody.LevelName)
 	if err != nil {
 		slog.Error(apperrors.ErrFailedMarshal.Error(), "error", err)
 		response.WriteJson(w, http.StatusBadRequest, apperrors.ErrInvalidRequestBody.Error(), nil)
