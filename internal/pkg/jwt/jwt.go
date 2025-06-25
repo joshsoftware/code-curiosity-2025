@@ -1,6 +1,7 @@
 package jwt
 
 import (
+	"log/slog"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -27,6 +28,8 @@ func GenerateJWT(userId int, isAdmin bool, appCfg config.AppConfig) (string, err
 	if err != nil {
 		return "", err
 	}
+
+	slog.Info("token - " + tokenString)
 
 	return tokenString, nil
 }

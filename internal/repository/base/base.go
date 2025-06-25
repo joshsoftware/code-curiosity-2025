@@ -1,4 +1,4 @@
-package repository
+package base
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 )
 
 type BaseRepository struct {
-	db *sqlx.DB
+	db QueryExecuter
 }
 
 type RepositoryTransaction interface {
@@ -20,7 +20,14 @@ type RepositoryTransaction interface {
 	HandleTransaction(ctx context.Context, tx *sqlx.Tx, incomingErr error) error
 }
 
+func NewBaseRepository(db QueryExecuter) BaseRepository{
+	return BaseRepository{
+		db: db,
+	};
+}
+
 type QueryExecuter interface {
+	BeginTxx(ctx context.Context, opts *sql.TxOptions) (*sqlx.Tx, error)
 	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
 	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
 	SelectContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
@@ -62,7 +69,7 @@ func (b *BaseRepository) HandleTransaction(ctx context.Context, tx *sqlx.Tx, inc
 		}
 		return nil
 	}
-	
+
 	err := tx.Commit()
 	if err != nil {
 		slog.Error("error occurred while committing database transaction", "error", err)
@@ -71,9 +78,9 @@ func (b *BaseRepository) HandleTransaction(ctx context.Context, tx *sqlx.Tx, inc
 	return nil
 }
 
-func (b *BaseRepository) initiateQueryExecuter(tx *sqlx.Tx) QueryExecuter {
-	if tx != nil {
-		return tx
-	}
+func (b *BaseRepository) InitiateQueryExecuter() QueryExecuter {
+	// if tx != nil {
+	// 	return tx
+	// }
 	return b.db
 }

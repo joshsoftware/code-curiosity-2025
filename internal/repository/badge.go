@@ -4,20 +4,21 @@ import (
 	"context"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/joshsoftware/code-curiosity-2025/internal/repository/base"
 )
 
 type badgeRepository struct {
-	BaseRepository
+	base.BaseRepository
 }
 
 type BadgeRepository interface {
-	RepositoryTransaction
+	base.RepositoryTransaction
 	GetBadgeDetailsOfUser(ctx context.Context, tx *sqlx.Tx, userId int) ([]Badge, error)
 }
 
 func NewBadgeRepository(db *sqlx.DB) BadgeRepository {
 	return &badgeRepository{
-		BaseRepository: BaseRepository{db},
+		BaseRepository: base.NewBaseRepository(db),
 	}
 }
 
@@ -26,7 +27,7 @@ const (
 )
 
 func (br *badgeRepository) GetBadgeDetailsOfUser(ctx context.Context, tx *sqlx.Tx, userId int) ([]Badge, error) {
-	executer := br.BaseRepository.initiateQueryExecuter(tx)
+	executer := br.BaseRepository.InitiateQueryExecuter()
 
 	var badges []Badge
 

@@ -9,14 +9,15 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/apperrors"
+	"github.com/joshsoftware/code-curiosity-2025/internal/repository/base"
 )
 
 type userRepository struct {
-	BaseRepository
+	base.BaseRepository
 }
 
 type UserRepository interface {
-	RepositoryTransaction
+	base.RepositoryTransaction
 	GetUserById(ctx context.Context, tx *sqlx.Tx, userId int) (User, error)
 	GetUserByGithubId(ctx context.Context, tx *sqlx.Tx, githubId int) (User, error)
 	CreateUser(ctx context.Context, tx *sqlx.Tx, userInfo CreateUserRequestBody) (User, error)
@@ -25,7 +26,7 @@ type UserRepository interface {
 
 func NewUserRepository(db *sqlx.DB) UserRepository {
 	return &userRepository{
-		BaseRepository: BaseRepository{db},
+		BaseRepository: base.NewBaseRepository(db),
 	}
 }
 
@@ -48,7 +49,7 @@ const (
 )
 
 func (ur *userRepository) GetUserById(ctx context.Context, tx *sqlx.Tx, userId int) (User, error) {
-	executer := ur.BaseRepository.initiateQueryExecuter(tx)
+	executer := ur.BaseRepository.InitiateQueryExecuter()
 
 	var user User
 	err := executer.QueryRowContext(ctx, getUserByIdQuery, userId).Scan(
@@ -80,7 +81,7 @@ func (ur *userRepository) GetUserById(ctx context.Context, tx *sqlx.Tx, userId i
 }
 
 func (ur *userRepository) GetUserByGithubId(ctx context.Context, tx *sqlx.Tx, githubId int) (User, error) {
-	executer := ur.BaseRepository.initiateQueryExecuter(tx)
+	executer := ur.BaseRepository.InitiateQueryExecuter()
 
 	var user User
 	err := executer.QueryRowContext(ctx, getUserByGithubIdQuery, githubId).Scan(
@@ -112,7 +113,7 @@ func (ur *userRepository) GetUserByGithubId(ctx context.Context, tx *sqlx.Tx, gi
 }
 
 func (ur *userRepository) CreateUser(ctx context.Context, tx *sqlx.Tx, userInfo CreateUserRequestBody) (User, error) {
-	executer := ur.BaseRepository.initiateQueryExecuter(tx)
+	executer := ur.BaseRepository.InitiateQueryExecuter()
 
 	var user User
 	err := executer.QueryRowContext(ctx, createUserQuery,
@@ -146,7 +147,7 @@ func (ur *userRepository) CreateUser(ctx context.Context, tx *sqlx.Tx, userInfo 
 }
 
 func (ur *userRepository) UpdateUserEmail(ctx context.Context, tx *sqlx.Tx, userId int, email string) error {
-	executer := ur.BaseRepository.initiateQueryExecuter(tx)
+	executer := ur.BaseRepository.InitiateQueryExecuter()
 
 	_, err := executer.ExecContext(ctx, updateEmailQuery, email, time.Now(), userId)
 	if err != nil {
