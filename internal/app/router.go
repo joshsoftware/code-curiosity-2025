@@ -20,7 +20,6 @@ func NewRouter(deps Dependencies) http.Handler {
 
 	router.HandleFunc("PATCH /api/v1/user/email", middleware.Authentication(deps.UserHandler.UpdateUserEmail, deps.AppCfg))
 
-	router.HandleFunc("GET /api/v1/user/contributions/latest", middleware.Authentication(deps.ContributionHandler.FetchUserLatestContributions, deps.AppCfg))
 	router.HandleFunc("GET /api/v1/user/contributions/all", middleware.Authentication(deps.ContributionHandler.FetchUsersAllContributions, deps.AppCfg))
 	return middleware.CorsMiddleware(router, deps.AppCfg)
 }
