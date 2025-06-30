@@ -49,15 +49,26 @@ func (migration Migration) MigrationsUpAll(){
 			slog.Error("No new migrations to apply")
 			return
 		}
-		slog.Error("*******" + err.Error())
+		slog.Error("An error occurred while making migrations up", "error", err)
 		return
 	}
-	migration.MigrationVersion()
+	slog.Info("Current migration version:", "version", migration.MigrationVersion())
 	slog.Info("Migration up completed")
 }
 
 func (migration Migration) MigrationsUpWithSteps(steps int){
+	if err := migration.m.Steps(steps); err != nil {
+		if err == migrate.ErrNoChange {
+			slog.Error("No new migrations to apply")
+			return
+		}
 
+		slog.Error("An error occurred while making migrations up", "error", err)
+		return
+    }
+
+	slog.Info("Current migration version:", "version", migration.MigrationVersion())
+	slog.Info("Migration up completed")
 }
 
 // MigrationsUp used to make migrations up
@@ -75,8 +86,7 @@ func (migration Migration) MigrationsUp(steps string) {
 	}
 }
 
-// MigrationsDown used to make migrations down
-func (migration Migration) MigrationsDown() {
+func (migration Migration) MigrationsDownAll() {
 	err := migration.m.Down()
 	if err != nil {
 		if err == migrate.ErrNoChange {
@@ -84,11 +94,41 @@ func (migration Migration) MigrationsDown() {
 			return
 		}
 
-		slog.Error(err.Error())
+		slog.Error("An error occurred while making migrations down", "error", err)
 		return
 	}
-	migration.MigrationVersion()
+	slog.Info("Current migration version:", "version", migration.MigrationVersion())
 	slog.Info("Migration down completed")
+}
+
+func (migration Migration) MigrationsDownWithSteps(steps int) {
+	if err := migration.m.Steps(-1 * steps); err != nil {
+		if err == migrate.ErrNoChange {
+			slog.Error("No migrations to revert")
+			return
+		}
+
+		slog.Error("An error occurred while making migrations down", "error", err)
+		return
+    }
+
+	slog.Info("Current migration version:", "version", migration.MigrationVersion())
+	slog.Info("Migration down completed")
+}
+
+// MigrationsDown used to make migrations down
+func (migration Migration) MigrationsDown(steps string) {
+	if len(steps) == 0 {
+		migration.MigrationsDownAll()
+	} else {
+		stepsCnt, err := strconv.Atoi(steps)
+		if err != nil {
+			slog.Error("Failed to parse steps argument to integer", "error", err)
+			return
+		}
+
+		migration.MigrationsDownWithSteps(stepsCnt)
+	}
 }
 
 // CreateMigrationFile creates new migration files
@@ -170,7 +210,7 @@ func main() {
 	case "up":
 		migration.MigrationsUp(os.Args[2])
 	case "down":
-		migration.MigrationsDown()
+		migration.MigrationsDown(os.Args[2])
 	case "create":
 		migration.CreateMigrationFile(os.Args[2])
 	default:
