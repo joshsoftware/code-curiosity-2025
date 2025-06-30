@@ -1,0 +1,1 @@
+ALTER TABLE contributions DROP COLUMN gh_event_id;
