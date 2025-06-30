@@ -1,1 +1,1 @@
-ALTER TABLE contributions ADD COLUMN gh_event_id VARCHAR(255) DEFAULT '';
+ALTER TABLE contributions ADD COLUMN github_event_id VARCHAR(255) DEFAULT '';

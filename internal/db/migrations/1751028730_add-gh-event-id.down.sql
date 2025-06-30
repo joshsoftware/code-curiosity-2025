@@ -1,1 +1,1 @@
-ALTER TABLE contributions DROP COLUMN gh_event_id;
+ALTER TABLE contributions DROP COLUMN github_event_id;
