@@ -28,7 +28,7 @@ func (h *handler) FetchUserLatestContributions(w http.ResponseWriter, r *http.Re
 
 	err := h.contributionService.ProcessFetchedContributions(ctx)
 	if err != nil {
-		slog.Error("error fetching latest contributions")
+		slog.Error("error fetching latest contributions", "error", err)
 		status, errorMessage := apperrors.MapError(err)
 		response.WriteJson(w, status, errorMessage, nil)
 		return

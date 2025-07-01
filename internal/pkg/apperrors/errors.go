@@ -31,8 +31,11 @@ var (
 	ErrJWTCreationFailed   = errors.New("failed to create jwt token")
 	ErrAuthorizationFailed = errors.New("failed to authorize user")
 
-	ErrRepoNotFound       = errors.New("repository not found")
-	ErrRepoCreationFailed = errors.New("failed to create repo for user")
+	ErrRepoNotFound                    = errors.New("repository not found")
+	ErrRepoCreationFailed              = errors.New("failed to create repo for user")
+	ErrCalculatingUserRepoTotalCoins   = errors.New("error calculating total coins earned by user for the repository")
+	ErrFetchingUsersContributedRepos   = errors.New("error fetching users contributed repositories")
+	ErrFetchingUserContributionsInRepo = errors.New("error fetching users contribution in repository")
 
 	ErrFetchingFromBigquery        = errors.New("error fetching contributions from bigquery service")
 	ErrNextContribution            = errors.New("error while loading next bigquery contribution")
@@ -49,7 +52,7 @@ func MapError(err error) (statusCode int, errMessage string) {
 		return http.StatusUnauthorized, err.Error()
 	case ErrAccessForbidden:
 		return http.StatusForbidden, err.Error()
-	case ErrUserNotFound:
+	case ErrUserNotFound, ErrRepoNotFound:
 		return http.StatusNotFound, err.Error()
 	case ErrInvalidToken:
 		return http.StatusUnprocessableEntity, err.Error()

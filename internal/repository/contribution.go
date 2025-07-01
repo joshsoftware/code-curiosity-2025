@@ -107,7 +107,7 @@ func (cr *contributionRepository) FetchUserContributions(ctx context.Context, tx
 
 	rows, err := executer.QueryContext(ctx, fetchUserContributionsQuery, userId)
 	if err != nil {
-		slog.Error("error fetching all contributions for user")
+		slog.Error("error fetching all contributions for user", "error", err)
 		return nil, apperrors.ErrFetchingAllContributions
 	}
 	defer rows.Close()

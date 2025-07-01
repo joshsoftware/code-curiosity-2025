@@ -20,6 +20,7 @@ type Dependencies struct {
 	AuthHandler         auth.Handler
 	UserHandler         user.Handler
 	ContributionHandler contribution.Handler
+	RepositoryHandler   repoService.Handler
 	AppCfg              config.AppConfig
 	Client              config.Bigquery
 }
@@ -37,6 +38,7 @@ func InitDependencies(db *sqlx.DB, appCfg config.AppConfig, client config.Bigque
 
 	authHandler := auth.NewHandler(authService, appCfg)
 	userHandler := user.NewHandler(userService)
+	repositoryHandler := repoService.NewHandler(repositoryService)
 	contributionHandler := contribution.NewHandler(contributionService)
 
 	return Dependencies{
@@ -44,6 +46,7 @@ func InitDependencies(db *sqlx.DB, appCfg config.AppConfig, client config.Bigque
 		UserService:         userService,
 		AuthHandler:         authHandler,
 		UserHandler:         userHandler,
+		RepositoryHandler:   repositoryHandler,
 		ContributionHandler: contributionHandler,
 		AppCfg:              appCfg,
 		Client:              client,
