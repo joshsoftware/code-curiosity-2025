@@ -38,6 +38,7 @@ type Contribution struct {
 	ContributionType    string    `db:"contribution_type"`
 	BalanceChange       int       `db:"balance_change"`
 	ContributedAt       time.Time `db:"contributed_at"`
+	GithubEventId       int       `db:"github_event_id"`
 	CreatedAt           time.Time `db:"created_at"`
 	UpdatedAt           time.Time `db:"updated_at"`
 }

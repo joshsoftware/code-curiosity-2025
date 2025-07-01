@@ -213,6 +213,7 @@ func (s *service) CreateContribution(ctx context.Context, contributionType strin
 		RepositoryId:     repositoryId,
 		ContributionType: contributionType,
 		ContributedAt:    contributionDetails.CreatedAt,
+		GithubEventId:    contributionDetails.ActorID,
 	}
 
 	contributionScoreDetails, err := s.GetContributionScoreDetailsByContributionType(ctx, contributionType)

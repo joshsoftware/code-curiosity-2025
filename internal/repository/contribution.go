@@ -36,9 +36,10 @@ const (
 	contribution_score_id, 
 	contribution_type, 
 	balance_change, 
-	contributed_at
+	contributed_at,
+	github_event_id
 	)
-	VALUES ($1, $2, $3, $4, $5, $6) 
+	VALUES ($1, $2, $3, $4, $5, $6, $7) 
 	RETURNING *`
 
 	getContributionScoreDetailsByContributionTypeQuery = `SELECT * from contribution_score where contribution_type=$1`
@@ -57,6 +58,7 @@ func (cr *contributionRepository) CreateContribution(ctx context.Context, tx *sq
 		contributionInfo.ContributionType,
 		contributionInfo.BalanceChange,
 		contributionInfo.ContributedAt,
+		contributionInfo.GithubEventId,
 	)
 	if err != nil {
 		slog.Error("error occured while inserting contributions", "error", err)
@@ -101,6 +103,6 @@ func (cr *contributionRepository) FetchUserContributions(ctx context.Context, tx
 		slog.Error("error fetching user contributions", "error", err)
 		return nil, apperrors.ErrFetchingAllContributions
 	}
-	
+
 	return userContributions, nil
 }
