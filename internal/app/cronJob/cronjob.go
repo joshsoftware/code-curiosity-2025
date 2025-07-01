@@ -14,13 +14,11 @@ type CronJob struct {
 	Name string
 }
 
-func (c *CronJob) Execute(ctx context.Context, fn func(context.Context)) func() {
-	return func() {
-		slog.Info("cron job started at", "time ", time.Now())
-		defer func() {
-			slog.Info("cron job completed")
-		}()
+func (c *CronJob) Execute(ctx context.Context, fn func(context.Context)) {
+	slog.Info("cron job started at", "time ", time.Now())
+	defer func() {
+		slog.Info("cron job completed")
+	}()
 
-		fn(ctx)
-	}
+	fn(ctx)
 }

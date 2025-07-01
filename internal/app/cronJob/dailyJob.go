@@ -19,7 +19,7 @@ func NewDailyJob(contributionService contribution.Service) *DailyJob {
 }
 
 func (d *DailyJob) Schedule(s *CronSchedular) error {
-	_, err := s.cron.AddFunc("0 1 * * *", func() { d.Execute(context.Background(), d.run)() })
+	_, err := s.cron.AddFunc("0 1 * * *", func() { d.Execute(context.Background(), d.run) })
 	if err != nil {
 		return err
 	}
