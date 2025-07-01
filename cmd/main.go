@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/joshsoftware/code-curiosity-2025/internal/app"
+	"github.com/joshsoftware/code-curiosity-2025/internal/app/cronJob"
 	"github.com/joshsoftware/code-curiosity-2025/internal/config"
 )
 
@@ -42,6 +43,9 @@ func main() {
 	dependencies := app.InitDependencies(db, cfg, bigqueryInstance, httpClient)
 
 	router := app.NewRouter(dependencies)
+
+	newCronSchedular := cronJob.NewCronSchedular()
+	newCronSchedular.InitCronJobs(dependencies.ContributionService)
 
 	server := http.Server{
 		Addr:    fmt.Sprintf(":%s", cfg.HTTPServer.Port),
