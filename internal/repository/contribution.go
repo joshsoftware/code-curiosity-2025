@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"log/slog"
 
 	"github.com/jmoiron/sqlx"
@@ -48,23 +50,13 @@ func (cr *contributionRepository) CreateContribution(ctx context.Context, tx *sq
 	executer := cr.BaseRepository.initiateQueryExecuter(tx)
 
 	var contribution Contribution
-	err := executer.QueryRowContext(ctx, createContributionQuery,
+	err := executer.GetContext(ctx, &contribution, createContributionQuery,
 		contributionInfo.UserId,
 		contributionInfo.RepositoryId,
 		contributionInfo.ContributionScoreId,
 		contributionInfo.ContributionType,
 		contributionInfo.BalanceChange,
 		contributionInfo.ContributedAt,
-	).Scan(
-		&contribution.Id,
-		&contribution.UserId,
-		&contribution.RepositoryId,
-		&contribution.ContributionScoreId,
-		&contribution.ContributionType,
-		&contribution.BalanceChange,
-		&contribution.ContributedAt,
-		&contribution.CreatedAt,
-		&contribution.UpdatedAt,
 	)
 	if err != nil {
 		slog.Error("error occured while inserting contributions", "error", err)
@@ -78,15 +70,13 @@ func (cr *contributionRepository) GetContributionScoreDetailsByContributionType(
 	executer := cr.BaseRepository.initiateQueryExecuter(tx)
 
 	var contributionScoreDetails ContributionScore
-	err := executer.QueryRowContext(ctx, getContributionScoreDetailsByContributionTypeQuery, contributionType).Scan(
-		&contributionScoreDetails.Id,
-		&contributionScoreDetails.AdminId,
-		&contributionScoreDetails.ContributionType,
-		&contributionScoreDetails.Score,
-		&contributionScoreDetails.CreatedAt,
-		&contributionScoreDetails.UpdatedAt,
-	)
+	err := executer.GetContext(ctx, &contributionScoreDetails, getContributionScoreDetailsByContributionTypeQuery, contributionType)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			slog.Warn("no contribution score details found for contribution type", "contributionType", contributionType)
+			return ContributionScore{}, apperrors.ErrContributionScoreNotFound
+		}
+
 		slog.Error("error occured while getting contribution score details", "error", err)
 		return ContributionScore{}, err
 	}
@@ -105,30 +95,12 @@ func (cr *contributionRepository) FetchUserContributions(ctx context.Context, tx
 
 	executer := cr.BaseRepository.initiateQueryExecuter(tx)
 
-	rows, err := executer.QueryContext(ctx, fetchUserContributionsQuery, userId)
+	var userContributions []Contribution
+	err := executer.SelectContext(ctx, &userContributions, fetchUserContributionsQuery, userId)
 	if err != nil {
-		slog.Error("error fetching all contributions for user", "error", err)
+		slog.Error("error fetching user contributions", "error", err)
 		return nil, apperrors.ErrFetchingAllContributions
 	}
-	defer rows.Close()
-
-	var userContributions []Contribution
-	for rows.Next() {
-		var currentContribution Contribution
-		if err = rows.Scan(
-			&currentContribution.Id,
-			&currentContribution.UserId,
-			&currentContribution.RepositoryId,
-			&currentContribution.ContributionScoreId,
-			&currentContribution.ContributionType,
-			&currentContribution.BalanceChange,
-			&currentContribution.ContributedAt,
-			&currentContribution.CreatedAt, &currentContribution.UpdatedAt); err != nil {
-			return nil, err
-		}
-
-		userContributions = append(userContributions, currentContribution)
-	}
-
+	
 	return userContributions, nil
 }
