@@ -113,7 +113,7 @@ func (s *service) ProcessFetchedContributions(ctx context.Context) error {
 			if err == apperrors.ErrRepoNotFound {
 				repo, err := s.repositoryService.FetchRepositoryDetails(ctx, contribution.RepoUrl)
 				if err != nil {
-					slog.Error("error fetching repository details")
+					slog.Error("error fetching repository details", "error", err)
 					return err
 				}
 
@@ -157,7 +157,7 @@ func (s *service) GetContributionType(ctx context.Context, contribution Contribu
 	}
 
 	var action string
-	if actionVal, ok := contributionPayload[action]; ok {
+	if actionVal, ok := contributionPayload[payloadActionKey]; ok {
 		action = actionVal.(string)
 	}
 
