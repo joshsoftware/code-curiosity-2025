@@ -2,7 +2,7 @@ package repository
 
 import "time"
 
-type RepoOWner struct {
+type RepoOwner struct {
 	Login string `json:"login"`
 }
 
@@ -12,7 +12,7 @@ type FetchRepositoryDetailsResponse struct {
 	Description     string    `json:"description"`
 	LanguagesURL    string    `json:"languages_url"`
 	UpdateDate      time.Time `json:"updated_at"`
-	RepoOwnerName   RepoOWner `json:"owner"`
+	RepoOwnerName   RepoOwner `json:"owner"`
 	ContributorsUrl string    `json:"contributors_url"`
 	RepoUrl         string    `json:"html_url"`
 }

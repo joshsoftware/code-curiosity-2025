@@ -34,6 +34,8 @@ var (
 	ErrRepoNotFound       = errors.New("repository not found")
 	ErrRepoCreationFailed = errors.New("failed to create repo for user")
 
+	ErrFetchingFromBigquery        = errors.New("error fetching contributions from bigquery service")
+	ErrNextContribution            = errors.New("error while loading next bigquery contribution")
 	ErrContributionCreationFailed  = errors.New("failed to create contrbitution")
 	ErrFetchingRecentContributions = errors.New("failed to fetch users five recent contributions")
 	ErrFetchingAllContributions    = errors.New("failed to fetch all contributions for user")
