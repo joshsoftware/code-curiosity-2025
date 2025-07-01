@@ -40,6 +40,7 @@ var (
 	ErrContributionCreationFailed  = errors.New("failed to create contrbitution")
 	ErrFetchingRecentContributions = errors.New("failed to fetch users five recent contributions")
 	ErrFetchingAllContributions    = errors.New("failed to fetch all contributions for user")
+	ErrContributionScoreNotFound   = errors.New("failed to get contributionscore details for given contribution type")
 )
 
 func MapError(err error) (statusCode int, errMessage string) {

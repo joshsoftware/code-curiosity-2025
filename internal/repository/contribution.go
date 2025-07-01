@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"log/slog"
 
 	"github.com/jmoiron/sqlx"
@@ -70,6 +72,11 @@ func (cr *contributionRepository) GetContributionScoreDetailsByContributionType(
 	var contributionScoreDetails ContributionScore
 	err := executer.GetContext(ctx, &contributionScoreDetails, getContributionScoreDetailsByContributionTypeQuery, contributionType)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			slog.Warn("no contribution score details found for contribution type", "contributionType", contributionType)
+			return ContributionScore{}, apperrors.ErrContributionScoreNotFound
+		}
+
 		slog.Error("error occured while getting contribution score details", "error", err)
 		return ContributionScore{}, err
 	}
