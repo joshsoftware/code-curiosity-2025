@@ -20,6 +20,7 @@ type ContributionRepository interface {
 	CreateContribution(ctx context.Context, tx *sqlx.Tx, contributionDetails Contribution) (Contribution, error)
 	GetContributionScoreDetailsByContributionType(ctx context.Context, tx *sqlx.Tx, contributionType string) (ContributionScore, error)
 	FetchUserContributions(ctx context.Context, tx *sqlx.Tx) ([]Contribution, error)
+	GetContributionByGithubEventId(ctx context.Context, tx *sqlx.Tx, githubEventId string) (Contribution, error)
 }
 
 func NewContributionRepository(db *sqlx.DB) ContributionRepository {
@@ -45,6 +46,8 @@ const (
 	getContributionScoreDetailsByContributionTypeQuery = `SELECT * from contribution_score where contribution_type=$1`
 
 	fetchUserContributionsQuery = `SELECT * from contributions where user_id=$1 order by contributed_at desc`
+
+	GetContributionByGithubEventIdQuery = `SELECT * from contributions where github_event_id=$1`
 )
 
 func (cr *contributionRepository) CreateContribution(ctx context.Context, tx *sqlx.Tx, contributionInfo Contribution) (Contribution, error) {
@@ -105,4 +108,22 @@ func (cr *contributionRepository) FetchUserContributions(ctx context.Context, tx
 	}
 
 	return userContributions, nil
+}
+
+func (cr *contributionRepository) GetContributionByGithubEventId(ctx context.Context, tx *sqlx.Tx, githubEventId string) (Contribution, error) {
+	executer := cr.BaseRepository.initiateQueryExecuter(tx)
+
+	var contribution Contribution
+	err := executer.GetContext(ctx, &contribution, GetContributionByGithubEventIdQuery, githubEventId)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			slog.Error("contribution not found", "error", err)
+			return Contribution{}, apperrors.ErrContributionNotFound
+		}
+		slog.Error("error fetching contribution by github event id", "error", err)
+		return Contribution{}, apperrors.ErrFetchingContribution
+	}
+
+	return contribution, nil
+
 }

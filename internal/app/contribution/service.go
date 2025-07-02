@@ -60,6 +60,7 @@ type Service interface {
 	CreateContribution(ctx context.Context, contributionType string, contributionDetails ContributionResponse, repositoryId int, userId int) (Contribution, error)
 	GetContributionScoreDetailsByContributionType(ctx context.Context, contributionType string) (ContributionScore, error)
 	FetchUserContributions(ctx context.Context) ([]Contribution, error)
+	GetContributionByGithubEventId(ctx context.Context, githubEventId string) (Contribution, error)
 }
 
 func NewService(bigqueryService bigquery.Service, contributionRepository repository.ContributionRepository, repositoryService repoService.Service, userService user.Service, httpClient *http.Client) Service {
@@ -100,15 +101,18 @@ func (s *service) ProcessFetchedContributions(ctx context.Context) error {
 	}
 
 	for _, contribution := range fetchedContributions {
+		_, err := s.GetContributionByGithubEventId(ctx, contribution.ID)
+		if err == nil {
+			continue
+		}
 
-		contributionType, err := s.GetContributionType(ctx, contribution)
-		if err != nil {
-			slog.Error("error getting contribution type", "error", err)
+		if err != apperrors.ErrContributionNotFound {
+			slog.Error("error fetching contribution by github event id", "error", err)
 			return err
 		}
 
 		var repositoryId int
-		repoFetched, err := s.repositoryService.GetRepoByRepoId(ctx, contribution.RepoID)
+		repoFetched, err := s.repositoryService.GetRepoByGithubId(ctx, contribution.RepoID)
 		if err != nil {
 			if err == apperrors.ErrRepoNotFound {
 				repo, err := s.repositoryService.FetchRepositoryDetails(ctx, contribution.RepoUrl)
@@ -135,6 +139,12 @@ func (s *service) ProcessFetchedContributions(ctx context.Context) error {
 		user, err := s.userService.GetUserByGithubId(ctx, contribution.ActorID)
 		if err != nil {
 			slog.Error("error getting user id", "error", err)
+			return err
+		}
+
+		contributionType, err := s.GetContributionType(ctx, contribution)
+		if err != nil {
+			slog.Error("error getting contribution type", "error", err)
 			return err
 		}
 
@@ -213,7 +223,7 @@ func (s *service) CreateContribution(ctx context.Context, contributionType strin
 		RepositoryId:     repositoryId,
 		ContributionType: contributionType,
 		ContributedAt:    contributionDetails.CreatedAt,
-		GithubEventId:    contributionDetails.ActorID,
+		GithubEventId:    contributionDetails.ID,
 	}
 
 	contributionScoreDetails, err := s.GetContributionScoreDetailsByContributionType(ctx, contributionType)
@@ -257,4 +267,14 @@ func (s *service) FetchUserContributions(ctx context.Context) ([]Contribution, e
 	}
 
 	return serviceContributions, nil
+}
+
+func (s *service) GetContributionByGithubEventId(ctx context.Context, githubEventId string) (Contribution, error) {
+	contribution, err := s.contributionRepository.GetContributionByGithubEventId(ctx, nil, githubEventId)
+	if err != nil {
+		slog.Error("error fetching contribution by github event id")
+		return Contribution{}, err
+	}
+
+	return Contribution(contribution), nil
 }

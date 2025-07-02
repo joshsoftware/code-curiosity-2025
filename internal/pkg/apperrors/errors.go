@@ -43,6 +43,8 @@ var (
 	ErrFetchingRecentContributions = errors.New("failed to fetch users five recent contributions")
 	ErrFetchingAllContributions    = errors.New("failed to fetch all contributions for user")
 	ErrContributionScoreNotFound   = errors.New("failed to get contributionscore details for given contribution type")
+	ErrFetchingContribution        = errors.New("error fetching contribution by github repo id")
+	ErrContributionNotFound        = errors.New("contribution not found")
 )
 
 func MapError(err error) (statusCode int, errMessage string) {

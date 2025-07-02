@@ -28,7 +28,7 @@ WHERE
     'PullRequestReviewCommentEvent'
   )
   AND (
-    actor.login IN (%s) 
+    actor.id IN (%s) 
   )`
 
 type ContributionResponse struct {

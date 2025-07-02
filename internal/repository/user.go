@@ -21,7 +21,7 @@ type UserRepository interface {
 	GetUserByGithubId(ctx context.Context, tx *sqlx.Tx, githubId int) (User, error)
 	CreateUser(ctx context.Context, tx *sqlx.Tx, userInfo CreateUserRequestBody) (User, error)
 	UpdateUserEmail(ctx context.Context, tx *sqlx.Tx, userId int, email string) error
-	GetAllUsersGithubUsernames(ctx context.Context, tx *sqlx.Tx) ([]string, error)
+	GetAllUsersGithubId(ctx context.Context, tx *sqlx.Tx) ([]int, error)
 }
 
 func NewUserRepository(db *sqlx.DB) UserRepository {
@@ -47,7 +47,7 @@ const (
 
 	updateEmailQuery = "UPDATE users SET email=$1, updated_at=$2 where id=$3"
 
-	getAllUsersGithubUsernamesQuery = "SELECT github_username from users"
+	getAllUsersGithubIdQuery = "SELECT github_id from users"
 )
 
 func (ur *userRepository) GetUserById(ctx context.Context, tx *sqlx.Tx, userId int) (User, error) {
@@ -115,15 +115,15 @@ func (ur *userRepository) UpdateUserEmail(ctx context.Context, tx *sqlx.Tx, user
 	return nil
 }
 
-func (ur *userRepository) GetAllUsersGithubUsernames(ctx context.Context, tx *sqlx.Tx) ([]string, error) {
+func (ur *userRepository) GetAllUsersGithubId(ctx context.Context, tx *sqlx.Tx) ([]int, error) {
 	executer := ur.BaseRepository.initiateQueryExecuter(tx)
 
-	var githubUsernames []string
-	err := executer.SelectContext(ctx, &githubUsernames, getAllUsersGithubUsernamesQuery)
+	var githubIds []int
+	err := executer.SelectContext(ctx, &githubIds, getAllUsersGithubIdQuery)
 	if err != nil {
 		slog.Error("failed to get github usernames", "error", err)
 		return nil, apperrors.ErrInternalServer
 	}
 
-	return githubUsernames, nil
+	return githubIds, nil
 }

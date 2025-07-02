@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"strings"
 	"time"
 
 	bq "cloud.google.com/go/bigquery"
 	"github.com/joshsoftware/code-curiosity-2025/internal/config"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/apperrors"
+	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/utils"
 	"github.com/joshsoftware/code-curiosity-2025/internal/repository"
 )
 
@@ -30,22 +30,17 @@ func NewService(bigqueryInstance config.Bigquery, userRepository repository.User
 }
 
 func (s *service) FetchDailyContributions(ctx context.Context) (*bq.RowIterator, error) {
-	usersNamesList, err := s.userRepository.GetAllUsersGithubUsernames(ctx, nil)
+	usersGithubId, err := s.userRepository.GetAllUsersGithubId(ctx, nil)
 	if err != nil {
 		slog.Error("error fetching users github usernames")
 		return nil, apperrors.ErrInternalServer
 	}
 
-	var quotedUsernamesList []string
-	for _, username := range usersNamesList {
-		quotedUsernamesList = append(quotedUsernamesList, fmt.Sprintf("'%s'", username))
-	}
+	formattedGithubIds := utils.FormatIntSliceForQuery(usersGithubId)
 
 	YesterdayDate := time.Now().AddDate(0, 0, -1)
 	YesterdayYearMonthDay := YesterdayDate.Format("20060102")
-
-	githubUsernames := strings.Join(quotedUsernamesList, ",")
-	fetchDailyContributionsQuery := fmt.Sprintf(DailyQuery, YesterdayYearMonthDay, githubUsernames)
+	fetchDailyContributionsQuery := fmt.Sprintf(DailyQuery, YesterdayYearMonthDay, formattedGithubIds)
 
 	bigqueryQuery := s.bigqueryInstance.Client.Query(fetchDailyContributionsQuery)
 	contributionRows, err := bigqueryQuery.Read(ctx)

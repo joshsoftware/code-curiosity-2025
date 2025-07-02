@@ -36,7 +36,7 @@ type Contribution struct {
 	ContributionType    string
 	BalanceChange       int
 	ContributedAt       time.Time
-	GithubEventId       int
+	GithubEventId       string
 	CreatedAt           time.Time
 	UpdatedAt           time.Time
 }
