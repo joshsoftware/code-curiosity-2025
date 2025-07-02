@@ -57,6 +57,7 @@ type service struct {
 
 type Service interface {
 	ProcessFetchedContributions(ctx context.Context) error
+	ProcessEachContribution(ctx context.Context, contribution ContributionResponse) error
 	CreateContribution(ctx context.Context, contributionType string, contributionDetails ContributionResponse, repositoryId int, userId int) (Contribution, error)
 	GetContributionScoreDetailsByContributionType(ctx context.Context, contributionType string) (ContributionScore, error)
 	FetchUserContributions(ctx context.Context) ([]Contribution, error)
@@ -100,50 +101,60 @@ func (s *service) ProcessFetchedContributions(ctx context.Context) error {
 	}
 
 	for _, contribution := range fetchedContributions {
-		_, err := s.GetContributionByGithubEventId(ctx, contribution.ID)
-		if err == nil {
-			continue
-		}
-
-		if err != apperrors.ErrContributionNotFound {
-			slog.Error("error fetching contribution by github event id", "error", err)
-			return err
-		}
-
-		var repositoryId int
-		repoFetched, err := s.repositoryService.GetRepoByGithubId(ctx, contribution.RepoID)
-		if err == nil {
-			repositoryId = repoFetched.Id
-		} else if err == apperrors.ErrRepoNotFound {
-			repositoryCreated, err := s.repositoryService.CreateRepository(ctx, contribution.RepoID, contribution.RepoUrl)
-			if err != nil {
-				slog.Error("error creating repository", "error", err)
-				return err
-			}
-
-			repositoryId = repositoryCreated.Id
-		} else {
-			slog.Error("error fetching repo by repo id", "error", err)
-			return err
-		}
-
-		user, err := s.userService.GetUserByGithubId(ctx, contribution.ActorID)
+		err := s.ProcessEachContribution(ctx, contribution)
 		if err != nil {
-			slog.Error("error getting user id", "error", err)
+			slog.Error("error processing contribution with github event id", "github event id", "error", contribution.ID, err)
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *service) ProcessEachContribution(ctx context.Context, contribution ContributionResponse) error {
+	_, err := s.GetContributionByGithubEventId(ctx, contribution.ID)
+	if err == nil {
+		return nil
+	}
+
+	if err != apperrors.ErrContributionNotFound {
+		slog.Error("error fetching contribution by github event id", "error", err)
+		return err
+	}
+
+	var repositoryId int
+	repoFetched, err := s.repositoryService.GetRepoByGithubId(ctx, contribution.RepoID)
+	if err == nil {
+		repositoryId = repoFetched.Id
+	} else if err == apperrors.ErrRepoNotFound {
+		repositoryCreated, err := s.repositoryService.CreateRepository(ctx, contribution.RepoID, contribution.RepoUrl)
+		if err != nil {
+			slog.Error("error creating repository", "error", err)
 			return err
 		}
 
-		contributionType, err := s.GetContributionType(ctx, contribution)
-		if err != nil {
-			slog.Error("error getting contribution type", "error", err)
-			return err
-		}
+		repositoryId = repositoryCreated.Id
+	} else {
+		slog.Error("error fetching repo by repo id", "error", err)
+		return err
+	}
 
-		_, err = s.CreateContribution(ctx, contributionType, contribution, repositoryId, user.Id)
-		if err != nil {
-			slog.Error("error creating contribution", "error", err)
-			return err
-		}
+	user, err := s.userService.GetUserByGithubId(ctx, contribution.ActorID)
+	if err != nil {
+		slog.Error("error getting user id", "error", err)
+		return err
+	}
+
+	contributionType, err := s.GetContributionType(ctx, contribution)
+	if err != nil {
+		slog.Error("error getting contribution type", "error", err)
+		return err
+	}
+
+	_, err = s.CreateContribution(ctx, contributionType, contribution, repositoryId, user.Id)
+	if err != nil {
+		slog.Error("error creating contribution", "error", err)
+		return err
 	}
 
 	return nil
