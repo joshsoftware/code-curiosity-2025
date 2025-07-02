@@ -68,9 +68,8 @@ func NewService(bigqueryService bigquery.Service, contributionRepository reposit
 		bigqueryService:        bigqueryService,
 		contributionRepository: contributionRepository,
 		repositoryService:      repositoryService,
-
-		userService: userService,
-		httpClient:  httpClient,
+		userService:            userService,
+		httpClient:             httpClient,
 	}
 }
 
@@ -81,10 +80,10 @@ func (s *service) ProcessFetchedContributions(ctx context.Context) error {
 		return apperrors.ErrFetchingFromBigquery
 	}
 
-	var fetchedContributions []ContributionResponse
-
 	//using a local copy here to copy contribution so that I can implement retry mechanism in future
 	//thinking of batch processing to be implemented later on, to handle memory overflow
+	var fetchedContributions []ContributionResponse
+
 	for {
 		var contribution ContributionResponse
 		err := contributions.Next(&contribution)
@@ -113,27 +112,19 @@ func (s *service) ProcessFetchedContributions(ctx context.Context) error {
 
 		var repositoryId int
 		repoFetched, err := s.repositoryService.GetRepoByGithubId(ctx, contribution.RepoID)
-		if err != nil {
-			if err == apperrors.ErrRepoNotFound {
-				repo, err := s.repositoryService.FetchRepositoryDetails(ctx, contribution.RepoUrl)
-				if err != nil {
-					slog.Error("error fetching repository details", "error", err)
-					return err
-				}
-
-				repositoryCreated, err := s.repositoryService.CreateRepository(ctx, contribution.RepoID, repo)
-				if err != nil {
-					slog.Error("error creating repository", "error", err)
-					return err
-				}
-
-				repositoryId = repositoryCreated.Id
-			} else {
-				slog.Error("error fetching repo by repo id", "error", err)
+		if err == nil {
+			repositoryId = repoFetched.Id
+		} else if err == apperrors.ErrRepoNotFound {
+			repositoryCreated, err := s.repositoryService.CreateRepository(ctx, contribution.RepoID, contribution.RepoUrl)
+			if err != nil {
+				slog.Error("error creating repository", "error", err)
 				return err
 			}
+
+			repositoryId = repositoryCreated.Id
 		} else {
-			repositoryId = repoFetched.Id
+			slog.Error("error fetching repo by repo id", "error", err)
+			return err
 		}
 
 		user, err := s.userService.GetUserByGithubId(ctx, contribution.ActorID)

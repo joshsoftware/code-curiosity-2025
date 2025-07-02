@@ -5,12 +5,14 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/joshsoftware/code-curiosity-2025/internal/app/github"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/apperrors"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/response"
 )
 
 type handler struct {
 	repositoryService Service
+	githubService     github.Service
 }
 
 type Handler interface {
@@ -86,7 +88,7 @@ func (h *handler) FetchParticularRepoContributors(w http.ResponseWriter, r *http
 		return
 	}
 
-	repoContributors, err := h.repositoryService.FetchRepositoryContributors(ctx, client, repoDetails.ContributorsUrl)
+	repoContributors, err := h.githubService.FetchRepositoryContributors(ctx, client, repoDetails.ContributorsUrl)
 	if err != nil {
 		slog.Error("error fetching repo contributors", "error", err)
 		status, errorMessage := apperrors.MapError(err)
@@ -142,7 +144,7 @@ func (h *handler) FetchLanguagePercentInRepo(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	repoLanguages, err := h.repositoryService.FetchRepositoryLanguages(ctx, client, repoDetails.LanguagesUrl)
+	repoLanguages, err := h.githubService.FetchRepositoryLanguages(ctx, client, repoDetails.LanguagesUrl)
 	if err != nil {
 		slog.Error("error fetching particular repo languages", "error", err)
 		status, errorMessage := apperrors.MapError(err)
@@ -150,7 +152,7 @@ func (h *handler) FetchLanguagePercentInRepo(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	langPercent, err := h.repositoryService.CalculateLanguagePercentInRepo(ctx, repoLanguages)
+	langPercent, err := h.repositoryService.CalculateLanguagePercentInRepo(ctx, RepoLanguages(repoLanguages))
 	if err != nil {
 		slog.Error("error fetching particular repo languages", "error", err)
 		status, errorMessage := apperrors.MapError(err)
