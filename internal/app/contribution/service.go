@@ -274,7 +274,7 @@ func (s *service) FetchUserContributions(ctx context.Context) ([]Contribution, e
 func (s *service) GetContributionByGithubEventId(ctx context.Context, githubEventId string) (Contribution, error) {
 	contribution, err := s.contributionRepository.GetContributionByGithubEventId(ctx, nil, githubEventId)
 	if err != nil {
-		slog.Error("error fetching contribution by github event id")
+		slog.Error("error fetching contribution by github event id", "error", err)
 		return Contribution{}, err
 	}
 
