@@ -45,6 +45,8 @@ var (
 	ErrContributionScoreNotFound   = errors.New("failed to get contributionscore details for given contribution type")
 	ErrFetchingContribution        = errors.New("error fetching contribution by github repo id")
 	ErrContributionNotFound        = errors.New("contribution not found")
+
+	ErrTransactionCreationFailed = errors.New("error failed to create transaction")
 )
 
 func MapError(err error) (statusCode int, errMessage string) {
@@ -55,7 +57,7 @@ func MapError(err error) (statusCode int, errMessage string) {
 		return http.StatusUnauthorized, err.Error()
 	case ErrAccessForbidden:
 		return http.StatusForbidden, err.Error()
-	case ErrUserNotFound, ErrRepoNotFound:
+	case ErrUserNotFound, ErrRepoNotFound, ErrContributionNotFound:
 		return http.StatusNotFound, err.Error()
 	case ErrInvalidToken:
 		return http.StatusUnprocessableEntity, err.Error()

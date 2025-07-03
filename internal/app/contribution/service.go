@@ -8,6 +8,7 @@ import (
 
 	"github.com/joshsoftware/code-curiosity-2025/internal/app/bigquery"
 	repoService "github.com/joshsoftware/code-curiosity-2025/internal/app/repository"
+	"github.com/joshsoftware/code-curiosity-2025/internal/app/transaction"
 	"github.com/joshsoftware/code-curiosity-2025/internal/app/user"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/apperrors"
 	"github.com/joshsoftware/code-curiosity-2025/internal/repository"
@@ -52,6 +53,7 @@ type service struct {
 	contributionRepository repository.ContributionRepository
 	repositoryService      repoService.Service
 	userService            user.Service
+	transactionService     transaction.Service
 	httpClient             *http.Client
 }
 
@@ -62,14 +64,16 @@ type Service interface {
 	GetContributionScoreDetailsByContributionType(ctx context.Context, contributionType string) (ContributionScore, error)
 	FetchUserContributions(ctx context.Context) ([]Contribution, error)
 	GetContributionByGithubEventId(ctx context.Context, githubEventId string) (Contribution, error)
+	CreateContributionTransaction(ctx context.Context, userId int, contributionDetails Contribution) (Transaction, error)
 }
 
-func NewService(bigqueryService bigquery.Service, contributionRepository repository.ContributionRepository, repositoryService repoService.Service, userService user.Service, httpClient *http.Client) Service {
+func NewService(bigqueryService bigquery.Service, contributionRepository repository.ContributionRepository, repositoryService repoService.Service, userService user.Service, transactionService transaction.Service, httpClient *http.Client) Service {
 	return &service{
 		bigqueryService:        bigqueryService,
 		contributionRepository: contributionRepository,
 		repositoryService:      repositoryService,
 		userService:            userService,
+		transactionService:     transactionService,
 		httpClient:             httpClient,
 	}
 }
@@ -151,9 +155,15 @@ func (s *service) ProcessEachContribution(ctx context.Context, contribution Cont
 		return err
 	}
 
-	_, err = s.CreateContribution(ctx, contributionType, contribution, repositoryId, user.Id)
+	createdContribution, err := s.CreateContribution(ctx, contributionType, contribution, repositoryId, user.Id)
 	if err != nil {
 		slog.Error("error creating contribution", "error", err)
+		return err
+	}
+
+	_, err = s.CreateContributionTransaction(ctx, user.Id, createdContribution)
+	if err != nil {
+		slog.Error("error creating transaction for current contribution", "error", err)
 		return err
 	}
 
@@ -279,4 +289,22 @@ func (s *service) GetContributionByGithubEventId(ctx context.Context, githubEven
 	}
 
 	return Contribution(contribution), nil
+}
+
+func (s *service) CreateContributionTransaction(ctx context.Context, userId int, contributionDetails Contribution) (Transaction, error) {
+	transactionInfo := Transaction{
+		UserId:            userId,
+		ContributionId:    contributionDetails.Id,
+		IsRedeemed:        false,
+		IsGained:          true,
+		TransactedBalance: contributionDetails.BalanceChange,
+		TransactedAt:      contributionDetails.ContributedAt,
+	}
+	transaction, err := s.transactionService.CreateTransaction(ctx, transaction.Transaction(transactionInfo))
+	if err != nil {
+		slog.Error("error creating transaction for current contribution", "error", err)
+		return Transaction{}, err
+	}
+
+	return Transaction(transaction), nil
 }
