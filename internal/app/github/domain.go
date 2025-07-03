@@ -2,6 +2,8 @@ package github
 
 import "time"
 
+const AuthorizationKey = "Authorization"
+
 type RepoOwner struct {
 	Login string `json:"login"`
 }

@@ -3,11 +3,11 @@ package github
 import (
 	"context"
 	"encoding/json"
-	"io"
 	"log/slog"
 	"net/http"
 
 	"github.com/joshsoftware/code-curiosity-2025/internal/config"
+	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/utils"
 )
 
 type service struct {
@@ -16,6 +16,7 @@ type service struct {
 }
 
 type Service interface {
+	configureGithubApiHeaders() map[string]string
 	FetchRepositoryDetails(ctx context.Context, getUserRepoDetailsUrl string) (FetchRepositoryDetailsResponse, error)
 	FetchRepositoryLanguages(ctx context.Context, client *http.Client, getRepoLanguagesURL string) (RepoLanguages, error)
 	FetchRepositoryContributors(ctx context.Context, client *http.Client, getRepoContributorsURl string) ([]FetchRepoContributorsResponse, error)
@@ -28,24 +29,18 @@ func NewService(appCfg config.AppConfig, httpClient *http.Client) Service {
 	}
 }
 
+func (s *service) configureGithubApiHeaders() map[string]string {
+	return map[string]string{
+		AuthorizationKey: s.appCfg.GithubPersonalAccessToken,
+	}
+}
+
 func (s *service) FetchRepositoryDetails(ctx context.Context, getUserRepoDetailsUrl string) (FetchRepositoryDetailsResponse, error) {
-	req, err := http.NewRequest("GET", getUserRepoDetailsUrl, nil)
-	if err != nil {
-		slog.Error("error fetching user repositories details", "error", err)
-		return FetchRepositoryDetailsResponse{}, err
-	}
+	headers := s.configureGithubApiHeaders()
 
-	req.Header.Add("Authorization", s.appCfg.GithubPersonalAccessToken)
-
-	resp, err := s.httpClient.Do(req)
+	body, err := utils.DoGet(s.httpClient, getUserRepoDetailsUrl, headers)
 	if err != nil {
-		slog.Error("error fetching user repositories details", "error", err)
-		return FetchRepositoryDetailsResponse{}, err
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		slog.Error("error reading body", "error", err)
+		slog.Error("error making a GET request", "error", err)
 		return FetchRepositoryDetailsResponse{}, err
 	}
 
@@ -60,21 +55,11 @@ func (s *service) FetchRepositoryDetails(ctx context.Context, getUserRepoDetails
 }
 
 func (s *service) FetchRepositoryLanguages(ctx context.Context, client *http.Client, getRepoLanguagesURL string) (RepoLanguages, error) {
-	req, err := http.NewRequest("GET", getRepoLanguagesURL, nil)
-	if err != nil {
-		slog.Error("error fetching languages for repository", "error", err)
-		return RepoLanguages{}, err
-	}
+	headers := s.configureGithubApiHeaders()
 
-	resp, err := client.Do(req)
+	body, err := utils.DoGet(s.httpClient, getRepoLanguagesURL, headers)
 	if err != nil {
-		slog.Error("error fetching languages for repository", "error", err)
-		return RepoLanguages{}, err
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		slog.Error("error reading body", "error", err)
+		slog.Error("error making a GET request", "error", err)
 		return RepoLanguages{}, err
 	}
 
@@ -89,22 +74,12 @@ func (s *service) FetchRepositoryLanguages(ctx context.Context, client *http.Cli
 }
 
 func (s *service) FetchRepositoryContributors(ctx context.Context, client *http.Client, getRepoContributorsURl string) ([]FetchRepoContributorsResponse, error) {
-	req, err := http.NewRequest("GET", getRepoContributorsURl, nil)
-	if err != nil {
-		slog.Error("error fetching contributors for repository", "error", err)
-		return nil, err
-	}
+	headers := s.configureGithubApiHeaders()
 
-	resp, err := client.Do(req)
+	body, err := utils.DoGet(s.httpClient, getRepoContributorsURl, headers)
 	if err != nil {
-		slog.Error("error fetching contributors for repository", "error", err)
-		return nil, err
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		slog.Error("error reading body", "error", err)
-		return nil, err
+		slog.Error("error making a GET request", "error", err)
+		return []FetchRepoContributorsResponse{}, err
 	}
 
 	var repoContributors []FetchRepoContributorsResponse
