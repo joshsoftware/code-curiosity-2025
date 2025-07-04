@@ -5,11 +5,16 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/joshsoftware/code-curiosity-2025/internal/config"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/apperrors"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/jwt"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/response"
 )
+
+type txKeyType struct{}
+
+var txKey = txKeyType{}
 
 type contextKey string
 
@@ -17,6 +22,15 @@ const (
 	UserIdKey  contextKey = "userId"
 	IsAdminKey contextKey = "isAdmin"
 )
+
+func EmbedTxInContext(ctx context.Context, tx *sqlx.Tx) context.Context {
+	return context.WithValue(ctx, txKey, tx)
+}
+
+func ExtractTxFromContext(ctx context.Context) (*sqlx.Tx, bool) {
+	tx, ok := ctx.Value(txKey).(*sqlx.Tx)
+	return tx, ok
+}
 
 func CorsMiddleware(next http.Handler, appCfg config.AppConfig) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

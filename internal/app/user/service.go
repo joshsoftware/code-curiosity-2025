@@ -18,6 +18,7 @@ type Service interface {
 	GetUserByGithubId(ctx context.Context, githubId int) (User, error)
 	CreateUser(ctx context.Context, userInfo CreateUserRequestBody) (User, error)
 	UpdateUserEmail(ctx context.Context, email string) error
+	UpdateUserCurrentBalance(ctx context.Context, transaction Transaction) error
 }
 
 func NewService(userRepository repository.UserRepository) Service {
@@ -69,6 +70,29 @@ func (s *service) UpdateUserEmail(ctx context.Context, email string) error {
 	err := s.userRepository.UpdateUserEmail(ctx, nil, userId, email)
 	if err != nil {
 		slog.Error("failed to update user email", "error", err)
+		return err
+	}
+
+	return nil
+}
+
+func (s *service) UpdateUserCurrentBalance(ctx context.Context, transaction Transaction) error {
+	user, err := s.GetUserById(ctx, transaction.UserId)
+	if err != nil {
+		slog.Error("error obtaining user by id", "error", err)
+		return err
+	}
+
+	user.CurrentBalance += transaction.TransactedBalance
+
+	tx, ok := middleware.ExtractTxFromContext(ctx)
+	if !ok {
+		slog.Error("error obtaining tx from context")
+	}
+
+	err = s.userRepository.UpdateUserCurrentBalance(ctx, tx, repository.User(user))
+	if err != nil {
+		slog.Error("error updating user current balance", "error", err)
 		return err
 	}
 
