@@ -47,6 +47,7 @@ var (
 	ErrContributionNotFound        = errors.New("contribution not found")
 
 	ErrTransactionCreationFailed = errors.New("error failed to create transaction")
+	ErrTransactionNotFound       = errors.New("error transaction for the contribution id does not exist")
 )
 
 func MapError(err error) (statusCode int, errMessage string) {

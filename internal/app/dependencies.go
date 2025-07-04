@@ -42,7 +42,7 @@ func InitDependencies(db *sqlx.DB, appCfg config.AppConfig, client config.Bigque
 
 	authHandler := auth.NewHandler(authService, appCfg)
 	userHandler := user.NewHandler(userService)
-	repositoryHandler := repoService.NewHandler(repositoryService)
+	repositoryHandler := repoService.NewHandler(repositoryService, githubService)
 	contributionHandler := contribution.NewHandler(contributionService)
 
 	return Dependencies{
