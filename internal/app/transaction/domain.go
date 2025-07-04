@@ -13,3 +13,16 @@ type Transaction struct {
 	CreatedAt         time.Time `db:"created_at"`
 	UpdatedAt         time.Time `db:"updated_at"`
 }
+
+type Contribution struct {
+	Id                  int
+	UserId              int
+	RepositoryId        int
+	ContributionScoreId int
+	ContributionType    string
+	BalanceChange       int
+	ContributedAt       time.Time
+	GithubEventId       string
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
+}

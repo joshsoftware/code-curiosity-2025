@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"log/slog"
 
 	"github.com/jmoiron/sqlx"
@@ -15,6 +17,7 @@ type transactionRepository struct {
 type TransactionRepository interface {
 	RepositoryTransaction
 	CreateTransaction(ctx context.Context, tx *sqlx.Tx, transactionInfo Transaction) (Transaction, error)
+	GetTransactionByContributionId(ctx context.Context, tx *sqlx.Tx, contributionId int) (Transaction, error)
 }
 
 func NewTransactionRepository(db *sqlx.DB) TransactionRepository {
@@ -34,6 +37,8 @@ const (
 	)
 	VALUES ($1, $2, $3, $4, $5, $6)
 	RETURNING *`
+
+	getTransactionByContributionIdQuery = `SELECT * from transactions where contribution_id=$1`
 )
 
 func (tr *transactionRepository) CreateTransaction(ctx context.Context, tx *sqlx.Tx, transactionInfo Transaction) (Transaction, error) {
@@ -51,6 +56,23 @@ func (tr *transactionRepository) CreateTransaction(ctx context.Context, tx *sqlx
 	if err != nil {
 		slog.Error("error occured while creating transaction", "error", err)
 		return Transaction{}, apperrors.ErrTransactionCreationFailed
+	}
+
+	return transaction, nil
+}
+
+func (tr *transactionRepository) GetTransactionByContributionId(ctx context.Context, tx *sqlx.Tx, contributionId int) (Transaction, error) {
+	executer := tr.BaseRepository.initiateQueryExecuter(tx)
+
+	var transaction Transaction
+	err := executer.GetContext(ctx, &transaction, getTransactionByContributionIdQuery, contributionId)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			slog.Error("transaction for the contribution id does not exist", "error", err)
+			return Transaction{}, apperrors.ErrTransactionNotFound
+		}
+		slog.Error("error fetching transaction using contributionid", "error", err)
+		return Transaction{}, err
 	}
 
 	return transaction, nil
