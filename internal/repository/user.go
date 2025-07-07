@@ -9,6 +9,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/apperrors"
+	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/middleware"
 )
 
 type userRepository struct {
@@ -23,6 +24,8 @@ type UserRepository interface {
 	UpdateUserEmail(ctx context.Context, tx *sqlx.Tx, userId int, email string) error
 	GetAllUsersGithubId(ctx context.Context, tx *sqlx.Tx) ([]int, error)
 	UpdateUserCurrentBalance(ctx context.Context, tx *sqlx.Tx, user User) error
+	GetAllUsersRank(ctx context.Context, tx *sqlx.Tx) ([]LeaderboardUser, error)
+	GetCurrentUserRank(ctx context.Context, tx *sqlx.Tx) (LeaderboardUser, error)
 }
 
 func NewUserRepository(db *sqlx.DB) UserRepository {
@@ -51,6 +54,31 @@ const (
 	getAllUsersGithubIdQuery = "SELECT github_id from users"
 
 	updateUserCurrentBalanceQuery = "UPDATE users SET current_balance=$1, updated_at=$2 where id=$3"
+
+	getAllUsersRankQuery = `
+	SELECT 
+	id,
+	github_username,
+	avatar_url,
+	current_balance,
+	RANK() over (ORDER BY current_balance DESC) AS rank
+	FROM users 
+	ORDER BY current_balance DESC`
+
+	getCurrentUserRankQuery = `
+	SELECT *
+	FROM 
+	(
+  	SELECT 
+	id, 
+	github_username, 
+	avatar_url,
+	current_balance,
+    RANK() OVER (ORDER BY current_balance DESC) AS rank
+  	FROM users
+	) 
+	ranked_users
+	WHERE id = $1;`
 )
 
 func (ur *userRepository) GetUserById(ctx context.Context, tx *sqlx.Tx, userId int) (User, error) {
@@ -141,4 +169,38 @@ func (ur *userRepository) UpdateUserCurrentBalance(ctx context.Context, tx *sqlx
 	}
 
 	return nil
+}
+
+func (ur *userRepository) GetAllUsersRank(ctx context.Context, tx *sqlx.Tx) ([]LeaderboardUser, error) {
+	executer := ur.BaseRepository.initiateQueryExecuter(tx)
+
+	var leaderboard []LeaderboardUser
+	err := executer.SelectContext(ctx, &leaderboard, getAllUsersRankQuery)
+	if err != nil {
+		slog.Error("failed to get users rank", "error", err)
+		return nil, apperrors.ErrInternalServer
+	}
+
+	return leaderboard, nil
+}
+
+func (ur *userRepository) GetCurrentUserRank(ctx context.Context, tx *sqlx.Tx) (LeaderboardUser, error) {
+	userIdValue := ctx.Value(middleware.UserIdKey)
+
+	userId, ok := userIdValue.(int)
+	if !ok {
+		slog.Error("error obtaining user id from context")
+		return LeaderboardUser{}, apperrors.ErrInternalServer
+	}
+
+	executer := ur.BaseRepository.initiateQueryExecuter(tx)
+
+	var currentUserRank LeaderboardUser
+	err := executer.GetContext(ctx, &currentUserRank, getCurrentUserRankQuery, userId)
+	if err != nil {
+		slog.Error("failed to get user rank", "error", err)
+		return LeaderboardUser{}, apperrors.ErrInternalServer
+	}
+
+	return currentUserRank, nil
 }

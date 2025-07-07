@@ -15,6 +15,8 @@ type handler struct {
 
 type Handler interface {
 	UpdateUserEmail(w http.ResponseWriter, r *http.Request)
+	GetAllUsersRank(w http.ResponseWriter, r *http.Request)
+	GetCurrentUserRank(w http.ResponseWriter, r *http.Request)
 }
 
 func NewHandler(userService Service) Handler {
@@ -43,4 +45,32 @@ func (h *handler) UpdateUserEmail(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.WriteJson(w, http.StatusOK, "email updated successfully", nil)
+}
+
+func (h *handler) GetAllUsersRank(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	leaderboard, err := h.userService.GetAllUsersRank(ctx)
+	if err != nil {
+		slog.Error("failed to get all users rank", "error", err)
+		status, errorMessage := apperrors.MapError(err)
+		response.WriteJson(w, status, errorMessage, nil)
+		return
+	}
+
+	response.WriteJson(w, http.StatusOK, "leaderboard fetched successfully", leaderboard)
+}
+
+func (h *handler) GetCurrentUserRank(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	currentUserRank, err := h.userService.GetCurrentUserRank(ctx)
+	if err != nil {
+		slog.Error("failed to get current user rank", "error", err)
+		status, errorMessage := apperrors.MapError(err)
+		response.WriteJson(w, status, errorMessage, nil)
+		return
+	}
+
+	response.WriteJson(w, http.StatusOK, "current user rank fetched successfully", currentUserRank)
 }

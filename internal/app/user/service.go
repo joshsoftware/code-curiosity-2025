@@ -19,6 +19,8 @@ type Service interface {
 	CreateUser(ctx context.Context, userInfo CreateUserRequestBody) (User, error)
 	UpdateUserEmail(ctx context.Context, email string) error
 	UpdateUserCurrentBalance(ctx context.Context, transaction Transaction) error
+	GetAllUsersRank(ctx context.Context) ([]LeaderboardUser, error)
+	GetCurrentUserRank(ctx context.Context) (LeaderboardUser, error)
 }
 
 func NewService(userRepository repository.UserRepository) Service {
@@ -97,4 +99,29 @@ func (s *service) UpdateUserCurrentBalance(ctx context.Context, transaction Tran
 	}
 
 	return nil
+}
+
+func (s *service) GetAllUsersRank(ctx context.Context) ([]LeaderboardUser, error) {
+	leaderboard, err := s.userRepository.GetAllUsersRank(ctx, nil)
+	if err != nil {
+		slog.Error("error obtaining all users rank", "error", err)
+		return nil, err
+	}
+
+	serviceLeaderboard := make([]LeaderboardUser, len(leaderboard))
+	for i, l := range leaderboard {
+		serviceLeaderboard[i] = LeaderboardUser((l))
+	}
+
+	return serviceLeaderboard, nil
+}
+
+func (s *service) GetCurrentUserRank(ctx context.Context) (LeaderboardUser, error) {
+	currentUserRank, err := s.userRepository.GetCurrentUserRank(ctx, nil)
+	if err != nil {
+		slog.Error("error obtaining current user rank", "error", err)
+		return LeaderboardUser{}, err
+	}
+
+	return LeaderboardUser(currentUserRank), nil
 }
