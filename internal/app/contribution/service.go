@@ -3,8 +3,10 @@ package contribution
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/joshsoftware/code-curiosity-2025/internal/app/bigquery"
 	repoService "github.com/joshsoftware/code-curiosity-2025/internal/app/repository"
@@ -66,6 +68,7 @@ type Service interface {
 	GetContributionScoreDetailsByContributionType(ctx context.Context, contributionType string) (ContributionScore, error)
 	FetchUserContributions(ctx context.Context) ([]Contribution, error)
 	GetContributionByGithubEventId(ctx context.Context, githubEventId string) (Contribution, error)
+	GetContributionTypeSummaryForMonth(ctx context.Context, monthParam string) ([]ContributionTypeSummary, error)
 }
 
 func NewService(bigqueryService bigquery.Service, contributionRepository repository.ContributionRepository, repositoryService repoService.Service, userService user.Service, transactionService transaction.Service, httpClient *http.Client) Service {
@@ -286,4 +289,36 @@ func (s *service) GetContributionByGithubEventId(ctx context.Context, githubEven
 	}
 
 	return Contribution(contribution), nil
+}
+
+func (s *service) GetContributionTypeSummaryForMonth(ctx context.Context, monthParam string) ([]ContributionTypeSummary, error) {
+	month, err := time.Parse("2006-01", monthParam)
+	if err != nil {
+		slog.Error("error parsing month query parameter", "error", err)
+		return nil, err
+	}
+
+	contributionTypes, err := s.contributionRepository.GetAllContributionTypes(ctx, nil)
+	if err != nil {
+		slog.Error("error fetching contribution types", "error", err)
+		return nil, err
+	}
+
+	var contributionTypeSummaryForMonth []ContributionTypeSummary
+
+	for _, contributionType := range contributionTypes {
+		contributionTypeSummary, err := s.contributionRepository.GetContributionTypeSummaryForMonth(ctx, nil, contributionType.ContributionType, month)
+		if err != nil {
+			if errors.Is(err, apperrors.ErrNoContributionForContributionType) {
+				contributionTypeSummaryForMonth = append(contributionTypeSummaryForMonth, ContributionTypeSummary{ContributionType: contributionType.ContributionType})
+				continue
+			}
+			slog.Error("error fetching contribution type summary", "error", err)
+			return nil, err
+		}
+
+		contributionTypeSummaryForMonth = append(contributionTypeSummaryForMonth, ContributionTypeSummary(contributionTypeSummary))
+	}
+
+	return contributionTypeSummaryForMonth, nil
 }

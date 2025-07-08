@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"log/slog"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/apperrors"
@@ -21,6 +22,8 @@ type ContributionRepository interface {
 	GetContributionScoreDetailsByContributionType(ctx context.Context, tx *sqlx.Tx, contributionType string) (ContributionScore, error)
 	FetchUserContributions(ctx context.Context, tx *sqlx.Tx) ([]Contribution, error)
 	GetContributionByGithubEventId(ctx context.Context, tx *sqlx.Tx, githubEventId string) (Contribution, error)
+	GetAllContributionTypes(ctx context.Context, tx *sqlx.Tx) ([]ContributionScore, error)
+	GetContributionTypeSummaryForMonth(ctx context.Context, tx *sqlx.Tx, contributionType string, month time.Time) (ContributionTypeSummary, error)
 }
 
 func NewContributionRepository(db *sqlx.DB) ContributionRepository {
@@ -47,7 +50,23 @@ const (
 
 	fetchUserContributionsQuery = `SELECT * from contributions where user_id=$1 order by contributed_at desc`
 
-	GetContributionByGithubEventIdQuery = `SELECT * from contributions where github_event_id=$1`
+	getContributionByGithubEventIdQuery = `SELECT * from contributions where github_event_id=$1`
+
+	getAllContributionTypesQuery = `SELECT * from contribution_score`
+
+	GetContributionTypeSummaryForMonthQuery = `
+	SELECT
+  	DATE_TRUNC('month', contributed_at) AS month,
+ 	contribution_type,
+  	COUNT(*) AS contribution_count,
+  	SUM(balance_change) AS total_coins
+	FROM contributions
+	WHERE user_id = $1
+  	AND contribution_type = $2
+  	AND contributed_at >= DATE_TRUNC('month', $3::timestamptz)
+  	AND contributed_at < DATE_TRUNC('month', $3::timestamptz) + INTERVAL '1 month'
+	GROUP BY
+  	month, contribution_type;`
 )
 
 func (cr *contributionRepository) CreateContribution(ctx context.Context, tx *sqlx.Tx, contributionInfo Contribution) (Contribution, error) {
@@ -114,7 +133,7 @@ func (cr *contributionRepository) GetContributionByGithubEventId(ctx context.Con
 	executer := cr.BaseRepository.initiateQueryExecuter(tx)
 
 	var contribution Contribution
-	err := executer.GetContext(ctx, &contribution, GetContributionByGithubEventIdQuery, githubEventId)
+	err := executer.GetContext(ctx, &contribution, getContributionByGithubEventIdQuery, githubEventId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			slog.Error("contribution not found", "error", err)
@@ -126,4 +145,41 @@ func (cr *contributionRepository) GetContributionByGithubEventId(ctx context.Con
 
 	return contribution, nil
 
+}
+
+func (cr *contributionRepository) GetAllContributionTypes(ctx context.Context, tx *sqlx.Tx) ([]ContributionScore, error) {
+	executer := cr.BaseRepository.initiateQueryExecuter(tx)
+
+	var contributionTypes []ContributionScore
+	err := executer.SelectContext(ctx, &contributionTypes, getAllContributionTypesQuery)
+	if err != nil {
+		slog.Error("error fetching all contribution types", "error", err)
+		return nil, apperrors.ErrFetchingContributionTypes
+	}
+
+	return contributionTypes, nil
+}
+
+func (cr *contributionRepository) GetContributionTypeSummaryForMonth(ctx context.Context, tx *sqlx.Tx, contributionType string, month time.Time) (ContributionTypeSummary, error) {
+	userIdValue := ctx.Value(middleware.UserIdKey)
+
+	userId, ok := userIdValue.(int)
+	if !ok {
+		slog.Error("error obtaining user id from context")
+		return ContributionTypeSummary{}, apperrors.ErrInternalServer
+	}
+
+	executer := cr.BaseRepository.initiateQueryExecuter(tx)
+
+	var contributionTypeSummary ContributionTypeSummary
+	err := executer.GetContext(ctx, &contributionTypeSummary, GetContributionTypeSummaryForMonthQuery, userId, contributionType, month)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return ContributionTypeSummary{}, apperrors.ErrNoContributionForContributionType
+		}
+		slog.Error("error fetching contribution summary for contribution type", "error", err)
+		return ContributionTypeSummary{}, apperrors.ErrInternalServer
+	}
+
+	return contributionTypeSummary, nil
 }
