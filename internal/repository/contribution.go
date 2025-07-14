@@ -23,7 +23,7 @@ type ContributionRepository interface {
 	FetchUserContributions(ctx context.Context, tx *sqlx.Tx) ([]Contribution, error)
 	GetContributionByGithubEventId(ctx context.Context, tx *sqlx.Tx, githubEventId string) (Contribution, error)
 	GetAllContributionTypes(ctx context.Context, tx *sqlx.Tx) ([]ContributionScore, error)
-	GetContributionTypeSummaryForMonth(ctx context.Context, tx *sqlx.Tx, contributionType string, month time.Time) (ContributionTypeSummary, error)
+	GetMonthlyContributionTypeSummary(ctx context.Context, tx *sqlx.Tx, contributionType string, month time.Time) (MonthlyContributionSummary, error)
 }
 
 func NewContributionRepository(db *sqlx.DB) ContributionRepository {
@@ -54,7 +54,7 @@ const (
 
 	getAllContributionTypesQuery = `SELECT * from contribution_score`
 
-	GetContributionTypeSummaryForMonthQuery = `
+	GetMonthlyContributionTypeSummaryQuery = `
 	SELECT
   	DATE_TRUNC('month', contributed_at) AS month,
  	contribution_type,
@@ -160,25 +160,25 @@ func (cr *contributionRepository) GetAllContributionTypes(ctx context.Context, t
 	return contributionTypes, nil
 }
 
-func (cr *contributionRepository) GetContributionTypeSummaryForMonth(ctx context.Context, tx *sqlx.Tx, contributionType string, month time.Time) (ContributionTypeSummary, error) {
+func (cr *contributionRepository) GetMonthlyContributionTypeSummary(ctx context.Context, tx *sqlx.Tx, contributionType string, month time.Time) (MonthlyContributionSummary, error) {
 	userIdValue := ctx.Value(middleware.UserIdKey)
 
 	userId, ok := userIdValue.(int)
 	if !ok {
 		slog.Error("error obtaining user id from context")
-		return ContributionTypeSummary{}, apperrors.ErrInternalServer
+		return MonthlyContributionSummary{}, apperrors.ErrInternalServer
 	}
 
 	executer := cr.BaseRepository.initiateQueryExecuter(tx)
 
-	var contributionTypeSummary ContributionTypeSummary
-	err := executer.GetContext(ctx, &contributionTypeSummary, GetContributionTypeSummaryForMonthQuery, userId, contributionType, month)
+	var contributionTypeSummary MonthlyContributionSummary
+	err := executer.GetContext(ctx, &contributionTypeSummary, GetMonthlyContributionTypeSummaryQuery, userId, contributionType, month)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return ContributionTypeSummary{}, apperrors.ErrNoContributionForContributionType
+			return MonthlyContributionSummary{}, apperrors.ErrNoContributionForContributionType
 		}
 		slog.Error("error fetching contribution summary for contribution type", "error", err)
-		return ContributionTypeSummary{}, apperrors.ErrInternalServer
+		return MonthlyContributionSummary{}, apperrors.ErrInternalServer
 	}
 
 	return contributionTypeSummary, nil
