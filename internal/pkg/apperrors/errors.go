@@ -6,6 +6,7 @@ import (
 )
 
 var (
+	ErrContextValue   = errors.New("error obtaining value from context")
 	ErrInternalServer = errors.New("internal server error")
 
 	ErrInvalidRequestBody = errors.New("invalid or missing parameters in the request body")
@@ -52,7 +53,7 @@ var (
 
 func MapError(err error) (statusCode int, errMessage string) {
 	switch err {
-	case ErrInvalidRequestBody, ErrInvalidQueryParams:
+	case ErrInvalidRequestBody, ErrInvalidQueryParams, ErrContextValue:
 		return http.StatusBadRequest, err.Error()
 	case ErrUnauthorizedAccess:
 		return http.StatusUnauthorized, err.Error()

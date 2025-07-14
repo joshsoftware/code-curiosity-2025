@@ -9,7 +9,6 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/apperrors"
-	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/middleware"
 )
 
 type userRepository struct {
@@ -25,7 +24,7 @@ type UserRepository interface {
 	GetAllUsersGithubId(ctx context.Context, tx *sqlx.Tx) ([]int, error)
 	UpdateUserCurrentBalance(ctx context.Context, tx *sqlx.Tx, user User) error
 	GetAllUsersRank(ctx context.Context, tx *sqlx.Tx) ([]LeaderboardUser, error)
-	GetCurrentUserRank(ctx context.Context, tx *sqlx.Tx) (LeaderboardUser, error)
+	GetCurrentUserRank(ctx context.Context, tx *sqlx.Tx, userId int) (LeaderboardUser, error)
 }
 
 func NewUserRepository(db *sqlx.DB) UserRepository {
@@ -184,14 +183,7 @@ func (ur *userRepository) GetAllUsersRank(ctx context.Context, tx *sqlx.Tx) ([]L
 	return leaderboard, nil
 }
 
-func (ur *userRepository) GetCurrentUserRank(ctx context.Context, tx *sqlx.Tx) (LeaderboardUser, error) {
-	userIdValue := ctx.Value(middleware.UserIdKey)
-
-	userId, ok := userIdValue.(int)
-	if !ok {
-		slog.Error("error obtaining user id from context")
-		return LeaderboardUser{}, apperrors.ErrInternalServer
-	}
+func (ur *userRepository) GetCurrentUserRank(ctx context.Context, tx *sqlx.Tx, userId int) (LeaderboardUser, error) {
 
 	executer := ur.BaseRepository.initiateQueryExecuter(tx)
 
