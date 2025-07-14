@@ -18,8 +18,8 @@ type service struct {
 type Service interface {
 	configureGithubApiHeaders() map[string]string
 	FetchRepositoryDetails(ctx context.Context, getUserRepoDetailsUrl string) (FetchRepositoryDetailsResponse, error)
-	FetchRepositoryLanguages(ctx context.Context, client *http.Client, getRepoLanguagesURL string) (RepoLanguages, error)
-	FetchRepositoryContributors(ctx context.Context, client *http.Client, getRepoContributorsURl string) ([]FetchRepoContributorsResponse, error)
+	FetchRepositoryLanguages(ctx context.Context, getRepoLanguagesURL string) (RepoLanguages, error)
+	FetchRepositoryContributors(ctx context.Context, getRepoContributorsURl string) ([]FetchRepoContributorsResponse, error)
 }
 
 func NewService(appCfg config.AppConfig, httpClient *http.Client) Service {
@@ -54,7 +54,7 @@ func (s *service) FetchRepositoryDetails(ctx context.Context, getUserRepoDetails
 	return repoDetails, nil
 }
 
-func (s *service) FetchRepositoryLanguages(ctx context.Context, client *http.Client, getRepoLanguagesURL string) (RepoLanguages, error) {
+func (s *service) FetchRepositoryLanguages(ctx context.Context, getRepoLanguagesURL string) (RepoLanguages, error) {
 	headers := s.configureGithubApiHeaders()
 
 	body, err := utils.DoGet(s.httpClient, getRepoLanguagesURL, headers)
@@ -73,7 +73,7 @@ func (s *service) FetchRepositoryLanguages(ctx context.Context, client *http.Cli
 	return repoLanguages, nil
 }
 
-func (s *service) FetchRepositoryContributors(ctx context.Context, client *http.Client, getRepoContributorsURl string) ([]FetchRepoContributorsResponse, error) {
+func (s *service) FetchRepositoryContributors(ctx context.Context, getRepoContributorsURl string) ([]FetchRepoContributorsResponse, error) {
 	headers := s.configureGithubApiHeaders()
 
 	body, err := utils.DoGet(s.httpClient, getRepoContributorsURl, headers)

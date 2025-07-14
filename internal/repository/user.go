@@ -22,6 +22,7 @@ type UserRepository interface {
 	CreateUser(ctx context.Context, tx *sqlx.Tx, userInfo CreateUserRequestBody) (User, error)
 	UpdateUserEmail(ctx context.Context, tx *sqlx.Tx, userId int, email string) error
 	GetAllUsersGithubId(ctx context.Context, tx *sqlx.Tx) ([]int, error)
+	UpdateUserCurrentBalance(ctx context.Context, tx *sqlx.Tx, user User) error
 }
 
 func NewUserRepository(db *sqlx.DB) UserRepository {
@@ -48,6 +49,8 @@ const (
 	updateEmailQuery = "UPDATE users SET email=$1, updated_at=$2 where id=$3"
 
 	getAllUsersGithubIdQuery = "SELECT github_id from users"
+
+	updateUserCurrentBalanceQuery = "UPDATE users SET current_balance=$1, updated_at=$2 where id=$3"
 )
 
 func (ur *userRepository) GetUserById(ctx context.Context, tx *sqlx.Tx, userId int) (User, error) {
@@ -126,4 +129,16 @@ func (ur *userRepository) GetAllUsersGithubId(ctx context.Context, tx *sqlx.Tx) 
 	}
 
 	return githubIds, nil
+}
+
+func (ur *userRepository) UpdateUserCurrentBalance(ctx context.Context, tx *sqlx.Tx, user User) error {
+	executer := ur.BaseRepository.initiateQueryExecuter(tx)
+
+	_, err := executer.ExecContext(ctx, updateUserCurrentBalanceQuery, user.CurrentBalance, time.Now(), user.Id)
+	if err != nil {
+		slog.Error("failed to update user balance change", "error", err)
+		return apperrors.ErrInternalServer
+	}
+
+	return nil
 }

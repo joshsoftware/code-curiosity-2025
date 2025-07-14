@@ -22,9 +22,10 @@ type Handler interface {
 	FetchLanguagePercentInRepo(w http.ResponseWriter, r *http.Request)
 }
 
-func NewHandler(repositoryService Service) Handler {
+func NewHandler(repositoryService Service, githubService github.Service) Handler {
 	return &handler{
 		repositoryService: repositoryService,
+		githubService:     githubService,
 	}
 }
 
@@ -69,8 +70,6 @@ func (h *handler) FetchParticularRepoDetails(w http.ResponseWriter, r *http.Requ
 func (h *handler) FetchParticularRepoContributors(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	client := &http.Client{}
-
 	repoIdPath := r.PathValue("repo_id")
 	repoId, err := strconv.Atoi(repoIdPath)
 	if err != nil {
@@ -88,7 +87,7 @@ func (h *handler) FetchParticularRepoContributors(w http.ResponseWriter, r *http
 		return
 	}
 
-	repoContributors, err := h.githubService.FetchRepositoryContributors(ctx, client, repoDetails.ContributorsUrl)
+	repoContributors, err := h.githubService.FetchRepositoryContributors(ctx, repoDetails.ContributorsUrl)
 	if err != nil {
 		slog.Error("error fetching repo contributors", "error", err)
 		status, errorMessage := apperrors.MapError(err)
@@ -125,8 +124,6 @@ func (h *handler) FetchUserContributionsInRepo(w http.ResponseWriter, r *http.Re
 func (h *handler) FetchLanguagePercentInRepo(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	client := &http.Client{}
-
 	repoIdPath := r.PathValue("repo_id")
 	repoId, err := strconv.Atoi(repoIdPath)
 	if err != nil {
@@ -144,7 +141,7 @@ func (h *handler) FetchLanguagePercentInRepo(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	repoLanguages, err := h.githubService.FetchRepositoryLanguages(ctx, client, repoDetails.LanguagesUrl)
+	repoLanguages, err := h.githubService.FetchRepositoryLanguages(ctx, repoDetails.LanguagesUrl)
 	if err != nil {
 		slog.Error("error fetching particular repo languages", "error", err)
 		status, errorMessage := apperrors.MapError(err)

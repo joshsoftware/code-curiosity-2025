@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/joshsoftware/code-curiosity-2025/internal/app/github"
+	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/apperrors"
 	"github.com/joshsoftware/code-curiosity-2025/internal/repository"
 )
 
@@ -19,6 +20,7 @@ type Service interface {
 	GetRepoByGithubId(ctx context.Context, githubRepoId int) (Repository, error)
 	GetRepoByRepoId(ctx context.Context, repoId int) (Repository, error)
 	CreateRepository(ctx context.Context, repoGithubId int, ContributionRepoDetailsUrl string) (Repository, error)
+	HandleRepositoryCreation(ctx context.Context, contribution ContributionResponse) (Repository, error)
 	FetchUsersContributedRepos(ctx context.Context, client *http.Client) ([]FetchUsersContributedReposResponse, error)
 	FetchUserContributionsInRepo(ctx context.Context, githubRepoId int) ([]Contribution, error)
 	CalculateLanguagePercentInRepo(ctx context.Context, repoLanguages RepoLanguages) ([]LanguagePercent, error)
@@ -77,6 +79,24 @@ func (s *service) CreateRepository(ctx context.Context, repoGithubId int, Contri
 	return Repository(repositoryCreated), nil
 }
 
+func (s *service) HandleRepositoryCreation(ctx context.Context, contribution ContributionResponse) (Repository, error) {
+	obtainedRepository, err := s.GetRepoByGithubId(ctx, contribution.RepoID)
+	if err != nil {
+		if err == apperrors.ErrRepoNotFound {
+			obtainedRepository, err = s.CreateRepository(ctx, contribution.RepoID, contribution.RepoUrl)
+			if err != nil {
+				slog.Error("error creating repository", "error", err)
+				return Repository{}, err
+			}
+		} else {
+			slog.Error("error fetching repo by repo id", "error", err)
+			return Repository{}, err
+		}
+	}
+
+	return obtainedRepository, nil
+}
+
 func (s *service) FetchUsersContributedRepos(ctx context.Context, client *http.Client) ([]FetchUsersContributedReposResponse, error) {
 	usersContributedRepos, err := s.repositoryRepository.FetchUsersContributedRepos(ctx, nil)
 	if err != nil {
@@ -89,7 +109,7 @@ func (s *service) FetchUsersContributedRepos(ctx context.Context, client *http.C
 	for i, usersContributedRepo := range usersContributedRepos {
 		fetchUsersContributedReposResponse[i].Repository = Repository(usersContributedRepo)
 
-		contributedRepoLanguages, err := s.githubService.FetchRepositoryLanguages(ctx, client, usersContributedRepo.LanguagesUrl)
+		contributedRepoLanguages, err := s.githubService.FetchRepositoryLanguages(ctx, usersContributedRepo.LanguagesUrl)
 		if err != nil {
 			slog.Error("error fetching languages for repository", "error", err)
 			return nil, err
