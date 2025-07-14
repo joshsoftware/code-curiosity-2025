@@ -61,3 +61,10 @@ type Transaction struct {
 	CreatedAt         time.Time `db:"created_at"`
 	UpdatedAt         time.Time `db:"updated_at"`
 }
+
+type ContributionTypeSummary struct {
+	ContributionType  string    `db:"contribution_type"`
+	ContributionCount int       `db:"contribution_count"`
+	TotalCoins        int       `db:"total_coins"`
+	Month             time.Time `db:"month"`
+}
