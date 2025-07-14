@@ -21,6 +21,9 @@ type Service interface {
 	UpdateUserEmail(ctx context.Context, email string) error
 	SoftDeleteUser(ctx context.Context, userID int) (User, error)
 	RecoverAccountInGracePeriod(ctx context.Context, userID int) error
+	UpdateUserCurrentBalance(ctx context.Context, transaction Transaction) error
+	GetAllUsersRank(ctx context.Context) ([]LeaderboardUser, error)
+	GetCurrentUserRank(ctx context.Context, userId int) (LeaderboardUser, error)
 }
 
 func NewService(userRepository repository.UserRepository) Service {
@@ -95,4 +98,52 @@ func (s *service) RecoverAccountInGracePeriod(ctx context.Context, userID int) e
 		return err
 	}
 	return nil
+}
+
+func (s *service) UpdateUserCurrentBalance(ctx context.Context, transaction Transaction) error {
+	user, err := s.GetUserById(ctx, transaction.UserId)
+	if err != nil {
+		slog.Error("error obtaining user by id", "error", err)
+		return err
+	}
+
+	user.CurrentBalance += transaction.TransactedBalance
+
+	tx, ok := middleware.ExtractTxFromContext(ctx)
+	if !ok {
+		slog.Error("error obtaining tx from context")
+	}
+
+	err = s.userRepository.UpdateUserCurrentBalance(ctx, tx, repository.User(user))
+	if err != nil {
+		slog.Error("error updating user current balance", "error", err)
+		return err
+	}
+
+	return nil
+}
+
+func (s *service) GetAllUsersRank(ctx context.Context) ([]LeaderboardUser, error) {
+	userRanks, err := s.userRepository.GetAllUsersRank(ctx, nil)
+	if err != nil {
+		slog.Error("error obtaining all users rank", "error", err)
+		return nil, err
+	}
+
+	Leaderboard := make([]LeaderboardUser, len(userRanks))
+	for i, l := range userRanks {
+		Leaderboard[i] = LeaderboardUser(l)
+	}
+
+	return Leaderboard, nil
+}
+
+func (s *service) GetCurrentUserRank(ctx context.Context, userId int) (LeaderboardUser, error) {
+	currentUserRank, err := s.userRepository.GetCurrentUserRank(ctx, nil, userId)
+	if err != nil {
+		slog.Error("error obtaining current user rank", "error", err)
+		return LeaderboardUser{}, err
+	}
+
+	return LeaderboardUser(currentUserRank), nil
 }

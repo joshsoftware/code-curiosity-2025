@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/joshsoftware/code-curiosity-2025/internal/app"
+	"github.com/joshsoftware/code-curiosity-2025/internal/app/cronJob"
 	"github.com/joshsoftware/code-curiosity-2025/internal/config"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/jobs"
 )
@@ -32,9 +33,20 @@ func main() {
 	}
 	defer db.Close()
 
-	dependencies := app.InitDependencies(db, cfg)
+	bigqueryInstance, err := config.BigqueryInit(ctx, cfg)
+	if err != nil {
+		slog.Error("error initializing bigquery", "error", err)
+		return
+	}
+
+	httpClient := &http.Client{}
+
+	dependencies := app.InitDependencies(db, cfg, bigqueryInstance, httpClient)
 
 	router := app.NewRouter(dependencies)
+
+	newCronSchedular := cronJob.NewCronSchedular()
+	newCronSchedular.InitCronJobs(dependencies.ContributionService)
 
 	server := http.Server{
 		Addr:    fmt.Sprintf(":%s", cfg.HTTPServer.Port),

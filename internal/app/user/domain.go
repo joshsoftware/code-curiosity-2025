@@ -33,3 +33,23 @@ type CreateUserRequestBody struct {
 type Email struct {
 	Email string `json:"email"`
 }
+
+type Transaction struct {
+	Id                int       `db:"id"`
+	UserId            int       `db:"user_id"`
+	ContributionId    int       `db:"contribution_id"`
+	IsRedeemed        bool      `db:"is_redeemed"`
+	IsGained          bool      `db:"is_gained"`
+	TransactedBalance int       `db:"transacted_balance"`
+	TransactedAt      time.Time `db:"transacted_at"`
+	CreatedAt         time.Time `db:"created_at"`
+	UpdatedAt         time.Time `db:"updated_at"`
+}
+
+type LeaderboardUser struct {
+	Id             int    `db:"id"`
+	GithubUsername string `db:"github_username"`
+	AvatarUrl      string `db:"avatar_url"`
+	CurrentBalance int    `db:"current_balance"`
+	Rank           int    `db:"rank"`
+}
