@@ -3,10 +3,8 @@ package contribution
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"log/slog"
 	"net/http"
-	"time"
 
 	"github.com/joshsoftware/code-curiosity-2025/internal/app/bigquery"
 	repoService "github.com/joshsoftware/code-curiosity-2025/internal/app/repository"
@@ -68,7 +66,7 @@ type Service interface {
 	GetContributionScoreDetailsByContributionType(ctx context.Context, contributionType string) (ContributionScore, error)
 	FetchUserContributions(ctx context.Context) ([]Contribution, error)
 	GetContributionByGithubEventId(ctx context.Context, githubEventId string) (Contribution, error)
-	GetMonthlyContributionSummary(ctx context.Context, monthParam string) ([]MonthlyContributionSummary, error)
+	ListMonthlyContributionSummary(ctx context.Context, year int, monthParam int, userId int) ([]MonthlyContributionSummary, error)
 }
 
 func NewService(bigqueryService bigquery.Service, contributionRepository repository.ContributionRepository, repositoryService repoService.Service, userService user.Service, transactionService transaction.Service, httpClient *http.Client) Service {
@@ -291,34 +289,19 @@ func (s *service) GetContributionByGithubEventId(ctx context.Context, githubEven
 	return Contribution(contribution), nil
 }
 
-func (s *service) GetMonthlyContributionSummary(ctx context.Context, monthParam string) ([]MonthlyContributionSummary, error) {
-	month, err := time.Parse("2006-01", monthParam)
+func (s *service) ListMonthlyContributionSummary(ctx context.Context, year int, month int, userId int) ([]MonthlyContributionSummary, error) {
+
+	MonthlyContributionSummaries, err := s.contributionRepository.ListMonthlyContributionSummary(ctx, nil, year, month, userId)
 	if err != nil {
-		slog.Error("error parsing month query parameter", "error", err)
+		slog.Error("error fetching monthly contribution summary", "error", err)
 		return nil, err
 	}
 
-	contributionTypes, err := s.contributionRepository.GetAllContributionTypes(ctx, nil)
-	if err != nil {
-		slog.Error("error fetching contribution types", "error", err)
-		return nil, err
+	serviceMonthlyContributionSummaries := make([]MonthlyContributionSummary, len(MonthlyContributionSummaries))
+
+	for i, c := range MonthlyContributionSummaries {
+		serviceMonthlyContributionSummaries[i] = MonthlyContributionSummary(c)
 	}
 
-	var monthlyContributionSummary []MonthlyContributionSummary
-
-	for _, contributionType := range contributionTypes {
-		contributionTypeSummary, err := s.contributionRepository.GetMonthlyContributionTypeSummary(ctx, nil, contributionType.ContributionType, month)
-		if err != nil {
-			if errors.Is(err, apperrors.ErrNoContributionForContributionType) {
-				monthlyContributionSummary = append(monthlyContributionSummary, MonthlyContributionSummary{Type: contributionType.ContributionType})
-				continue
-			}
-			slog.Error("error fetching contribution type summary", "error", err)
-			return nil, err
-		}
-
-		monthlyContributionSummary = append(monthlyContributionSummary, MonthlyContributionSummary(contributionTypeSummary))
-	}
-
-	return monthlyContributionSummary, nil
+	return serviceMonthlyContributionSummaries, nil
 }
