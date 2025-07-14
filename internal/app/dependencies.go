@@ -7,6 +7,7 @@ import (
 	"github.com/joshsoftware/code-curiosity-2025/internal/app/auth"
 	"github.com/joshsoftware/code-curiosity-2025/internal/app/bigquery"
 	"github.com/joshsoftware/code-curiosity-2025/internal/app/contribution"
+	"github.com/joshsoftware/code-curiosity-2025/internal/app/github"
 	repoService "github.com/joshsoftware/code-curiosity-2025/internal/app/repository"
 	"github.com/joshsoftware/code-curiosity-2025/internal/app/user"
 	"github.com/joshsoftware/code-curiosity-2025/internal/config"
@@ -15,11 +16,11 @@ import (
 )
 
 type Dependencies struct {
-	AuthService         auth.Service
-	UserService         user.Service
+	ContributionService contribution.Service
 	AuthHandler         auth.Handler
 	UserHandler         user.Handler
 	ContributionHandler contribution.Handler
+	RepositoryHandler   repoService.Handler
 	AppCfg              config.AppConfig
 	Client              config.Bigquery
 }
@@ -32,18 +33,20 @@ func InitDependencies(db *sqlx.DB, appCfg config.AppConfig, client config.Bigque
 	userService := user.NewService(userRepository)
 	authService := auth.NewService(userService, appCfg)
 	bigqueryService := bigquery.NewService(client, userRepository)
-	repositoryService := repoService.NewService(repositoryRepository, appCfg, httpClient)
+	githubService := github.NewService(appCfg, httpClient)
+	repositoryService := repoService.NewService(repositoryRepository, githubService)
 	contributionService := contribution.NewService(bigqueryService, contributionRepository, repositoryService, userService, httpClient)
 
 	authHandler := auth.NewHandler(authService, appCfg)
 	userHandler := user.NewHandler(userService)
+	repositoryHandler := repoService.NewHandler(repositoryService)
 	contributionHandler := contribution.NewHandler(contributionService)
 
 	return Dependencies{
-		AuthService:         authService,
-		UserService:         userService,
+		ContributionService: contributionService,
 		AuthHandler:         authHandler,
 		UserHandler:         userHandler,
+		RepositoryHandler:   repositoryHandler,
 		ContributionHandler: contributionHandler,
 		AppCfg:              appCfg,
 		Client:              client,

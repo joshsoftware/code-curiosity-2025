@@ -9,6 +9,7 @@ require (
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/lib/pq v1.10.9
+	github.com/robfig/cron/v3 v3.0.1
 	golang.org/x/oauth2 v0.29.0
 	google.golang.org/api v0.231.0
 )

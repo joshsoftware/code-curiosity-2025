@@ -6,61 +6,62 @@ import (
 )
 
 type User struct {
-	Id                  int
-	GithubId            int
-	GithubUsername      string
-	Email               string
-	AvatarUrl           string
-	CurrentBalance      int
-	CurrentActiveGoalId sql.NullInt64
-	IsBlocked           bool
-	IsAdmin             bool
-	Password            string
-	IsDeleted           bool
-	DeletedAt           sql.NullTime
-	CreatedAt           time.Time
-	UpdatedAt           time.Time
+	Id                  int           `db:"id"`
+	GithubId            int           `db:"github_id"`
+	GithubUsername      string        `db:"github_username"`
+	Email               string        `db:"email"`
+	AvatarUrl           string        `db:"avatar_url"`
+	CurrentBalance      int           `db:"current_balance"`
+	CurrentActiveGoalId sql.NullInt64 `db:"current_active_goal_id"`
+	IsBlocked           bool          `db:"is_blocked"`
+	IsAdmin             bool          `db:"is_admin"`
+	Password            string        `db:"password"`
+	IsDeleted           bool          `db:"is_deleted"`
+	DeletedAt           sql.NullTime  `db:"deleted_at"`
+	CreatedAt           time.Time     `db:"created_at"`
+	UpdatedAt           time.Time     `db:"updated_at"`
 }
 
 type CreateUserRequestBody struct {
-	GithubId       int
-	GithubUsername string
-	AvatarUrl      string
-	Email          string
-	IsAdmin        bool
+	GithubId       int    `db:"github_id"`
+	GithubUsername string `db:"github_username"`
+	AvatarUrl      string `db:"avatar_url"`
+	Email          string `db:"email"`
+	IsAdmin        bool   `db:"is_admin"`
 }
 
 type Contribution struct {
-	Id                  int
-	UserId              int
-	RepositoryId        int
-	ContributionScoreId int
-	ContributionType    string
-	BalanceChange       int
-	ContributedAt       time.Time
-	CreatedAt           time.Time
-	UpdatedAt           time.Time
+	Id                  int       `db:"id"`
+	UserId              int       `db:"user_id"`
+	RepositoryId        int       `db:"repository_id"`
+	ContributionScoreId int       `db:"contribution_score_id"`
+	ContributionType    string    `db:"contribution_type"`
+	BalanceChange       int       `db:"balance_change"`
+	ContributedAt       time.Time `db:"contributed_at"`
+	GithubEventId       string    `db:"github_event_id"`
+	CreatedAt           time.Time `db:"created_at"`
+	UpdatedAt           time.Time `db:"updated_at"`
 }
 
 type Repository struct {
-	Id              int
-	GithubRepoId    int
-	RepoName        string
-	Description     string
-	LanguagesUrl    string
-	RepoUrl         string
-	OwnerName       string
-	UpdateDate      time.Time
-	ContributorsUrl string
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
+	Id              int       `db:"id"`
+	GithubRepoId    int       `db:"github_repo_id"`
+	RepoName        string    `db:"repo_name"`
+	Description     string    `db:"description"`
+	LanguagesUrl    string    `db:"languages_url"`
+	RepoUrl         string    `db:"repo_url"`
+	OwnerName       string    `db:"owner_name"`
+	UpdateDate      time.Time `db:"update_date"`
+	ContributorsUrl string    `db:"contributors_url"`
+	CreatedAt       time.Time `db:"created_at"`
+	UpdatedAt       time.Time `db:"updated_at"`
 }
 
 type ContributionScore struct {
-	Id               int
-	AdminId          int
-	ContributionType string
-	Score            int
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
+	Id               int       `db:"id"`
+	AdminId          int       `db:"admin_id"`
+	ContributionType string    `db:"contribution_type"`
+	Score            int       `db:"score"`
+	CreatedAt        time.Time `db:"created_at"`
+	UpdatedAt        time.Time `db:"updated_at"`
 }

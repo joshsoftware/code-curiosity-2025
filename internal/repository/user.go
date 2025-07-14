@@ -21,7 +21,7 @@ type UserRepository interface {
 	GetUserByGithubId(ctx context.Context, tx *sqlx.Tx, githubId int) (User, error)
 	CreateUser(ctx context.Context, tx *sqlx.Tx, userInfo CreateUserRequestBody) (User, error)
 	UpdateUserEmail(ctx context.Context, tx *sqlx.Tx, userId int, email string) error
-	GetAllUsersGithubUsernames(ctx context.Context, tx *sqlx.Tx) ([]string, error)
+	GetAllUsersGithubId(ctx context.Context, tx *sqlx.Tx) ([]int, error)
 }
 
 func NewUserRepository(db *sqlx.DB) UserRepository {
@@ -47,29 +47,14 @@ const (
 
 	updateEmailQuery = "UPDATE users SET email=$1, updated_at=$2 where id=$3"
 
-	getAllUsersGithubUsernamesQuery = "SELECT github_username from users"
+	getAllUsersGithubIdQuery = "SELECT github_id from users"
 )
 
 func (ur *userRepository) GetUserById(ctx context.Context, tx *sqlx.Tx, userId int) (User, error) {
 	executer := ur.BaseRepository.initiateQueryExecuter(tx)
 
 	var user User
-	err := executer.QueryRowContext(ctx, getUserByIdQuery, userId).Scan(
-		&user.Id,
-		&user.GithubId,
-		&user.GithubUsername,
-		&user.AvatarUrl,
-		&user.Email,
-		&user.CurrentActiveGoalId,
-		&user.CurrentBalance,
-		&user.IsBlocked,
-		&user.IsAdmin,
-		&user.Password,
-		&user.IsDeleted,
-		&user.DeletedAt,
-		&user.CreatedAt,
-		&user.UpdatedAt,
-	)
+	err := executer.GetContext(ctx, &user, getUserByIdQuery, userId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			slog.Error("user not found", "error", err)
@@ -86,22 +71,7 @@ func (ur *userRepository) GetUserByGithubId(ctx context.Context, tx *sqlx.Tx, gi
 	executer := ur.BaseRepository.initiateQueryExecuter(tx)
 
 	var user User
-	err := executer.QueryRowContext(ctx, getUserByGithubIdQuery, githubId).Scan(
-		&user.Id,
-		&user.GithubId,
-		&user.GithubUsername,
-		&user.AvatarUrl,
-		&user.Email,
-		&user.CurrentActiveGoalId,
-		&user.CurrentBalance,
-		&user.IsBlocked,
-		&user.IsAdmin,
-		&user.Password,
-		&user.IsDeleted,
-		&user.DeletedAt,
-		&user.CreatedAt,
-		&user.UpdatedAt,
-	)
+	err := executer.GetContext(ctx, &user, getUserByGithubIdQuery, githubId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			slog.Error("user not found", "error", err)
@@ -118,27 +88,12 @@ func (ur *userRepository) CreateUser(ctx context.Context, tx *sqlx.Tx, userInfo 
 	executer := ur.BaseRepository.initiateQueryExecuter(tx)
 
 	var user User
-	err := executer.QueryRowContext(ctx, createUserQuery,
+	err := executer.GetContext(ctx, &user, createUserQuery,
 		userInfo.GithubId,
 		userInfo.GithubUsername,
 		userInfo.Email,
-		userInfo.AvatarUrl,
-	).Scan(
-		&user.Id,
-		&user.GithubId,
-		&user.GithubUsername,
-		&user.AvatarUrl,
-		&user.Email,
-		&user.CurrentActiveGoalId,
-		&user.CurrentBalance,
-		&user.IsBlocked,
-		&user.IsAdmin,
-		&user.Password,
-		&user.IsDeleted,
-		&user.DeletedAt,
-		&user.CreatedAt,
-		&user.UpdatedAt,
-	)
+		userInfo.AvatarUrl)
+
 	if err != nil {
 		slog.Error("error occurred while creating user", "error", err)
 		return User{}, apperrors.ErrUserCreationFailed
@@ -160,23 +115,15 @@ func (ur *userRepository) UpdateUserEmail(ctx context.Context, tx *sqlx.Tx, user
 	return nil
 }
 
-func (ur *userRepository) GetAllUsersGithubUsernames(ctx context.Context, tx *sqlx.Tx) ([]string, error) {
+func (ur *userRepository) GetAllUsersGithubId(ctx context.Context, tx *sqlx.Tx) ([]int, error) {
 	executer := ur.BaseRepository.initiateQueryExecuter(tx)
-	rows, err := executer.QueryContext(ctx, getAllUsersGithubUsernamesQuery)
+
+	var githubIds []int
+	err := executer.SelectContext(ctx, &githubIds, getAllUsersGithubIdQuery)
 	if err != nil {
 		slog.Error("failed to get github usernames", "error", err)
 		return nil, apperrors.ErrInternalServer
 	}
-	defer rows.Close()
 
-	var githubUsernames []string
-	for rows.Next() {
-		var username string
-		if err := rows.Scan(&username); err != nil {
-			return nil, err
-		}
-		githubUsernames = append(githubUsernames, username)
-	}
-
-	return githubUsernames, nil
+	return githubIds, nil
 }

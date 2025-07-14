@@ -2,77 +2,62 @@ package repository
 
 import (
 	"context"
-	"encoding/json"
-	"io"
 	"log/slog"
+	"math"
 	"net/http"
 
-	"github.com/joshsoftware/code-curiosity-2025/internal/config"
+	"github.com/joshsoftware/code-curiosity-2025/internal/app/github"
 	"github.com/joshsoftware/code-curiosity-2025/internal/repository"
 )
 
 type service struct {
 	repositoryRepository repository.RepositoryRepository
-	appCfg               config.AppConfig
-	httpClient           *http.Client
+	githubService        github.Service
 }
 
 type Service interface {
-	GetRepoByRepoId(ctx context.Context, githubRepoId int) (Repository, error)
-	FetchRepositoryDetails(ctx context.Context, getUserRepoDetailsUrl string) (FetchRepositoryDetailsResponse, error)
-	CreateRepository(ctx context.Context, repoGithubId int, repo FetchRepositoryDetailsResponse) (Repository, error)
+	GetRepoByGithubId(ctx context.Context, githubRepoId int) (Repository, error)
+	GetRepoByRepoId(ctx context.Context, repoId int) (Repository, error)
+	CreateRepository(ctx context.Context, repoGithubId int, ContributionRepoDetailsUrl string) (Repository, error)
+	FetchUsersContributedRepos(ctx context.Context, client *http.Client) ([]FetchUsersContributedReposResponse, error)
+	FetchUserContributionsInRepo(ctx context.Context, githubRepoId int) ([]Contribution, error)
+	CalculateLanguagePercentInRepo(ctx context.Context, repoLanguages RepoLanguages) ([]LanguagePercent, error)
 }
 
-func NewService(repositoryRepository repository.RepositoryRepository, appCfg config.AppConfig, httpClient *http.Client) Service {
+func NewService(repositoryRepository repository.RepositoryRepository, githubService github.Service) Service {
 	return &service{
 		repositoryRepository: repositoryRepository,
-		appCfg:               appCfg,
-		httpClient:           httpClient,
+		githubService:        githubService,
 	}
 }
 
-func (s *service) GetRepoByRepoId(ctx context.Context, repoGithubId int) (Repository, error) {
+func (s *service) GetRepoByGithubId(ctx context.Context, repoGithubId int) (Repository, error) {
 	repoDetails, err := s.repositoryRepository.GetRepoByGithubId(ctx, nil, repoGithubId)
 	if err != nil {
-		slog.Error("failed to get repository by github id")
+		slog.Error("failed to get repository by repo github id", "error", err)
 		return Repository{}, err
 	}
 
 	return Repository(repoDetails), nil
 }
 
-func (s *service) FetchRepositoryDetails(ctx context.Context, getUserRepoDetailsUrl string) (FetchRepositoryDetailsResponse, error) {
-	req, err := http.NewRequest("GET", getUserRepoDetailsUrl, nil)
+func (s *service) GetRepoByRepoId(ctx context.Context, repobId int) (Repository, error) {
+	repoDetails, err := s.repositoryRepository.GetRepoByRepoId(ctx, nil, repobId)
 	if err != nil {
-		slog.Error("error fetching user repositories details", "error", err)
-		return FetchRepositoryDetailsResponse{}, err
+		slog.Error("failed to get repository by repo id", "error", err)
+		return Repository{}, err
 	}
 
-	req.Header.Add("Authorization", s.appCfg.GithubPersonalAccessToken)
-
-	resp, err := s.httpClient.Do(req)
-	if err != nil {
-		slog.Error("error fetching user repositories details", "error", err)
-		return FetchRepositoryDetailsResponse{}, err
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		slog.Error("error freading body", "error", err)
-		return FetchRepositoryDetailsResponse{}, err
-	}
-
-	var repoDetails FetchRepositoryDetailsResponse
-	err = json.Unmarshal(body, &repoDetails)
-	if err != nil {
-		slog.Error("error unmarshalling fetch repository details body", "error", err)
-		return FetchRepositoryDetailsResponse{}, err
-	}
-
-	return repoDetails, nil
+	return Repository(repoDetails), nil
 }
 
-func (s *service) CreateRepository(ctx context.Context, repoGithubId int, repo FetchRepositoryDetailsResponse) (Repository, error) {
+func (s *service) CreateRepository(ctx context.Context, repoGithubId int, ContributionRepoDetailsUrl string) (Repository, error) {
+	repo, err := s.githubService.FetchRepositoryDetails(ctx, ContributionRepoDetailsUrl)
+	if err != nil {
+		slog.Error("error fetching user repositories details", "error", err)
+		return Repository{}, err
+	}
+
 	createRepo := Repository{
 		GithubRepoId:    repoGithubId,
 		RepoName:        repo.Name,
@@ -90,4 +75,73 @@ func (s *service) CreateRepository(ctx context.Context, repoGithubId int, repo F
 	}
 
 	return Repository(repositoryCreated), nil
+}
+
+func (s *service) FetchUsersContributedRepos(ctx context.Context, client *http.Client) ([]FetchUsersContributedReposResponse, error) {
+	usersContributedRepos, err := s.repositoryRepository.FetchUsersContributedRepos(ctx, nil)
+	if err != nil {
+		slog.Error("error fetching users conributed repos", "error", err)
+		return nil, err
+	}
+
+	fetchUsersContributedReposResponse := make([]FetchUsersContributedReposResponse, len(usersContributedRepos))
+
+	for i, usersContributedRepo := range usersContributedRepos {
+		fetchUsersContributedReposResponse[i].Repository = Repository(usersContributedRepo)
+
+		contributedRepoLanguages, err := s.githubService.FetchRepositoryLanguages(ctx, client, usersContributedRepo.LanguagesUrl)
+		if err != nil {
+			slog.Error("error fetching languages for repository", "error", err)
+			return nil, err
+		}
+
+		for language := range contributedRepoLanguages {
+			fetchUsersContributedReposResponse[i].Languages = append(fetchUsersContributedReposResponse[i].Languages, language)
+		}
+
+		userRepoTotalCoins, err := s.repositoryRepository.GetUserRepoTotalCoins(ctx, nil, usersContributedRepo.Id)
+		if err != nil {
+			slog.Error("error calculating total coins earned by user for the repository", "error", err)
+			return nil, err
+		}
+
+		fetchUsersContributedReposResponse[i].TotalCoinsEarned = userRepoTotalCoins
+	}
+
+	return fetchUsersContributedReposResponse, nil
+}
+
+func (s *service) FetchUserContributionsInRepo(ctx context.Context, githubRepoId int) ([]Contribution, error) {
+	userContributionsInRepo, err := s.repositoryRepository.FetchUserContributionsInRepo(ctx, nil, githubRepoId)
+	if err != nil {
+		slog.Error("error fetching users contribution in repository", "error", err)
+		return nil, err
+	}
+
+	serviceUserContributionsInRepo := make([]Contribution, len(userContributionsInRepo))
+	for i, c := range userContributionsInRepo {
+		serviceUserContributionsInRepo[i] = Contribution(c)
+	}
+
+	return serviceUserContributionsInRepo, nil
+}
+
+func (s *service) CalculateLanguagePercentInRepo(ctx context.Context, repoLanguages RepoLanguages) ([]LanguagePercent, error) {
+	var total int
+	for _, bytes := range repoLanguages {
+		total += bytes
+	}
+
+	var langPercent []LanguagePercent
+
+	for lang, bytes := range repoLanguages {
+		percentage := (float64(bytes) / float64(total)) * 100
+		langPercent = append(langPercent, LanguagePercent{
+			Name:       lang,
+			Bytes:      bytes,
+			Percentage: math.Round(percentage*10) / 10,
+		})
+	}
+
+	return langPercent, nil
 }
