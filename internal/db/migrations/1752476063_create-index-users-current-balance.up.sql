@@ -1,0 +1,1 @@
+CREATE INDEX idx_users_current_balance ON users(current_balance DESC);
