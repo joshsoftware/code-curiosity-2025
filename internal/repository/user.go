@@ -21,7 +21,7 @@ type UserRepository interface {
 	GetUserByGithubId(ctx context.Context, tx *sqlx.Tx, githubId int) (User, error)
 	CreateUser(ctx context.Context, tx *sqlx.Tx, userInfo CreateUserRequestBody) (User, error)
 	UpdateUserEmail(ctx context.Context, tx *sqlx.Tx, userId int, email string) error
-	MarkUserAsDeleted(ctx context.Context, tx *sqlx.Tx, userID int, deletedAt time.Time) (User, error)
+	MarkUserAsDeleted(ctx context.Context, tx *sqlx.Tx, userID int, deletedAt time.Time) error
 	AccountScheduledForDelete(ctx context.Context, tx *sqlx.Tx, userID int) error
 	DeleteUser(tx *sqlx.Tx) error
 	GetAllUsersGithubId(ctx context.Context, tx *sqlx.Tx) ([]int, error)
@@ -52,6 +52,8 @@ const (
 	RETURNING *`
 
 	updateEmailQuery = "UPDATE users SET email=$1, updated_at=$2 where id=$3"
+
+	markUserAsDeletedQuery = "UPDATE users SET is_deleted = TRUE, deleted_at=$1 WHERE id = $2"
 
 	getAllUsersGithubIdQuery = "SELECT github_id from users"
 
@@ -148,39 +150,16 @@ func (ur *userRepository) UpdateUserEmail(ctx context.Context, tx *sqlx.Tx, user
 	return nil
 }
 
-func (ur *userRepository) MarkUserAsDeleted(ctx context.Context, tx *sqlx.Tx, userID int, deletedAt time.Time) (User, error) {
+func (ur *userRepository) MarkUserAsDeleted(ctx context.Context, tx *sqlx.Tx, userID int, deletedAt time.Time) error {
 	executer := ur.BaseRepository.initiateQueryExecuter(tx)
-	_, err := executer.ExecContext(ctx, `UPDATE users SET is_deleted = TRUE, deleted_at=$1 WHERE id = $2`, deletedAt, userID)
+
+	_, err := executer.ExecContext(ctx, markUserAsDeletedQuery, deletedAt, userID)
 	if err != nil {
 		slog.Error("unable to mark user as deleted", "error", err)
-		return User{}, apperrors.ErrInternalServer
+		return apperrors.ErrInternalServer
 	}
-	var user User
-	err = executer.QueryRowContext(ctx, getUserByIdQuery, userID).Scan(
-		&user.Id,
-		&user.GithubId,
-		&user.GithubUsername,
-		&user.AvatarUrl,
-		&user.Email,
-		&user.CurrentActiveGoalId,
-		&user.CurrentBalance,
-		&user.IsBlocked,
-		&user.IsAdmin,
-		&user.Password,
-		&user.IsDeleted,
-		&user.DeletedAt,
-		&user.CreatedAt,
-		&user.UpdatedAt,
-	)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			slog.Error("user not found", "error", err)
-			return User{}, apperrors.ErrUserNotFound
-		}
-		slog.Error("error occurred while getting user by id", "error", err)
-		return User{}, apperrors.ErrInternalServer
-	}
-	return user, nil
+
+	return nil
 }
 
 func (ur *userRepository) AccountScheduledForDelete(ctx context.Context, tx *sqlx.Tx, userID int) error {

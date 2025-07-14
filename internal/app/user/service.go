@@ -19,7 +19,7 @@ type Service interface {
 	GetUserByGithubId(ctx context.Context, githubId int) (User, error)
 	CreateUser(ctx context.Context, userInfo CreateUserRequestBody) (User, error)
 	UpdateUserEmail(ctx context.Context, email string) error
-	SoftDeleteUser(ctx context.Context, userID int) (User, error)
+	SoftDeleteUser(ctx context.Context, userID int) error
 	RecoverAccountInGracePeriod(ctx context.Context, userID int) error
 	UpdateUserCurrentBalance(ctx context.Context, transaction Transaction) error
 	GetAllUsersRank(ctx context.Context) ([]LeaderboardUser, error)
@@ -81,14 +81,14 @@ func (s *service) UpdateUserEmail(ctx context.Context, email string) error {
 	return nil
 }
 
-func (s *service) SoftDeleteUser(ctx context.Context, userID int) (User, error) {
+func (s *service) SoftDeleteUser(ctx context.Context, userID int) error {
 	now := time.Now()
-	user, err := s.userRepository.MarkUserAsDeleted(ctx, nil, userID, now)
+	err := s.userRepository.MarkUserAsDeleted(ctx, nil, userID, now)
 	if err != nil {
 		slog.Error("unable to softdelete user", "error", err)
-		return User{}, apperrors.ErrInternalServer
+		return apperrors.ErrInternalServer
 	}
-	return User(user), nil
+	return nil
 }
 
 func (s *service) RecoverAccountInGracePeriod(ctx context.Context, userID int) error {

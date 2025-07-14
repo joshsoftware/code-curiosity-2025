@@ -19,7 +19,7 @@ func NewRouter(deps Dependencies) http.Handler {
 	router.HandleFunc("GET /api/v1/auth/user", middleware.Authentication(deps.AuthHandler.GetLoggedInUser, deps.AppCfg))
 
 	router.HandleFunc("PATCH /api/v1/user/email", middleware.Authentication(deps.UserHandler.UpdateUserEmail, deps.AppCfg))
-	router.HandleFunc("DELETE /api/user/delete", middleware.Authentication(deps.UserHandler.DeleteUser, deps.AppCfg))
+	router.HandleFunc("DELETE /api/v1/user/delete/{user_id}", middleware.Authentication(deps.UserHandler.SoftDeleteUser, deps.AppCfg))
 
 	router.HandleFunc("GET /api/v1/user/contributions/all", middleware.Authentication(deps.ContributionHandler.FetchUserContributions, deps.AppCfg))
 	router.HandleFunc("GET /api/v1/user/overview", middleware.Authentication(deps.ContributionHandler.ListMonthlyContributionSummary, deps.AppCfg))
