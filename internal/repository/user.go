@@ -22,8 +22,8 @@ type UserRepository interface {
 	CreateUser(ctx context.Context, tx *sqlx.Tx, userInfo CreateUserRequestBody) (User, error)
 	UpdateUserEmail(ctx context.Context, tx *sqlx.Tx, userId int, email string) error
 	MarkUserAsDeleted(ctx context.Context, tx *sqlx.Tx, userID int, deletedAt time.Time) error
-	AccountScheduledForDelete(ctx context.Context, tx *sqlx.Tx, userID int) error
-	DeleteUser(tx *sqlx.Tx) error
+	RecoverAccountInGracePeriod(ctx context.Context, tx *sqlx.Tx, userID int) error
+	HardDeleteUsers(ctx context.Context, tx *sqlx.Tx) error
 	GetAllUsersGithubId(ctx context.Context, tx *sqlx.Tx) ([]int, error)
 	UpdateUserCurrentBalance(ctx context.Context, tx *sqlx.Tx, user User) error
 	GetAllUsersRank(ctx context.Context, tx *sqlx.Tx) ([]LeaderboardUser, error)
@@ -53,7 +53,11 @@ const (
 
 	updateEmailQuery = "UPDATE users SET email=$1, updated_at=$2 where id=$3"
 
-	markUserAsDeletedQuery = "UPDATE users SET is_deleted = TRUE, deleted_at=$1 WHERE id = $2"
+	markUserAsDeletedQuery = "UPDATE users SET is_deleted = TRUE, deleted_at=$1 where id = $2"
+
+	recoverAccountInGracePeriodQuery = "UPDATE users SET is_deleted = false, deleted_at = NULL where id = $1"
+
+	hardDeleteUsersQuery = "DELETE FROM users WHERE is_deleted = TRUE AND deleted_at <= $1"
 
 	getAllUsersGithubIdQuery = "SELECT github_id from users"
 
@@ -162,41 +166,29 @@ func (ur *userRepository) MarkUserAsDeleted(ctx context.Context, tx *sqlx.Tx, us
 	return nil
 }
 
-func (ur *userRepository) AccountScheduledForDelete(ctx context.Context, tx *sqlx.Tx, userID int) error {
-	var deleteGracePeriod = 90 * 24 * time.Hour
-	user, err := ur.GetUserById(ctx, tx, userID)
+func (ur *userRepository) RecoverAccountInGracePeriod(ctx context.Context, tx *sqlx.Tx, userID int) error {
+	executer := ur.BaseRepository.initiateQueryExecuter(tx)
 
+	_, err := executer.ExecContext(ctx, recoverAccountInGracePeriodQuery, userID)
 	if err != nil {
-		slog.Error("unable to fetch user by ID ", "error", err)
+		slog.Error("unable to reverse the soft delete ", "error", err)
 		return apperrors.ErrInternalServer
 	}
 
-	if user.IsDeleted {
-		var dlt_at time.Time
-		if !user.DeletedAt.Valid {
-			return errors.New("invalid deletion state")
-		} else {
-			dlt_at = user.DeletedAt.Time
-		}
-
-		if time.Since(dlt_at) >= deleteGracePeriod {
-			slog.Error("user is permanentaly deleted ", "error", err)
-			return apperrors.ErrInternalServer
-		} else {
-			executer := ur.BaseRepository.initiateQueryExecuter(tx)
-			_, err := executer.ExecContext(ctx, `UPDATE users SET is_deleted = false, deleted_at = NULL WHERE id = $1`, userID)
-			slog.Error("unable to reverse the soft delete ", "error", err)
-			return apperrors.ErrInternalServer
-		}
-	}
 	return nil
 }
 
-func (ur *userRepository) DeleteUser(tx *sqlx.Tx) error {
-	threshold := time.Now().Add(-90 * 1 * time.Second)
+func (ur *userRepository) HardDeleteUsers(ctx context.Context, tx *sqlx.Tx) error {
 	executer := ur.BaseRepository.initiateQueryExecuter(tx)
-	ctx := context.Background()
-	_, err := executer.ExecContext(ctx, `DELETE FROM users WHERE is_deleted = TRUE AND deleted_at <= $1 `, threshold)
+
+	threshold := time.Now().Add(-90 * 1 * time.Second)
+
+	_, err := executer.ExecContext(ctx, hardDeleteUsersQuery, threshold)
+	if err != nil {
+		slog.Error("error deleting users that are soft deleted for more than three months", "error", err)
+		return apperrors.ErrInternalServer
+	}
+
 	return err
 }
 
@@ -251,3 +243,30 @@ func (ur *userRepository) GetCurrentUserRank(ctx context.Context, tx *sqlx.Tx, u
 
 	return currentUserRank, nil
 }
+
+// DELETE FROM leaderboard_hourly WHERE user_id = 1;
+// DELETE FROM badges WHERE user_id = 1;
+// DELETE FROM goal_contribution WHERE set_by_user_id = 1;
+// DELETE FROM contribution_score WHERE admin_id = 1;
+
+// WITH user_contributions AS (
+//   SELECT id FROM contributions WHERE user_id = 1
+// )
+
+// DELETE FROM transactions
+// WHERE contribution_id IN (SELECT id FROM user_contributions);
+
+// DELETE FROM transactions WHERE user_id = 1;
+
+// DELETE FROM summary WHERE user_id = 1;
+
+// DELETE FROM summary
+// WHERE contribution_id IN (SELECT id FROM user_contributions);
+
+// select id as idstodelete from repositories where id in (select repository_id as repos from contributions where user_id=1)
+
+// delete from repositories where id in idstodelete and id not in (select repository_id from contributions where user_id=1)
+
+// DELETE FROM contributions WHERE user_id = 1;
+
+// DELETE FROM users WHERE id = 1;

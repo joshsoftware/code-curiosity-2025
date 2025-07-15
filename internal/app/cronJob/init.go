@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/joshsoftware/code-curiosity-2025/internal/app/contribution"
+	"github.com/joshsoftware/code-curiosity-2025/internal/app/user"
 	"github.com/robfig/cron/v3"
 )
 
@@ -23,9 +24,10 @@ func NewCronSchedular() *CronSchedular {
 	}
 }
 
-func (c *CronSchedular) InitCronJobs(contributionService contribution.Service) {
+func (c *CronSchedular) InitCronJobs(contributionService contribution.Service, userService user.Service) {
 	jobs := []Job{
 		NewDailyJob(contributionService),
+		NewCleanupJob(userService),
 	}
 
 	for _, job := range jobs {

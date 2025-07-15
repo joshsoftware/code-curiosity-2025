@@ -19,7 +19,8 @@ type Service interface {
 	GetUserByGithubId(ctx context.Context, githubId int) (User, error)
 	CreateUser(ctx context.Context, userInfo CreateUserRequestBody) (User, error)
 	UpdateUserEmail(ctx context.Context, email string) error
-	SoftDeleteUser(ctx context.Context, userID int) error
+	SoftDeleteUser(ctx context.Context, userId int) error
+	HardDeleteUsers(ctx context.Context) error
 	RecoverAccountInGracePeriod(ctx context.Context, userID int) error
 	UpdateUserCurrentBalance(ctx context.Context, transaction Transaction) error
 	GetAllUsersRank(ctx context.Context) ([]LeaderboardUser, error)
@@ -91,8 +92,18 @@ func (s *service) SoftDeleteUser(ctx context.Context, userID int) error {
 	return nil
 }
 
+func (s *service) HardDeleteUsers(ctx context.Context) error {
+	err := s.userRepository.HardDeleteUsers(ctx, nil)
+	if err != nil {
+		slog.Error("error deleting users that are soft deleted for more than three months", "error", err)
+		return err
+	}
+
+	return nil
+}
+
 func (s *service) RecoverAccountInGracePeriod(ctx context.Context, userID int) error {
-	err := s.userRepository.AccountScheduledForDelete(ctx, nil, userID)
+	err := s.userRepository.RecoverAccountInGracePeriod(ctx, nil, userID)
 	if err != nil {
 		slog.Error("failed to recover account in grace period", "error", err)
 		return err

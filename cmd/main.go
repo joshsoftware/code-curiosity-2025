@@ -14,7 +14,6 @@ import (
 	"github.com/joshsoftware/code-curiosity-2025/internal/app"
 	"github.com/joshsoftware/code-curiosity-2025/internal/app/cronJob"
 	"github.com/joshsoftware/code-curiosity-2025/internal/config"
-	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/jobs"
 )
 
 func main() {
@@ -46,15 +45,12 @@ func main() {
 	router := app.NewRouter(dependencies)
 
 	newCronSchedular := cronJob.NewCronSchedular()
-	newCronSchedular.InitCronJobs(dependencies.ContributionService)
+	newCronSchedular.InitCronJobs(dependencies.ContributionService, dependencies.UserService)
 
 	server := http.Server{
 		Addr:    fmt.Sprintf(":%s", cfg.HTTPServer.Port),
 		Handler: router,
 	}
-
-	// backround job start
-	jobs.PermanentDeleteJob(db)
 
 	serverRunning := make(chan os.Signal, 1)
 
