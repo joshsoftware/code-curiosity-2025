@@ -1,0 +1,1 @@
+ALTER TABLE repositories ADD COLUMN contributors_url VARCHAR(255) DEFAULT '';
