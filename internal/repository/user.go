@@ -243,30 +243,3 @@ func (ur *userRepository) GetCurrentUserRank(ctx context.Context, tx *sqlx.Tx, u
 
 	return currentUserRank, nil
 }
-
-// DELETE FROM leaderboard_hourly WHERE user_id = 1;
-// DELETE FROM badges WHERE user_id = 1;
-// DELETE FROM goal_contribution WHERE set_by_user_id = 1;
-// DELETE FROM contribution_score WHERE admin_id = 1;
-
-// WITH user_contributions AS (
-//   SELECT id FROM contributions WHERE user_id = 1
-// )
-
-// DELETE FROM transactions
-// WHERE contribution_id IN (SELECT id FROM user_contributions);
-
-// DELETE FROM transactions WHERE user_id = 1;
-
-// DELETE FROM summary WHERE user_id = 1;
-
-// DELETE FROM summary
-// WHERE contribution_id IN (SELECT id FROM user_contributions);
-
-// select id as idstodelete from repositories where id in (select repository_id as repos from contributions where user_id=1)
-
-// delete from repositories where id in idstodelete and id not in (select repository_id from contributions where user_id=1)
-
-// DELETE FROM contributions WHERE user_id = 1;
-
-// DELETE FROM users WHERE id = 1;
