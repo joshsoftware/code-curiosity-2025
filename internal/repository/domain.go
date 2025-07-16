@@ -86,9 +86,9 @@ type LeaderboardUser struct {
 	Rank           int    `db:"rank"`
 }
 
-type ContributionTypeSummary struct {
-	ContributionType  string    `db:"contribution_type"`
-	ContributionCount int       `db:"contribution_count"`
-	TotalCoins        int       `db:"total_coins"`
-	Month             time.Time `db:"month"`
+type MonthlyContributionSummary struct {
+	Type       string    `db:"contribution_type"`
+	Count      int       `db:"contribution_count"`
+	TotalCoins int       `db:"total_coins"`
+	Month      time.Time `db:"month"`
 }

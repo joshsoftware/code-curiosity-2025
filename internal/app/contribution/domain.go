@@ -51,20 +51,20 @@ type ContributionScore struct {
 }
 
 type Transaction struct {
-	Id                int       `db:"id"`
-	UserId            int       `db:"user_id"`
-	ContributionId    int       `db:"contribution_id"`
-	IsRedeemed        bool      `db:"is_redeemed"`
-	IsGained          bool      `db:"is_gained"`
-	TransactedBalance int       `db:"transacted_balance"`
-	TransactedAt      time.Time `db:"transacted_at"`
-	CreatedAt         time.Time `db:"created_at"`
-	UpdatedAt         time.Time `db:"updated_at"`
+	Id                int
+	UserId            int
+	ContributionId    int
+	IsRedeemed        bool
+	IsGained          bool
+	TransactedBalance int
+	TransactedAt      time.Time
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
 }
 
-type ContributionTypeSummary struct {
-	ContributionType  string    `db:"contribution_type"`
-	ContributionCount int       `db:"contribution_count"`
-	TotalCoins        int       `db:"total_coins"`
-	Month             time.Time `db:"month"`
+type MonthlyContributionSummary struct {
+	Type       string
+	Count      int
+	TotalCoins int
+	Month      time.Time
 }

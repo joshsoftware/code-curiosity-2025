@@ -5,7 +5,11 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
+
+	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/apperrors"
 )
 
 func FormatIntSliceForQuery(ids []int) string {
@@ -42,4 +46,34 @@ func DoGet(httpClient *http.Client, url string, headers map[string]string) ([]by
 	}
 
 	return body, nil
+}
+
+func ValidateYearQueryParam(yearVal string) (int, error) {
+	year, err := strconv.Atoi(yearVal)
+	if err != nil {
+		slog.Error("error converting year string value to int")
+		return 0, err
+	}
+
+	if year < 2025 || year > time.Now().Year() {
+		slog.Error("invalid year value")
+		return 0, apperrors.ErrInvalidQueryParams
+	}
+
+	return year, nil
+}
+
+func ValidateMonthQueryParam(monthVal string) (int, error) {
+	month, err := strconv.Atoi(monthVal)
+	if err != nil {
+		slog.Error("error converting month string value to int")
+		return 0, err
+	}
+
+	if month < 0 || month > 12 {
+		slog.Error("invalid month value")
+		return 0, apperrors.ErrInvalidQueryParams
+	}
+
+	return month, nil
 }

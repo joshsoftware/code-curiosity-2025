@@ -1,2 +1,2 @@
 ALTER TABLE transactions
-ALTER COLUMN contribution_id SET NOT NULL DEFAULT 0;
+ALTER COLUMN contribution_id SET NOT NULL;
