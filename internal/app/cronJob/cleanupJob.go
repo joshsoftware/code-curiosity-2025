@@ -19,7 +19,7 @@ func NewCleanupJob(userService user.Service) *CleanupJob {
 }
 
 func (c *CleanupJob) Schedule(s *CronSchedular) error {
-	_, err := s.cron.AddFunc("15 13 * * *", func() { c.Execute(context.Background(), c.run) })
+	_, err := s.cron.AddFunc("00 18 * * *", func() { c.Execute(context.Background(), c.run) })
 	if err != nil {
 		return err
 	}
