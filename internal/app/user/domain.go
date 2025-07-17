@@ -53,3 +53,7 @@ type LeaderboardUser struct {
 	CurrentBalance int    `db:"current_balance"`
 	Rank           int    `db:"rank"`
 }
+
+type GoalLevel struct {
+	Level string `json:"level"`
+}

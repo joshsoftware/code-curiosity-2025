@@ -51,6 +51,10 @@ var (
 
 	ErrTransactionCreationFailed = errors.New("error failed to create transaction")
 	ErrTransactionNotFound       = errors.New("error transaction for the contribution id does not exist")
+
+	ErrFetchingGoals                  = errors.New("error fetching goal levels ")
+	ErrGoalNotFound                   = errors.New("goal not found")
+	ErrCustomGoalTargetCreationFailed = errors.New("failed to create targets for custom goal level")
 )
 
 func MapError(err error) (statusCode int, errMessage string) {
@@ -61,7 +65,7 @@ func MapError(err error) (statusCode int, errMessage string) {
 		return http.StatusUnauthorized, err.Error()
 	case ErrAccessForbidden:
 		return http.StatusForbidden, err.Error()
-	case ErrUserNotFound, ErrRepoNotFound, ErrContributionNotFound:
+	case ErrUserNotFound, ErrRepoNotFound, ErrContributionNotFound, ErrGoalNotFound:
 		return http.StatusNotFound, err.Error()
 	case ErrInvalidToken:
 		return http.StatusUnprocessableEntity, err.Error()

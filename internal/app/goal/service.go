@@ -1,0 +1,103 @@
+package goal
+
+import (
+	"context"
+	"log/slog"
+
+	"github.com/joshsoftware/code-curiosity-2025/internal/repository"
+)
+
+type service struct {
+	goalRepository         repository.GoalRepository
+	contributionRepository repository.ContributionRepository
+}
+
+type Service interface {
+	ListGoalLevels(ctx context.Context) ([]Goal, error)
+	GetGoalIdByGoalLevel(ctx context.Context, level string) (int, error)
+	ListGoalLevelTargetDetail(ctx context.Context, userId int) ([]GoalContribution, error)
+	CreateCustomGoalLevelTarget(ctx context.Context, userID int, customGoalLevelTarget []CustomGoalLevelTarget) ([]GoalContribution, error)
+}
+
+func NewService(goalRepository repository.GoalRepository, contributionRepository repository.ContributionRepository) Service {
+	return &service{
+		goalRepository:         goalRepository,
+		contributionRepository: contributionRepository,
+	}
+}
+
+func (s *service) ListGoalLevels(ctx context.Context) ([]Goal, error) {
+	goals, err := s.goalRepository.ListGoalLevels(ctx, nil)
+	if err != nil {
+		slog.Error("error fetching goal levels", "error", err)
+		return nil, err
+	}
+
+	serviceGoals := make([]Goal, len(goals))
+
+	for i, g := range goals {
+		serviceGoals[i] = Goal(g)
+	}
+
+	return serviceGoals, nil
+}
+
+func (s *service) GetGoalIdByGoalLevel(ctx context.Context, level string) (int, error) {
+	goalId, err := s.goalRepository.GetGoalIdByGoalLevel(ctx, nil, level)
+
+	if err != nil {
+		slog.Error("failed to get goal id by goal level", "error", err)
+		return 0, err
+	}
+
+	return goalId, err
+}
+
+func (s *service) ListGoalLevelTargetDetail(ctx context.Context, userId int) ([]GoalContribution, error) {
+	goalLevelTargets, err := s.goalRepository.ListUserGoalLevelTargets(ctx, nil, userId)
+	if err != nil {
+		slog.Error("error fetching goal level targets", "error", err)
+		return nil, err
+	}
+
+	serviceGoalLevelTargets := make([]GoalContribution, len(goalLevelTargets))
+	for i, g := range goalLevelTargets {
+		serviceGoalLevelTargets[i] = GoalContribution(g)
+	}
+
+	return serviceGoalLevelTargets, nil
+}
+
+func (s *service) CreateCustomGoalLevelTarget(ctx context.Context, userID int, customGoalLevelTarget []CustomGoalLevelTarget) ([]GoalContribution, error) {
+	customGoalLevelId, err := s.GetGoalIdByGoalLevel(ctx, "Custom")
+	if err != nil {
+		slog.Error("error fetching custom goal level id", "error", err)
+		return nil, err
+	}
+	var goalContributions []GoalContribution
+
+	goalContributionInfo := make([]GoalContribution, len(customGoalLevelTarget))
+	for i, c := range customGoalLevelTarget {
+		goalContributionInfo[i].GoalId = customGoalLevelId
+
+		contributionScoreDetails, err := s.contributionRepository.GetContributionScoreDetailsByContributionType(ctx, nil, c.ContributionType)
+		if err != nil {
+			slog.Error("error fetching contribution score details by type", "error", err)
+			return nil, err
+		}
+
+		goalContributionInfo[i].ContributionScoreId = contributionScoreDetails.Id
+		goalContributionInfo[i].TargetCount = c.Target
+		goalContributionInfo[i].SetByUserId = userID
+
+		goalContribution, err := s.goalRepository.CreateCustomGoalLevelTarget(ctx, nil, repository.GoalContribution(goalContributionInfo[i]))
+		if err != nil {
+			slog.Error("error creating custom goal level target", "error", err)
+			return nil, err
+		}
+
+		goalContributions = append(goalContributions, GoalContribution(goalContribution))
+	}
+
+	return goalContributions, nil
+}
