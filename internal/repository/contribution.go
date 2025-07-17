@@ -23,6 +23,7 @@ type ContributionRepository interface {
 	GetContributionByGithubEventId(ctx context.Context, tx *sqlx.Tx, githubEventId string) (Contribution, error)
 	GetAllContributionTypes(ctx context.Context, tx *sqlx.Tx) ([]ContributionScore, error)
 	ListMonthlyContributionSummary(ctx context.Context, tx *sqlx.Tx, year int, month int, userId int) ([]MonthlyContributionSummary, error)
+	GetContributionTypeByContributionScoreId(ctx context.Context, tx *sqlx.Tx, contributionScoreId int) (string, error)
 }
 
 func NewContributionRepository(db *sqlx.DB) ContributionRepository {
@@ -64,6 +65,8 @@ const (
   	AND DATE_TRUNC('month', contributed_at) = MAKE_DATE($2, $3, 1)::timestamptz
 	GROUP BY
   	month, contribution_type;`
+
+	getContributionTypeByContributionScoreIdQuery = `SELECT contribution_type from contribution_score where id=$1`
 )
 
 func (cr *contributionRepository) CreateContribution(ctx context.Context, tx *sqlx.Tx, contributionInfo Contribution) (Contribution, error) {
@@ -161,11 +164,24 @@ func (cr *contributionRepository) ListMonthlyContributionSummary(ctx context.Con
 	executer := cr.BaseRepository.initiateQueryExecuter(tx)
 
 	var contributionTypeSummary []MonthlyContributionSummary
-	err := executer.SelectContext(ctx, &contributionTypeSummary, getMonthlyContributionSummaryQuery, userId, month)
+	err := executer.SelectContext(ctx, &contributionTypeSummary, getMonthlyContributionSummaryQuery, userId, year, month)
 	if err != nil {
 		slog.Error("error fetching monthly contribution summary for user", "error", err)
 		return nil, apperrors.ErrInternalServer
 	}
 
 	return contributionTypeSummary, nil
+}
+
+func (cr *contributionRepository) GetContributionTypeByContributionScoreId(ctx context.Context, tx *sqlx.Tx, contributionScoreId int) (string, error) {
+	executer := cr.BaseRepository.initiateQueryExecuter(tx)
+
+	var contributionType string
+	err := executer.GetContext(ctx, &contributionType, getContributionTypeByContributionScoreIdQuery, contributionScoreId)
+	if err != nil {
+		slog.Error("error occured while getting contribution type by contribution score id", "error", err)
+		return contributionType, err
+	}
+
+	return contributionType, nil
 }

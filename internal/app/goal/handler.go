@@ -18,6 +18,7 @@ type Handler interface {
 	ListGoalLevels(w http.ResponseWriter, r *http.Request)
 	ListGoalLevelTargets(w http.ResponseWriter, r *http.Request)
 	CreateCustomGoalLevelTarget(w http.ResponseWriter, r *http.Request)
+	ListGoalLevelAchievedTarget(w http.ResponseWriter, r *http.Request)
 }
 
 func NewHandler(goalService Service) Handler {
@@ -91,4 +92,26 @@ func (h *handler) CreateCustomGoalLevelTarget(w http.ResponseWriter, r *http.Req
 	}
 
 	response.WriteJson(w, http.StatusOK, "custom goal level targets created successfully", createdCustomGoalLevelTargets)
+}
+
+func (h *handler) ListGoalLevelAchievedTarget(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	userIdCtxVal := ctx.Value(middleware.UserIdKey)
+	userId, ok := userIdCtxVal.(int)
+	if !ok {
+		slog.Error("error obtaining user id from context")
+		status, errorMessage := apperrors.MapError(apperrors.ErrContextValue)
+		response.WriteJson(w, status, errorMessage, nil)
+		return
+	}
+
+	goalLevelAchievedTarget, err := h.goalService.ListGoalLevelAchievedTarget(ctx, userId)
+	if err != nil {
+		slog.Error("error failed to list goal level achieved targets", "error", err)
+		response.WriteJson(w, http.StatusBadRequest, err.Error(), nil)
+		return
+	}
+
+	response.WriteJson(w, http.StatusOK, "goal level achieved targets fetched successfully", goalLevelAchievedTarget)
 }

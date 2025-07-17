@@ -36,6 +36,7 @@ func NewRouter(deps Dependencies) http.Handler {
 	router.HandleFunc("GET /api/v1/user/goal/level", middleware.Authentication(deps.GoalHandler.ListGoalLevels, deps.AppCfg))
 	router.HandleFunc("GET /api/v1/user/goal/level/targets", middleware.Authentication(deps.GoalHandler.ListGoalLevelTargets, deps.AppCfg))
 	router.HandleFunc("POST /api/v1/user/goal/level/custom/targets", middleware.Authentication(deps.GoalHandler.CreateCustomGoalLevelTarget, deps.AppCfg))
+	router.HandleFunc("GET /api/v1/user/goal/level/targets/achieved", middleware.Authentication(deps.GoalHandler.ListGoalLevelAchievedTarget, deps.AppCfg))
 
 	return middleware.CorsMiddleware(router, deps.AppCfg)
 }

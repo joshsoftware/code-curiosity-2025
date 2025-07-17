@@ -2,7 +2,9 @@ package goal
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/joshsoftware/code-curiosity-2025/internal/repository"
 )
@@ -16,7 +18,8 @@ type Service interface {
 	ListGoalLevels(ctx context.Context) ([]Goal, error)
 	GetGoalIdByGoalLevel(ctx context.Context, level string) (int, error)
 	ListGoalLevelTargetDetail(ctx context.Context, userId int) ([]GoalContribution, error)
-	CreateCustomGoalLevelTarget(ctx context.Context, userID int, customGoalLevelTarget []CustomGoalLevelTarget) ([]GoalContribution, error)
+	CreateCustomGoalLevelTarget(ctx context.Context, userId int, customGoalLevelTarget []CustomGoalLevelTarget) ([]GoalContribution, error)
+	ListGoalLevelAchievedTarget(ctx context.Context, userId int) (map[string]int, error)
 }
 
 func NewService(goalRepository repository.GoalRepository, contributionRepository repository.ContributionRepository) Service {
@@ -100,4 +103,50 @@ func (s *service) CreateCustomGoalLevelTarget(ctx context.Context, userID int, c
 	}
 
 	return goalContributions, nil
+}
+
+func (s *service) ListGoalLevelAchievedTarget(ctx context.Context, userId int) (map[string]int, error) {
+	goalLevelSetTargets, err := s.goalRepository.ListUserGoalLevelTargets(ctx, nil, userId)
+	if err != nil {
+		slog.Error("error fetching goal level targets", "error", err)
+		return nil, err
+	}
+
+	contributionTypes := make([]CustomGoalLevelTarget, len(goalLevelSetTargets))
+	for i, g := range goalLevelSetTargets {
+		contributionTypes[i].ContributionType, err = s.contributionRepository.GetContributionTypeByContributionScoreId(ctx, nil, g.ContributionScoreId)
+		if err != nil {
+			slog.Error("error fetching contribution type by contribution score id", "error", err)
+			return nil, err
+		}
+
+		contributionTypes[i].Target = g.TargetCount
+	}
+
+	year := int(time.Now().Year())
+	month := int(time.Now().Month())
+	monthlyContributionCount, err := s.contributionRepository.ListMonthlyContributionSummary(ctx, nil, year, month, userId)
+	if err != nil {
+		slog.Error("error fetching monthly contribution count", "error", err)
+		return nil, err
+	}
+
+	contributionsAchievedTarget := make(map[string]int, len(monthlyContributionCount))
+
+	for _, m := range monthlyContributionCount {
+		contributionsAchievedTarget[m.Type] = m.Count
+	}
+
+	var completedTarget int
+	for _, c := range contributionTypes {
+		if c.Target == contributionsAchievedTarget[c.ContributionType] {
+			completedTarget += 1
+		}
+	}
+
+	if completedTarget == len(goalLevelSetTargets) {
+		fmt.Println("assign badge")
+	}
+
+	return contributionsAchievedTarget, nil
 }
