@@ -29,11 +29,11 @@ func NewGoalRepository(db *sqlx.DB) GoalRepository {
 }
 
 const (
-	getGoalLevelQuery = "SELECT * from goal;"
+	listGoalLevelQuery = "SELECT * from goal;"
 
-	fetchGoalIdByGoalNameQuery = "SELECT id from goal where level=$1"
+	getGoalIdByGoalLevelQuery = "SELECT id from goal where level=$1"
 
-	getGoalContributionDetailQuery = `
+	listUserGoalLevelTargetsQuery = `
 	SELECT * from goal_contribution 
 	where goal_id 
 	IN 
@@ -56,7 +56,7 @@ func (gr *goalRepository) ListGoalLevels(ctx context.Context, tx *sqlx.Tx) ([]Go
 	executer := gr.BaseRepository.initiateQueryExecuter(tx)
 
 	var goals []Goal
-	err := executer.SelectContext(ctx, &goals, getGoalLevelQuery)
+	err := executer.SelectContext(ctx, &goals, listGoalLevelQuery)
 	if err != nil {
 		slog.Error("error fetching goal levels", "error", err)
 		return nil, apperrors.ErrFetchingGoals
@@ -69,7 +69,7 @@ func (gr *goalRepository) GetGoalIdByGoalLevel(ctx context.Context, tx *sqlx.Tx,
 	executer := gr.BaseRepository.initiateQueryExecuter(tx)
 
 	var goalId int
-	err := executer.GetContext(ctx, &goalId, fetchGoalIdByGoalNameQuery, level)
+	err := executer.GetContext(ctx, &goalId, getGoalIdByGoalLevelQuery, level)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			slog.Error("error goal not found", "error", err)
@@ -87,7 +87,7 @@ func (gr *goalRepository) ListUserGoalLevelTargets(ctx context.Context, tx *sqlx
 	executer := gr.BaseRepository.initiateQueryExecuter(tx)
 
 	var goalLevelTargets []GoalContribution
-	err := executer.SelectContext(ctx, &goalLevelTargets, getGoalContributionDetailQuery, userId)
+	err := executer.SelectContext(ctx, &goalLevelTargets, listUserGoalLevelTargetsQuery, userId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			slog.Error("error goal not found", "error", err)
