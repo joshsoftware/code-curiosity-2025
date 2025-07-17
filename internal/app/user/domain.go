@@ -35,23 +35,23 @@ type Email struct {
 }
 
 type Transaction struct {
-	Id                int       `db:"id"`
-	UserId            int       `db:"user_id"`
-	ContributionId    int       `db:"contribution_id"`
-	IsRedeemed        bool      `db:"is_redeemed"`
-	IsGained          bool      `db:"is_gained"`
-	TransactedBalance int       `db:"transacted_balance"`
-	TransactedAt      time.Time `db:"transacted_at"`
-	CreatedAt         time.Time `db:"created_at"`
-	UpdatedAt         time.Time `db:"updated_at"`
+	Id                int
+	UserId            int
+	ContributionId    int
+	IsRedeemed        bool
+	IsGained          bool
+	TransactedBalance int
+	TransactedAt      time.Time
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
 }
 
 type LeaderboardUser struct {
-	Id             int    `db:"id"`
-	GithubUsername string `db:"github_username"`
-	AvatarUrl      string `db:"avatar_url"`
-	CurrentBalance int    `db:"current_balance"`
-	Rank           int    `db:"rank"`
+	Id             int
+	GithubUsername string
+	AvatarUrl      string
+	CurrentBalance int
+	Rank           int
 }
 
 type GoalLevel struct {
