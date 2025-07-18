@@ -110,3 +110,12 @@ type GoalContribution struct {
 	CreatedAt           time.Time `db:"created_at"`
 	UpdatedAt           time.Time `db:"updated_at"`
 }
+
+type Badge struct {
+	Id        int       `db:"id"`
+	UserId    int       `db:"user_id"`
+	BadgeType string    `db:"badge_type"`
+	EarnedAt  time.Time `db:"earned_at"`
+	CreatedAt time.Time `db:"created_at"`
+	UpdatedAt time.Time `db:"updated_at"`
+}

@@ -55,6 +55,8 @@ var (
 	ErrFetchingGoals                  = errors.New("error fetching goal levels ")
 	ErrGoalNotFound                   = errors.New("goal not found")
 	ErrCustomGoalTargetCreationFailed = errors.New("failed to create targets for custom goal level")
+
+	ErrBadgeCreationFailed = errors.New("failed to create badge for user")
 )
 
 func MapError(err error) (statusCode int, errMessage string) {

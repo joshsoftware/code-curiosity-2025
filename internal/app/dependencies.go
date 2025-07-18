@@ -5,6 +5,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/joshsoftware/code-curiosity-2025/internal/app/auth"
+	"github.com/joshsoftware/code-curiosity-2025/internal/app/badge"
 	"github.com/joshsoftware/code-curiosity-2025/internal/app/bigquery"
 	"github.com/joshsoftware/code-curiosity-2025/internal/app/contribution"
 	"github.com/joshsoftware/code-curiosity-2025/internal/app/github"
@@ -25,18 +26,21 @@ type Dependencies struct {
 	ContributionHandler contribution.Handler
 	RepositoryHandler   repoService.Handler
 	GoalHandler         goal.Handler
+	BadgeHandler        badge.Handler
 	AppCfg              config.AppConfig
 	Client              config.Bigquery
 }
 
 func InitDependencies(db *sqlx.DB, appCfg config.AppConfig, client config.Bigquery, httpClient *http.Client) Dependencies {
+	badgeRepository := repository.NewBadgeRepository(db)
 	goalRepository := repository.NewGoalRepository(db)
 	userRepository := repository.NewUserRepository(db)
 	contributionRepository := repository.NewContributionRepository(db)
 	repositoryRepository := repository.NewRepositoryRepository(db)
 	transactionRepository := repository.NewTransactionRepository(db)
 
-	goalService := goal.NewService(goalRepository, contributionRepository)
+	badgeService := badge.NewService(badgeRepository)
+	goalService := goal.NewService(goalRepository, contributionRepository, badgeService)
 	userService := user.NewService(userRepository, goalService)
 	authService := auth.NewService(userService, appCfg)
 	bigqueryService := bigquery.NewService(client, userRepository)
@@ -50,6 +54,7 @@ func InitDependencies(db *sqlx.DB, appCfg config.AppConfig, client config.Bigque
 	repositoryHandler := repoService.NewHandler(repositoryService, githubService)
 	contributionHandler := contribution.NewHandler(contributionService)
 	goalHandler := goal.NewHandler(goalService)
+	badgeHandler := badge.NewHandler(badgeService)
 
 	return Dependencies{
 		ContributionService: contributionService,
@@ -59,6 +64,7 @@ func InitDependencies(db *sqlx.DB, appCfg config.AppConfig, client config.Bigque
 		RepositoryHandler:   repositoryHandler,
 		ContributionHandler: contributionHandler,
 		GoalHandler:         goalHandler,
+		BadgeHandler:        badgeHandler,
 		AppCfg:              appCfg,
 		Client:              client,
 	}

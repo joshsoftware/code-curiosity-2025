@@ -2,16 +2,17 @@ package goal
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"time"
 
+	"github.com/joshsoftware/code-curiosity-2025/internal/app/badge"
 	"github.com/joshsoftware/code-curiosity-2025/internal/repository"
 )
 
 type service struct {
 	goalRepository         repository.GoalRepository
 	contributionRepository repository.ContributionRepository
+	badgeService           badge.Service
 }
 
 type Service interface {
@@ -22,10 +23,11 @@ type Service interface {
 	ListGoalLevelAchievedTarget(ctx context.Context, userId int) (map[string]int, error)
 }
 
-func NewService(goalRepository repository.GoalRepository, contributionRepository repository.ContributionRepository) Service {
+func NewService(goalRepository repository.GoalRepository, contributionRepository repository.ContributionRepository, badgeService badge.Service) Service {
 	return &service{
 		goalRepository:         goalRepository,
 		contributionRepository: contributionRepository,
+		badgeService:           badgeService,
 	}
 }
 
@@ -145,7 +147,17 @@ func (s *service) ListGoalLevelAchievedTarget(ctx context.Context, userId int) (
 	}
 
 	if completedTarget == len(goalLevelSetTargets) {
-		fmt.Println("assign badge")
+		userGoalLevel, err := s.goalRepository.GetUserActiveGoalLevel(ctx, nil, userId)
+		if err != nil {
+			slog.Error("error fetching user active gaol level", "error", err)
+			return nil, err
+		}
+
+		_, err = s.badgeService.HandleBadgeCreation(ctx, userId, userGoalLevel)
+		if err != nil {
+			slog.Error("error handling user badge creation", "error", err)
+			return nil, err
+		}
 	}
 
 	return contributionsAchievedTarget, nil

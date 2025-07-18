@@ -20,6 +20,7 @@ type GoalRepository interface {
 	GetGoalIdByGoalLevel(ctx context.Context, tx *sqlx.Tx, level string) (int, error)
 	ListUserGoalLevelTargets(ctx context.Context, tx *sqlx.Tx, userId int) ([]GoalContribution, error)
 	CreateCustomGoalLevelTarget(ctx context.Context, tx *sqlx.Tx, customGoalContributionInfo GoalContribution) (GoalContribution, error)
+	GetUserActiveGoalLevel(ctx context.Context, tx *sqlx.Tx, userId int) (string, error)
 }
 
 func NewGoalRepository(db *sqlx.DB) GoalRepository {
@@ -50,6 +51,11 @@ const (
 	VALUES 
 	($1, $2, $3, $4, $5)
 	RETURNING *`
+
+	getUserActiveGoalLevelQuery = `
+	SELECT level from goal 
+	where id IN 
+	(SELECT current_active_goal_id from users where id=$1)`
 )
 
 func (gr *goalRepository) ListGoalLevels(ctx context.Context, tx *sqlx.Tx) ([]Goal, error) {
@@ -117,4 +123,17 @@ func (gr *goalRepository) CreateCustomGoalLevelTarget(ctx context.Context, tx *s
 	}
 
 	return customGoalContribution, nil
+}
+
+func (gr *goalRepository) GetUserActiveGoalLevel(ctx context.Context, tx *sqlx.Tx, userId int) (string, error) {
+	executer := gr.BaseRepository.initiateQueryExecuter(tx)
+
+	var userActiveGoalLevel string
+	err := executer.GetContext(ctx, &userActiveGoalLevel, getUserActiveGoalLevelQuery, userId)
+	if err != nil {
+		slog.Error("error getting users current active goal level name", "error", err)
+		return userActiveGoalLevel, apperrors.ErrInternalServer
+	}
+
+	return userActiveGoalLevel, nil
 }
