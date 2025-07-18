@@ -18,8 +18,8 @@ type User struct {
 	Password            string        `json:"password"`
 	IsDeleted           bool          `json:"is_deleted"`
 	DeletedAt           sql.NullTime  `json:"deleted_at"`
-	CreatedAt           time.Time        `json:"created_at"`
-	UpdatedAt           time.Time        `json:"updated_at"`
+	CreatedAt           time.Time     `json:"created_at"`
+	UpdatedAt           time.Time     `json:"updated_at"`
 }
 
 type CreateUserRequestBody struct {
@@ -32,4 +32,28 @@ type CreateUserRequestBody struct {
 
 type Email struct {
 	Email string `json:"email"`
+}
+
+type Transaction struct {
+	Id                int
+	UserId            int
+	ContributionId    int
+	IsRedeemed        bool
+	IsGained          bool
+	TransactedBalance int
+	TransactedAt      time.Time
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
+}
+
+type LeaderboardUser struct {
+	Id             int
+	GithubUsername string
+	AvatarUrl      string
+	CurrentBalance int
+	Rank           int
+}
+
+type GoalLevel struct {
+	Level string `json:"level"`
 }

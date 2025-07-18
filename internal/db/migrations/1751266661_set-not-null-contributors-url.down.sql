@@ -1,0 +1,1 @@
+ALTER TABLE repositories ALTER COLUMN contributors_url DROP NOT NULL;
