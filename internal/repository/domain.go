@@ -92,3 +92,21 @@ type MonthlyContributionSummary struct {
 	TotalCoins int       `db:"total_coins"`
 	Month      time.Time `db:"month"`
 }
+
+type Goal struct {
+	Id        int       `db:"id"`
+	Level     string    `db:"level"`
+	CreatedAt time.Time `db:"created_at"`
+	UpdatedAt time.Time `db:"updated_at"`
+}
+
+type GoalContribution struct {
+	Id                  int       `db:"id"`
+	GoalId              int       `db:"goal_id"`
+	ContributionScoreId int       `db:"contribution_score_id"`
+	TargetCount         int       `db:"target_count"`
+	IsCustom            bool      `db:"is_custom"`
+	SetByUserId         int       `db:"set_by_user_id"`
+	CreatedAt           time.Time `db:"created_at"`
+	UpdatedAt           time.Time `db:"updated_at"`
+}

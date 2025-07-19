@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/joshsoftware/code-curiosity-2025/internal/app/goal"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/apperrors"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/middleware"
 	"github.com/joshsoftware/code-curiosity-2025/internal/repository"
@@ -12,6 +13,7 @@ import (
 
 type service struct {
 	userRepository repository.UserRepository
+	goalService    goal.Service
 }
 
 type Service interface {
@@ -25,11 +27,13 @@ type Service interface {
 	UpdateUserCurrentBalance(ctx context.Context, transaction Transaction) error
 	GetAllUsersRank(ctx context.Context) ([]LeaderboardUser, error)
 	GetCurrentUserRank(ctx context.Context, userId int) (LeaderboardUser, error)
+	UpdateCurrentActiveGoalId(ctx context.Context, userId int, level string) (int, error)
 }
 
-func NewService(userRepository repository.UserRepository) Service {
+func NewService(userRepository repository.UserRepository, goalService goal.Service) Service {
 	return &service{
 		userRepository: userRepository,
+		goalService:    goalService,
 	}
 }
 
@@ -157,4 +161,22 @@ func (s *service) GetCurrentUserRank(ctx context.Context, userId int) (Leaderboa
 	}
 
 	return LeaderboardUser(currentUserRank), nil
+}
+
+func (s *service) UpdateCurrentActiveGoalId(ctx context.Context, userId int, level string) (int, error) {
+
+	goalId, err := s.goalService.GetGoalIdByGoalLevel(ctx, level)
+
+	if err != nil {
+		slog.Error("error occured while fetching goal id by goal level")
+		return 0, err
+	}
+
+	goalId, err = s.userRepository.UpdateCurrentActiveGoalId(ctx, nil, userId, goalId)
+
+	if err != nil {
+		slog.Error("failed to update current active goal id", "error", err)
+	}
+
+	return goalId, err
 }

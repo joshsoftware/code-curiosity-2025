@@ -19,6 +19,7 @@ type Handler interface {
 	SoftDeleteUser(w http.ResponseWriter, r *http.Request)
 	ListUserRanks(w http.ResponseWriter, r *http.Request)
 	GetCurrentUserRank(w http.ResponseWriter, r *http.Request)
+	UpdateCurrentActiveGoalId(w http.ResponseWriter, r *http.Request)
 }
 
 func NewHandler(userService Service) Handler {
@@ -109,4 +110,35 @@ func (h *handler) GetCurrentUserRank(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.WriteJson(w, http.StatusOK, "current user rank fetched successfully", currentUserRank)
+}
+
+func (h *handler) UpdateCurrentActiveGoalId(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	userIdCtxVal := ctx.Value(middleware.UserIdKey)
+	userId, ok := userIdCtxVal.(int)
+	if !ok {
+		slog.Error("error obtaining user id from context")
+		status, errorMessage := apperrors.MapError(apperrors.ErrContextValue)
+		response.WriteJson(w, status, errorMessage, nil)
+		return
+	}
+
+	var goal GoalLevel
+	err := json.NewDecoder(r.Body).Decode(&goal)
+	if err != nil {
+		slog.Error(apperrors.ErrFailedMarshal.Error(), "error", err)
+		response.WriteJson(w, http.StatusBadRequest, apperrors.ErrInvalidRequestBody.Error(), nil)
+		return
+	}
+
+	goalId, err := h.userService.UpdateCurrentActiveGoalId(ctx, userId, goal.Level)
+	if err != nil {
+		slog.Error("failed to update current active goal id", "error", err)
+		status, errMsg := apperrors.MapError(err)
+		response.WriteJson(w, status, errMsg, nil)
+		return
+	}
+
+	response.WriteJson(w, http.StatusOK, "Goal updated successfully", goalId)
 }

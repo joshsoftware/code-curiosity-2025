@@ -28,6 +28,7 @@ type UserRepository interface {
 	UpdateUserCurrentBalance(ctx context.Context, tx *sqlx.Tx, user User) error
 	GetAllUsersRank(ctx context.Context, tx *sqlx.Tx) ([]LeaderboardUser, error)
 	GetCurrentUserRank(ctx context.Context, tx *sqlx.Tx, userId int) (LeaderboardUser, error)
+	UpdateCurrentActiveGoalId(ctx context.Context, tx *sqlx.Tx, userId int, goalId int) (int, error)
 }
 
 func NewUserRepository(db *sqlx.DB) UserRepository {
@@ -87,6 +88,8 @@ const (
 	) 
 	ranked_users
 	WHERE id = $1;`
+
+	updateCurrentActiveGoalIdQuery = "UPDATE users SET current_active_goal_id=$1 where id=$2"
 )
 
 func (ur *userRepository) GetUserById(ctx context.Context, tx *sqlx.Tx, userId int) (User, error) {
@@ -242,4 +245,16 @@ func (ur *userRepository) GetCurrentUserRank(ctx context.Context, tx *sqlx.Tx, u
 	}
 
 	return currentUserRank, nil
+}
+
+func (ur *userRepository) UpdateCurrentActiveGoalId(ctx context.Context, tx *sqlx.Tx, userId int, goalId int) (int, error) {
+	executer := ur.BaseRepository.initiateQueryExecuter(tx)
+
+	_, err := executer.ExecContext(ctx, updateCurrentActiveGoalIdQuery, goalId, userId)
+	if err != nil {
+		slog.Error("failed to update current active goal id", "error", err)
+		return 0, apperrors.ErrInternalServer
+	}
+
+	return goalId, nil
 }

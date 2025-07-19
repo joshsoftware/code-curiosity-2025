@@ -8,6 +8,7 @@ import (
 	"github.com/joshsoftware/code-curiosity-2025/internal/app/bigquery"
 	"github.com/joshsoftware/code-curiosity-2025/internal/app/contribution"
 	"github.com/joshsoftware/code-curiosity-2025/internal/app/github"
+	"github.com/joshsoftware/code-curiosity-2025/internal/app/goal"
 	repoService "github.com/joshsoftware/code-curiosity-2025/internal/app/repository"
 	"github.com/joshsoftware/code-curiosity-2025/internal/app/transaction"
 	"github.com/joshsoftware/code-curiosity-2025/internal/app/user"
@@ -23,17 +24,20 @@ type Dependencies struct {
 	UserHandler         user.Handler
 	ContributionHandler contribution.Handler
 	RepositoryHandler   repoService.Handler
+	GoalHandler         goal.Handler
 	AppCfg              config.AppConfig
 	Client              config.Bigquery
 }
 
 func InitDependencies(db *sqlx.DB, appCfg config.AppConfig, client config.Bigquery, httpClient *http.Client) Dependencies {
+	goalRepository := repository.NewGoalRepository(db)
 	userRepository := repository.NewUserRepository(db)
 	contributionRepository := repository.NewContributionRepository(db)
 	repositoryRepository := repository.NewRepositoryRepository(db)
 	transactionRepository := repository.NewTransactionRepository(db)
 
-	userService := user.NewService(userRepository)
+	goalService := goal.NewService(goalRepository, contributionRepository)
+	userService := user.NewService(userRepository, goalService)
 	authService := auth.NewService(userService, appCfg)
 	bigqueryService := bigquery.NewService(client, userRepository)
 	githubService := github.NewService(appCfg, httpClient)
@@ -45,6 +49,7 @@ func InitDependencies(db *sqlx.DB, appCfg config.AppConfig, client config.Bigque
 	userHandler := user.NewHandler(userService)
 	repositoryHandler := repoService.NewHandler(repositoryService, githubService)
 	contributionHandler := contribution.NewHandler(contributionService)
+	goalHandler := goal.NewHandler(goalService)
 
 	return Dependencies{
 		ContributionService: contributionService,
@@ -53,6 +58,7 @@ func InitDependencies(db *sqlx.DB, appCfg config.AppConfig, client config.Bigque
 		UserHandler:         userHandler,
 		RepositoryHandler:   repositoryHandler,
 		ContributionHandler: contributionHandler,
+		GoalHandler:         goalHandler,
 		AppCfg:              appCfg,
 		Client:              client,
 	}
