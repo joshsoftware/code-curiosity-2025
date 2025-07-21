@@ -2,9 +2,7 @@ import {
   createContext,
   useMemo,
   useState,
-  type Dispatch,
   type ReactNode,
-  type SetStateAction,
 } from "react";
 
 export type User = {
@@ -15,17 +13,25 @@ export type User = {
 
 export interface UserContextInterface {
   user: User;
-  setUser: Dispatch<SetStateAction<User>>;
+  login: (user: User, token: string) => void;
+  logout: () => void;
 }
 
-const defaultState = {
-  user: {
-    githubId: "",
-    githubUsername: "",
-    avatarUrl: "",
+const defaultUser: User = {
+  githubId: "",
+  githubUsername: "",
+  avatarUrl: "",
+};
+
+const defaultState: UserContextInterface = {
+  user: defaultUser,
+  login: () => {
+    throw new Error("login must be used within UserProvider");
   },
-  setUser: (user: User) => {},
-} as UserContextInterface;
+  logout: () => {
+    throw new Error("logout must be used within UserProvider");
+  },
+};
 
 export const UserContext = createContext(defaultState);
 
@@ -34,13 +40,19 @@ type UserProviderProps = {
 };
 
 export const UserProvider = ({ children }: UserProviderProps) => {
-  const [user, setUser] = useState<User>(defaultState.user);
+  const [user, setUser] = useState<User>(defaultUser);
 
-  const memoizedUserValue = useMemo(() => ({ user, setUser }), [user, setUser]);
+  const login = (newUser: User, token: string) => {
+    setUser(newUser);
+    localStorage.setItem("token", token);
+  };
 
-  return (
-    <UserContext.Provider value={memoizedUserValue}>
-      {children}
-    </UserContext.Provider>
-  );
+  const logout = () => {
+    setUser(defaultUser);
+    localStorage.removeItem("token");
+  };
+
+  const value = useMemo(() => ({ user, login, logout }), [user]);
+
+  return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 };
