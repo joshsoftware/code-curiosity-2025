@@ -1,6 +1,6 @@
 local.yaml
 
-*.ps1
+*.sh
 
 # Logs
 logs
