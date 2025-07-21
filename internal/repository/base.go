@@ -23,6 +23,9 @@ type RepositoryTransaction interface {
 type QueryExecuter interface {
 	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
 	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
+	QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
+	GetContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
+	SelectContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
 }
 
 func (b *BaseRepository) BeginTx(ctx context.Context) (*sqlx.Tx, error) {
@@ -61,7 +64,7 @@ func (b *BaseRepository) HandleTransaction(ctx context.Context, tx *sqlx.Tx, inc
 		}
 		return nil
 	}
-	
+
 	err := tx.Commit()
 	if err != nil {
 		slog.Error("error occurred while committing database transaction", "error", err)
