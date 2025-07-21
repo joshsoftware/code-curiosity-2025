@@ -1,0 +1,1 @@
+ALTER TABLE contributions ALTER COLUMN github_event_id DROP NOT NULL;
