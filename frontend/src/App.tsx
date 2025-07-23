@@ -1,6 +1,5 @@
-import "./App.css";
-import { UserProvider } from "./context/AuthProvider";
-import Router from "./root/Router";
+import { UserProvider } from './context/AuthProvider';
+import Router from './root/Router';
 
 function App() {
   return (
