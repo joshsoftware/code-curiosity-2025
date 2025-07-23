@@ -1,9 +1,4 @@
-import {
-  createContext,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
+import { createContext, useMemo, useState, type ReactNode } from 'react';
 
 export type User = {
   githubId: string;
@@ -18,19 +13,19 @@ export interface UserContextInterface {
 }
 
 const defaultUser: User = {
-  githubId: "",
-  githubUsername: "",
-  avatarUrl: "",
+  githubId: '',
+  githubUsername: '',
+  avatarUrl: ''
 };
 
 const defaultState: UserContextInterface = {
   user: defaultUser,
   login: () => {
-    throw new Error("login must be used within UserProvider");
+    throw new Error('login must be used within UserProvider');
   },
   logout: () => {
-    throw new Error("logout must be used within UserProvider");
-  },
+    throw new Error('logout must be used within UserProvider');
+  }
 };
 
 export const UserContext = createContext(defaultState);
@@ -44,12 +39,12 @@ export const UserProvider = ({ children }: UserProviderProps) => {
 
   const login = (newUser: User, token: string) => {
     setUser(newUser);
-    localStorage.setItem("token", token);
+    localStorage.setItem('token', token);
   };
 
   const logout = () => {
     setUser(defaultUser);
-    localStorage.removeItem("token");
+    localStorage.removeItem('token');
   };
 
   const value = useMemo(() => ({ user, login, logout }), [user]);

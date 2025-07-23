@@ -1,6 +1,6 @@
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import PrivateRoutes from "./PrivateRoutes";
-import { routesConfig, type RoutesType } from "./routesConfig";
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import PrivateRoutes from './PrivateRoutes';
+import { routesConfig, type RoutesType } from './routesConfig';
 
 const generateRoutes = (routes: RoutesType[]) => {
   return routes.map(({ path, element, isProtected }) => {

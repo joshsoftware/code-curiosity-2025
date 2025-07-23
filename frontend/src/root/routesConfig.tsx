@@ -1,6 +1,6 @@
-import type { ReactNode } from "react";
-import Login from "../pages/Login/main";
-import { ROUTES } from "./routeConstants";
+import type { ReactNode } from 'react';
+import Login from '../pages/Login';
+import { ROUTES } from './routeConstants';
 
 export interface RoutesType {
   path: string;
@@ -12,8 +12,8 @@ export const routesConfig: RoutesType[] = [
   {
     path: ROUTES.LOGIN,
     element: <Login />,
-    isProtected: false,
-  },
+    isProtected: false
+  }
   //   {
   //     path: //path,
   //     element: (
