@@ -1,14 +1,20 @@
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import './index.css';
-import App from './App.tsx';
-import { QueryClientProvider } from '@tanstack/react-query';
-import { queryClient } from './utils/react-query.ts';
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "sonner";
 
-createRoot(document.getElementById('root')!).render(
+import Router from "@/root/Router";
+import { AuthProvider } from "@/shared/context/AuthProvider";
+import { queryClient } from "@/api/react-query.ts";
+import "./index.css";
+
+createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <App />
+      <AuthProvider>
+        <Router />
+        <Toaster richColors theme="light" />
+      </AuthProvider>
     </QueryClientProvider>
   </StrictMode>
 );

@@ -1,13 +1,14 @@
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import PrivateRoutes from './PrivateRoutes';
-import { routesConfig, type RoutesType } from './routesConfig';
+import { RouterProvider, createBrowserRouter } from "react-router-dom";
+
+import WithAuth from "@/shared/HOC/WithAuth";
+import { type RoutesType, routesConfig } from "@/root/routes-config";
 
 const generateRoutes = (routes: RoutesType[]) => {
   return routes.map(({ path, element, isProtected }) => {
     let wrappedElement = element;
 
     if (isProtected) {
-      wrappedElement = <PrivateRoutes>{wrappedElement}</PrivateRoutes>;
+      wrappedElement = <WithAuth>{wrappedElement}</WithAuth>;
     }
 
     return { path, element: wrappedElement };
