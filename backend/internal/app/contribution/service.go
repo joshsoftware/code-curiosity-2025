@@ -64,7 +64,7 @@ type Service interface {
 	CreateContribution(ctx context.Context, contributionType string, contributionDetails ContributionResponse, repositoryId int, userId int) (Contribution, error)
 	HandleContributionCreation(ctx context.Context, repositoryID int, contribution ContributionResponse) (Contribution, error)
 	GetContributionScoreDetailsByContributionType(ctx context.Context, contributionType string) (ContributionScore, error)
-	FetchUserContributions(ctx context.Context) ([]Contribution, error)
+	FetchUserContributions(ctx context.Context) ([]FetchUserContributionsResponse, error)
 	GetContributionByGithubEventId(ctx context.Context, githubEventId string) (Contribution, error)
 	ListMonthlyContributionSummary(ctx context.Context, year int, monthParam int, userId int) ([]MonthlyContributionSummary, error)
 }
@@ -264,16 +264,23 @@ func (s *service) GetContributionScoreDetailsByContributionType(ctx context.Cont
 	return ContributionScore(contributionScoreDetails), nil
 }
 
-func (s *service) FetchUserContributions(ctx context.Context) ([]Contribution, error) {
+func (s *service) FetchUserContributions(ctx context.Context) ([]FetchUserContributionsResponse, error) {
 	userContributions, err := s.contributionRepository.FetchUserContributions(ctx, nil)
 	if err != nil {
 		slog.Error("error occured while fetching user contributions", "error", err)
 		return nil, err
 	}
 
-	serviceContributions := make([]Contribution, len(userContributions))
+	serviceContributions := make([]FetchUserContributionsResponse, len(userContributions))
 	for i, c := range userContributions {
-		serviceContributions[i] = Contribution((c))
+		serviceContributions[i].Contribution = Contribution(c)
+		fetchContributedRepository, err := s.repositoryService.GetRepoByRepoId(ctx, c.RepositoryId)
+		if err != nil {
+			slog.Error("error occured while fetching users contributed repository details", "error", err)
+			return nil, err
+		}
+
+		serviceContributions[i].Repository = Repository(fetchContributedRepository)
 	}
 
 	return serviceContributions, nil

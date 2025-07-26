@@ -3,24 +3,24 @@ package goal
 import "time"
 
 type Goal struct {
-	Id        int
-	Level     string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	Id        int       `json:"id"`
+	Level     string    `json:"level"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 type GoalContribution struct {
-	Id                  int
-	GoalId              int
-	ContributionScoreId int
-	TargetCount         int
-	IsCustom            bool
-	SetByUserId         int
-	CreatedAt           time.Time
-	UpdatedAt           time.Time
+	Id                  int       `json:"id"`
+	GoalId              int       `json:"goalId"`
+	ContributionScoreId int       `json:"contributionScoreId"`
+	TargetCount         int       `json:"targetCount"`
+	IsCustom            bool      `json:"isCustom"`
+	SetByUserId         int       `json:"setByUserId"`
+	CreatedAt           time.Time `json:"createdAt"`
+	UpdatedAt           time.Time `json:"updatedAt"`
 }
 
 type CustomGoalLevelTarget struct {
-	ContributionType string `json:"contribution_type"`
+	ContributionType string `json:"contributionType"`
 	Target           int    `json:"target"`
 }

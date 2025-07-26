@@ -39,13 +39,13 @@ func InitDependencies(db *sqlx.DB, appCfg config.AppConfig, client config.Bigque
 	repositoryRepository := repository.NewRepositoryRepository(db)
 	transactionRepository := repository.NewTransactionRepository(db)
 
-	badgeService := badge.NewService(badgeRepository)
-	goalService := goal.NewService(goalRepository, contributionRepository, badgeService)
-	userService := user.NewService(userRepository, goalService)
-	authService := auth.NewService(userService, appCfg)
-	bigqueryService := bigquery.NewService(client, userRepository)
 	githubService := github.NewService(appCfg, httpClient)
 	repositoryService := repoService.NewService(repositoryRepository, githubService)
+	badgeService := badge.NewService(badgeRepository)
+	goalService := goal.NewService(goalRepository, contributionRepository, badgeService)
+	userService := user.NewService(userRepository, goalService, repositoryService)
+	authService := auth.NewService(userService, appCfg)
+	bigqueryService := bigquery.NewService(client, userRepository)
 	transactionService := transaction.NewService(transactionRepository, userService)
 	contributionService := contribution.NewService(bigqueryService, contributionRepository, repositoryService, userService, transactionService, httpClient)
 

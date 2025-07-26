@@ -3,7 +3,7 @@ CREATE TABLE "users"(
     "github_id" BIGINT NOT NULL UNIQUE,
     "github_username" VARCHAR(255) NOT NULL,
     "avatar_url" VARCHAR(255) NOT NULL,
-    "email" VARCHAR(255) NULL,
+    "email" VARCHAR(255) NULL DEFAULT '',
     "current_active_goal_id" BIGINT NULL,
     "current_balance" BIGINT DEFAULT 0,
     "is_blocked" BOOLEAN DEFAULT FALSE,

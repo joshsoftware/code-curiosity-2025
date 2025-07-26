@@ -6,28 +6,28 @@ import (
 )
 
 type User struct {
-	Id                  int           `json:"user_id"`
-	GithubId            int           `json:"github_id"`
-	GithubUsername      string        `json:"github_username"`
+	Id                  int           `json:"userId"`
+	GithubId            int           `json:"githubId"`
+	GithubUsername      string        `json:"githubUsername"`
 	Email               string        `json:"email"`
-	AvatarUrl           string        `json:"avatar_url"`
-	CurrentBalance      int           `json:"current_balance"`
-	CurrentActiveGoalId sql.NullInt64 `json:"current_active_goal_id"`
-	IsBlocked           bool          `json:"is_blocked"`
-	IsAdmin             bool          `json:"is_admin"`
+	AvatarUrl           string        `json:"avatarUrl"`
+	CurrentBalance      int           `json:"currentBalance"`
+	CurrentActiveGoalId sql.NullInt64 `json:"currentActiveGoalId"`
+	IsBlocked           bool          `json:"isBlocked"`
+	IsAdmin             bool          `json:"isAdmin"`
 	Password            string        `json:"password"`
-	IsDeleted           bool          `json:"is_deleted"`
-	DeletedAt           sql.NullTime  `json:"deleted_at"`
-	CreatedAt           time.Time     `json:"created_at"`
-	UpdatedAt           time.Time     `json:"updated_at"`
+	IsDeleted           bool          `json:"isDeleted"`
+	DeletedAt           sql.NullTime  `json:"deletedAt"`
+	CreatedAt           time.Time     `json:"createdAt"`
+	UpdatedAt           time.Time     `json:"updatedAt"`
 }
 
 type CreateUserRequestBody struct {
-	GithubId       int    `json:"id"`
-	GithubUsername string `json:"github_id"`
-	AvatarUrl      string `json:"avatar_url"`
+	GithubId       int    `json:"githubId"`
+	GithubUsername string `json:"githubUsername"`
+	AvatarUrl      string `json:"avatarUrl"`
 	Email          string `json:"email"`
-	IsAdmin        bool   `json:"is_admin"`
+	IsAdmin        bool   `json:"isAdmin"`
 }
 
 type Email struct {
@@ -35,23 +35,24 @@ type Email struct {
 }
 
 type Transaction struct {
-	Id                int
-	UserId            int
-	ContributionId    int
-	IsRedeemed        bool
-	IsGained          bool
-	TransactedBalance int
-	TransactedAt      time.Time
-	CreatedAt         time.Time
-	UpdatedAt         time.Time
+	Id                int       `json:"id"`
+	UserId            int       `json:"userId"`
+	ContributionId    int       `json:"contributionId"`
+	IsRedeemed        bool      `json:"isRedeemed"`
+	IsGained          bool      `json:"isGained"`
+	TransactedBalance int       `json:"transactedBalance"`
+	TransactedAt      time.Time `json:"transactedAt"`
+	CreatedAt         time.Time `json:"createdAt"`
+	UpdatedAt         time.Time `json:"updatedAt"`
 }
 
 type LeaderboardUser struct {
-	Id             int
-	GithubUsername string
-	AvatarUrl      string
-	CurrentBalance int
-	Rank           int
+	Id                    int    `json:"id"`
+	GithubUsername        string `json:"githubUsername"`
+	AvatarUrl             string `json:"avatarUrl"`
+	ContributedReposCount int    `json:"contributedReposCount"`
+	CurrentBalance        int    `json:"currentBalance"`
+	Rank                  int    `json:"rank"`
 }
 
 type GoalLevel struct {

@@ -6,14 +6,16 @@ import (
 	"time"
 
 	"github.com/joshsoftware/code-curiosity-2025/internal/app/goal"
+	repoService "github.com/joshsoftware/code-curiosity-2025/internal/app/repository"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/apperrors"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/middleware"
 	"github.com/joshsoftware/code-curiosity-2025/internal/repository"
 )
 
 type service struct {
-	userRepository repository.UserRepository
-	goalService    goal.Service
+	userRepository    repository.UserRepository
+	goalService       goal.Service
+	repositoryService repoService.Service
 }
 
 type Service interface {
@@ -30,10 +32,11 @@ type Service interface {
 	UpdateCurrentActiveGoalId(ctx context.Context, userId int, level string) (int, error)
 }
 
-func NewService(userRepository repository.UserRepository, goalService goal.Service) Service {
+func NewService(userRepository repository.UserRepository, goalService goal.Service, repositoryService repoService.Service) Service {
 	return &service{
-		userRepository: userRepository,
-		goalService:    goalService,
+		userRepository:    userRepository,
+		goalService:       goalService,
+		repositoryService: repositoryService,
 	}
 }
 
@@ -147,7 +150,18 @@ func (s *service) GetAllUsersRank(ctx context.Context) ([]LeaderboardUser, error
 
 	Leaderboard := make([]LeaderboardUser, len(userRanks))
 	for i, l := range userRanks {
-		Leaderboard[i] = LeaderboardUser(l)
+		userContributedReposCount, err := s.repositoryService.FetchUserContributedReposCount(ctx, l.Id)
+		if err != nil {
+			slog.Error("error fetching user contributed repos count", "error", err)
+			return nil, err
+		}
+
+		Leaderboard[i].Id = l.Id
+		Leaderboard[i].GithubUsername = l.GithubUsername
+		Leaderboard[i].ContributedReposCount = userContributedReposCount
+		Leaderboard[i].AvatarUrl = l.AvatarUrl
+		Leaderboard[i].Rank = l.Rank
+		Leaderboard[i].CurrentBalance = l.CurrentBalance
 	}
 
 	return Leaderboard, nil
@@ -160,7 +174,21 @@ func (s *service) GetCurrentUserRank(ctx context.Context, userId int) (Leaderboa
 		return LeaderboardUser{}, err
 	}
 
-	return LeaderboardUser(currentUserRank), nil
+	currentUserContributedReposCount, err := s.repositoryService.FetchUserContributedReposCount(ctx, userId)
+	if err != nil {
+		slog.Error("error fetching user contributed repos count", "error", err)
+		return LeaderboardUser{}, err
+	}
+
+	leaderboardUser := LeaderboardUser{
+		Id:                    currentUserRank.Id,
+		GithubUsername:        currentUserRank.GithubUsername,
+		AvatarUrl:             currentUserRank.AvatarUrl,
+		ContributedReposCount: currentUserContributedReposCount,
+		CurrentBalance:        currentUserRank.CurrentBalance,
+		Rank:                  currentUserRank.Rank,
+	}
+	return leaderboardUser, nil
 }
 
 func (s *service) UpdateCurrentActiveGoalId(ctx context.Context, userId int, level string) (int, error) {

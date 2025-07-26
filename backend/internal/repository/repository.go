@@ -23,6 +23,7 @@ type RepositoryRepository interface {
 	GetUserRepoTotalCoins(ctx context.Context, tx *sqlx.Tx, repoId int) (int, error)
 	FetchUsersContributedRepos(ctx context.Context, tx *sqlx.Tx) ([]Repository, error)
 	FetchUserContributionsInRepo(ctx context.Context, tx *sqlx.Tx, repoGithubId int) ([]Contribution, error)
+	FetchUserContributedReposCount(ctx context.Context, tx *sqlx.Tx, userId int) (int, error)
 }
 
 func NewRepositoryRepository(db *sqlx.DB) RepositoryRepository {
@@ -55,6 +56,8 @@ const (
 	fetchUsersContributedReposQuery = `SELECT * from repositories where id in (SELECT repository_id from contributions where user_id=$1);`
 
 	fetchUserContributionsInRepoQuery = `SELECT * from contributions where repository_id=$1 and user_id=$2;`
+
+	fetchUserContributedReposCountQuery = `SELECT COUNT(DISTINCT repository_id) AS unique_repo_count FROM contributions WHERE user_id = $1;`
 )
 
 func (rr *repositoryRepository) GetRepoByGithubId(ctx context.Context, tx *sqlx.Tx, repoGithubId int) (Repository, error) {
@@ -177,4 +180,17 @@ func (r *repositoryRepository) FetchUserContributionsInRepo(ctx context.Context,
 	}
 
 	return userContributionsInRepo, nil
+}
+
+func (r *repositoryRepository) FetchUserContributedReposCount(ctx context.Context, tx *sqlx.Tx, userId int) (int, error) {
+	executer := r.BaseRepository.initiateQueryExecuter(tx)
+
+	var usersContributedReposCount int
+	err := executer.GetContext(ctx, &usersContributedReposCount, fetchUserContributedReposCountQuery, userId)
+	if err != nil {
+		slog.Error("error fetching user contributed repos count", "error", err)
+		return 0, apperrors.ErrFetchingUsersContributedReposCount
+	}
+
+	return usersContributedReposCount, nil
 }

@@ -24,6 +24,7 @@ type Service interface {
 	FetchUsersContributedRepos(ctx context.Context, client *http.Client) ([]FetchUsersContributedReposResponse, error)
 	FetchUserContributionsInRepo(ctx context.Context, githubRepoId int) ([]Contribution, error)
 	CalculateLanguagePercentInRepo(ctx context.Context, repoLanguages RepoLanguages) ([]LanguagePercent, error)
+	FetchUserContributedReposCount(ctx context.Context, userId int) (int, error)
 }
 
 func NewService(repositoryRepository repository.RepositoryRepository, githubService github.Service) Service {
@@ -164,4 +165,14 @@ func (s *service) CalculateLanguagePercentInRepo(ctx context.Context, repoLangua
 	}
 
 	return langPercent, nil
+}
+
+func (s *service) FetchUserContributedReposCount(ctx context.Context, userId int) (int, error) {
+	userContributedReposCount, err := s.repositoryRepository.FetchUserContributedReposCount(ctx, nil, userId)
+	if err != nil {
+		slog.Error("error fetching users contributes repos count", "error", err)
+		return 0, err
+	}
+
+	return userContributedReposCount, nil
 }

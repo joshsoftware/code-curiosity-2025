@@ -72,6 +72,8 @@ const (
 	current_balance,
 	RANK() over (ORDER BY current_balance DESC) AS rank
 	FROM users 
+	WHERE is_admin=false 
+	AND is_deleted=false
 	ORDER BY current_balance DESC`
 
 	getCurrentUserRankQuery = `
