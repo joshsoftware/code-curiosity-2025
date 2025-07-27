@@ -24,7 +24,7 @@ type RepoLanguages map[string]int
 type FetchRepoContributorsResponse struct {
 	Id            int    `json:"id"`
 	Name          string `json:"login"`
-	AvatarUrl     string `json:"avatarUrl"`
-	GithubUrl     string `json:"githubUrl"`
+	AvatarUrl     string `json:"avatar_url"`
+	GithubUrl     string `json:"html_url"`
 	Contributions int    `json:"contributions"`
 }

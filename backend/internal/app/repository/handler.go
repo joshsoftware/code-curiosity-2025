@@ -20,6 +20,7 @@ type Handler interface {
 	FetchParticularRepoDetails(w http.ResponseWriter, r *http.Request)
 	FetchUserContributionsInRepo(w http.ResponseWriter, r *http.Request)
 	FetchLanguagePercentInRepo(w http.ResponseWriter, r *http.Request)
+	FetchParticularRepoContributors(w http.ResponseWriter, r *http.Request)
 }
 
 func NewHandler(repositoryService Service, githubService github.Service) Handler {
