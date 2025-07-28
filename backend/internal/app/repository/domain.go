@@ -24,6 +24,11 @@ type FetchUsersContributedReposResponse struct {
 	TotalCoinsEarned int      `json:"totalCoinsEarned"`
 }
 
+type FetchParticularRepoDetailsResponse struct {
+	Repository
+	Languages []string `json:"languages"`
+}
+
 type ContributionResponse struct {
 	ID         string    `bigquery:"id" json:"id"`
 	Type       string    `bigquery:"type" json:"type"`

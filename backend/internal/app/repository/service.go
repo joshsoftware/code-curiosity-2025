@@ -22,6 +22,7 @@ type Service interface {
 	CreateRepository(ctx context.Context, repoGithubId int, ContributionRepoDetailsUrl string) (Repository, error)
 	HandleRepositoryCreation(ctx context.Context, contribution ContributionResponse) (Repository, error)
 	FetchUsersContributedRepos(ctx context.Context, client *http.Client) ([]FetchUsersContributedReposResponse, error)
+	FetchParticularRepoDetails(ctx context.Context, repoId int) (FetchParticularRepoDetailsResponse, error)
 	FetchUserContributionsInRepo(ctx context.Context, githubRepoId int) ([]Contribution, error)
 	CalculateLanguagePercentInRepo(ctx context.Context, repoLanguages RepoLanguages) ([]LanguagePercent, error)
 	FetchUserContributedReposCount(ctx context.Context, userId int) (int, error)
@@ -130,6 +131,32 @@ func (s *service) FetchUsersContributedRepos(ctx context.Context, client *http.C
 	}
 
 	return fetchUsersContributedReposResponse, nil
+}
+
+func (s *service) FetchParticularRepoDetails(ctx context.Context, repoId int) (FetchParticularRepoDetailsResponse, error) {
+	repoDetails, err := s.GetRepoByRepoId(ctx, repoId)
+	if err != nil {
+		slog.Error("error getting repo by repo id", "error", err)
+		return FetchParticularRepoDetailsResponse{}, err
+	}
+
+	repoLanguages, err := s.githubService.FetchRepositoryLanguages(ctx, repoDetails.LanguagesUrl)
+	if err != nil {
+		slog.Error("error fetching languages for repository", "error", err)
+		return FetchParticularRepoDetailsResponse{}, err
+	}
+
+	var particularRepoLanguages []string
+	for language := range repoLanguages {
+		particularRepoLanguages = append(particularRepoLanguages, language)
+	}
+
+	particularRepoDetails := FetchParticularRepoDetailsResponse{
+		Repository: repoDetails,
+		Languages:  particularRepoLanguages,
+	}
+
+	return particularRepoDetails, nil
 }
 
 func (s *service) FetchUserContributionsInRepo(ctx context.Context, githubRepoId int) ([]Contribution, error) {

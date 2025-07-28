@@ -57,7 +57,7 @@ func (h *handler) FetchParticularRepoDetails(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	repoDetails, err := h.repositoryService.GetRepoByRepoId(ctx, repoId)
+	repoDetails, err := h.repositoryService.FetchParticularRepoDetails(ctx, repoId)
 	if err != nil {
 		slog.Error("error fetching particular repo details", "error", err)
 		status, errorMessage := apperrors.MapError(err)
