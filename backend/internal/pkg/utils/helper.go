@@ -30,7 +30,6 @@ func DoGet(httpClient *http.Client, url string, headers map[string]string) ([]by
 
 	for key, value := range headers {
 		req.Header.Set(key, value)
-		fmt.Println("", key, "-", value)
 	}
 
 	resp, err := httpClient.Do(req)
