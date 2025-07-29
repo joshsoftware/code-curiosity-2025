@@ -5,6 +5,7 @@ import { CheckCircle } from "lucide-react";
 import { Card } from "@/shared/components/ui/card";
 import { LOGIN_PATH, USER_DASHBOARD_PATH } from "@/shared/constants/routes";
 import { getAccessToken } from "@/shared/utils/local-storage";
+import { AuthLayoutDetails } from "../constants/constants";
 
 interface AuthLayoutProps {
   children: ReactNode;
@@ -45,12 +46,7 @@ const AuthLayout: FC<AuthLayoutProps> = ({ children }) => {
                 </div>
 
                 <div className="space-y-6">
-                  {[
-                    "Earn and Upskill",
-                    "Set Your Goals",
-                    "Leader Board",
-                    "Open Source Contribution"
-                  ].map((text, i) => (
+                  {AuthLayoutDetails.map((text, i) => (
                     <div
                       key={i}
                       className="group flex cursor-pointer items-center space-x-4 transition"

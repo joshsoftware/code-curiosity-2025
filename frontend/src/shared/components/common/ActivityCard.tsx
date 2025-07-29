@@ -1,12 +1,14 @@
 import type { FC } from "react";
 import Coin from "@/shared/components/common/Coin";
+import { format } from "date-fns";
 
 interface ActivityCardProps {
   contributionType: string;
-  repositoryName: string;
+  repositoryName?: string;
   contributedAt: string;
   balanceChange: number;
   showLine: boolean;
+  isRepositoryActivity?: boolean;
 }
 
 const ActivityCard: FC<ActivityCardProps> = ({
@@ -14,7 +16,8 @@ const ActivityCard: FC<ActivityCardProps> = ({
   repositoryName,
   contributedAt,
   balanceChange,
-  showLine = true
+  showLine = true,
+  isRepositoryActivity
 }) => {
   return (
     <div className="relative flex h-full w-full items-start">
@@ -29,14 +32,17 @@ const ActivityCard: FC<ActivityCardProps> = ({
           <div className="text-sm font-semibold text-gray-900">
             {contributionType}
           </div>
+          {isRepositoryActivity ? null : (
+            <div className="text-cc-app-mid-blue mt-1 text-xs">
+              Contributed to
+              <span className="font-medium text-blue-600">
+                &lt;{repositoryName}&gt;
+              </span>
+            </div>
+          )}
+
           <div className="text-cc-app-mid-blue mt-1 text-xs">
-            Contributed to{" "}
-            <span className="font-medium text-blue-600">
-              &lt;{repositoryName}&gt;
-            </span>
-          </div>
-          <div className="text-cc-app-mid-blue mt-1 text-xs">
-            Contributed on {contributedAt}
+            Contributed on {format(new Date(contributedAt), "MMM d yyyy")}
           </div>
         </div>
 
