@@ -8,7 +8,6 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/apperrors"
-	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/middleware"
 )
 
 type repositoryRepository struct {
@@ -20,9 +19,9 @@ type RepositoryRepository interface {
 	GetRepoByGithubId(ctx context.Context, tx *sqlx.Tx, repoGithubId int) (Repository, error)
 	GetRepoByRepoId(ctx context.Context, tx *sqlx.Tx, repoId int) (Repository, error)
 	CreateRepository(ctx context.Context, tx *sqlx.Tx, repository Repository) (Repository, error)
-	GetUserRepoTotalCoins(ctx context.Context, tx *sqlx.Tx, repoId int) (int, error)
-	FetchUsersContributedRepos(ctx context.Context, tx *sqlx.Tx) ([]Repository, error)
-	FetchUserContributionsInRepo(ctx context.Context, tx *sqlx.Tx, repoGithubId int) ([]Contribution, error)
+	GetUserRepoTotalCoins(ctx context.Context, tx *sqlx.Tx, userId int, repoId int) (int, error)
+	FetchUsersContributedRepos(ctx context.Context, tx *sqlx.Tx, userId int) ([]Repository, error)
+	FetchUserContributionsInRepo(ctx context.Context, tx *sqlx.Tx, userId int, repoGithubId int) ([]Contribution, error)
 	FetchUserContributedReposCount(ctx context.Context, tx *sqlx.Tx, userId int) (int, error)
 }
 
@@ -118,19 +117,10 @@ func (rr *repositoryRepository) CreateRepository(ctx context.Context, tx *sqlx.T
 
 }
 
-func (r *repositoryRepository) GetUserRepoTotalCoins(ctx context.Context, tx *sqlx.Tx, repoId int) (int, error) {
-	userIdValue := ctx.Value(middleware.UserIdKey)
-
-	userId, ok := userIdValue.(int)
-	if !ok {
-		slog.Error("error obtaining user id from context")
-		return 0, apperrors.ErrInternalServer
-	}
-
+func (r *repositoryRepository) GetUserRepoTotalCoins(ctx context.Context, tx *sqlx.Tx, userId int, repoId int) (int, error) {
 	executer := r.BaseRepository.initiateQueryExecuter(tx)
 
 	var totalCoins int
-
 	err := executer.GetContext(ctx, &totalCoins, getUserRepoTotalCoinsQuery, userId, repoId)
 	if err != nil {
 		slog.Error("error calculating total coins earned by user for the repository", "error", err)
@@ -140,15 +130,7 @@ func (r *repositoryRepository) GetUserRepoTotalCoins(ctx context.Context, tx *sq
 	return totalCoins, nil
 }
 
-func (r *repositoryRepository) FetchUsersContributedRepos(ctx context.Context, tx *sqlx.Tx) ([]Repository, error) {
-	userIdValue := ctx.Value(middleware.UserIdKey)
-
-	userId, ok := userIdValue.(int)
-	if !ok {
-		slog.Error("error obtaining user id from context")
-		return nil, apperrors.ErrInternalServer
-	}
-
+func (r *repositoryRepository) FetchUsersContributedRepos(ctx context.Context, tx *sqlx.Tx, userId int) ([]Repository, error) {
 	executer := r.BaseRepository.initiateQueryExecuter(tx)
 
 	var usersContributedRepos []Repository
@@ -161,15 +143,7 @@ func (r *repositoryRepository) FetchUsersContributedRepos(ctx context.Context, t
 	return usersContributedRepos, nil
 }
 
-func (r *repositoryRepository) FetchUserContributionsInRepo(ctx context.Context, tx *sqlx.Tx, repoGithubId int) ([]Contribution, error) {
-	userIdValue := ctx.Value(middleware.UserIdKey)
-
-	userId, ok := userIdValue.(int)
-	if !ok {
-		slog.Error("error obtaining user id from context")
-		return nil, apperrors.ErrInternalServer
-	}
-
+func (r *repositoryRepository) FetchUserContributionsInRepo(ctx context.Context, tx *sqlx.Tx, userId int, repoGithubId int) ([]Contribution, error) {
 	executer := r.BaseRepository.initiateQueryExecuter(tx)
 
 	var userContributionsInRepo []Contribution

@@ -73,7 +73,7 @@ func (s *service) ListGoalLevelTargetDetail(ctx context.Context, userId int) ([]
 	return serviceGoalLevelTargets, nil
 }
 
-func (s *service) CreateCustomGoalLevelTarget(ctx context.Context, userID int, customGoalLevelTarget []CustomGoalLevelTarget) ([]GoalContribution, error) {
+func (s *service) CreateCustomGoalLevelTarget(ctx context.Context, userId int, customGoalLevelTarget []CustomGoalLevelTarget) ([]GoalContribution, error) {
 	customGoalLevelId, err := s.GetGoalIdByGoalLevel(ctx, "Custom")
 	if err != nil {
 		slog.Error("error fetching custom goal level id", "error", err)
@@ -93,7 +93,7 @@ func (s *service) CreateCustomGoalLevelTarget(ctx context.Context, userID int, c
 
 		goalContributionInfo[i].ContributionScoreId = contributionScoreDetails.Id
 		goalContributionInfo[i].TargetCount = c.Target
-		goalContributionInfo[i].SetByUserId = userID
+		goalContributionInfo[i].SetByUserId = userId
 
 		goalContribution, err := s.goalRepository.CreateCustomGoalLevelTarget(ctx, nil, repository.GoalContribution(goalContributionInfo[i]))
 		if err != nil {

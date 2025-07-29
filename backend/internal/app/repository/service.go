@@ -21,9 +21,9 @@ type Service interface {
 	GetRepoByRepoId(ctx context.Context, repoId int) (Repository, error)
 	CreateRepository(ctx context.Context, repoGithubId int, ContributionRepoDetailsUrl string) (Repository, error)
 	HandleRepositoryCreation(ctx context.Context, contribution ContributionResponse) (Repository, error)
-	FetchUsersContributedRepos(ctx context.Context, client *http.Client) ([]FetchUsersContributedReposResponse, error)
+	FetchUsersContributedRepos(ctx context.Context, client *http.Client, userId int) ([]FetchUsersContributedReposResponse, error)
 	FetchParticularRepoDetails(ctx context.Context, repoId int) (FetchParticularRepoDetailsResponse, error)
-	FetchUserContributionsInRepo(ctx context.Context, githubRepoId int) ([]Contribution, error)
+	FetchUserContributionsInRepo(ctx context.Context, userId int, githubRepoId int) ([]Contribution, error)
 	CalculateLanguagePercentInRepo(ctx context.Context, repoLanguages RepoLanguages) ([]LanguagePercent, error)
 	FetchUserContributedReposCount(ctx context.Context, userId int) (int, error)
 }
@@ -99,8 +99,8 @@ func (s *service) HandleRepositoryCreation(ctx context.Context, contribution Con
 	return obtainedRepository, nil
 }
 
-func (s *service) FetchUsersContributedRepos(ctx context.Context, client *http.Client) ([]FetchUsersContributedReposResponse, error) {
-	usersContributedRepos, err := s.repositoryRepository.FetchUsersContributedRepos(ctx, nil)
+func (s *service) FetchUsersContributedRepos(ctx context.Context, client *http.Client, userId int) ([]FetchUsersContributedReposResponse, error) {
+	usersContributedRepos, err := s.repositoryRepository.FetchUsersContributedRepos(ctx, nil, userId)
 	if err != nil {
 		slog.Error("error fetching users conributed repos", "error", err)
 		return nil, err
@@ -121,7 +121,7 @@ func (s *service) FetchUsersContributedRepos(ctx context.Context, client *http.C
 			fetchUsersContributedReposResponse[i].Languages = append(fetchUsersContributedReposResponse[i].Languages, language)
 		}
 
-		userRepoTotalCoins, err := s.repositoryRepository.GetUserRepoTotalCoins(ctx, nil, usersContributedRepo.Id)
+		userRepoTotalCoins, err := s.repositoryRepository.GetUserRepoTotalCoins(ctx, nil, userId, usersContributedRepo.Id)
 		if err != nil {
 			slog.Error("error calculating total coins earned by user for the repository", "error", err)
 			return nil, err
@@ -159,8 +159,8 @@ func (s *service) FetchParticularRepoDetails(ctx context.Context, repoId int) (F
 	return particularRepoDetails, nil
 }
 
-func (s *service) FetchUserContributionsInRepo(ctx context.Context, githubRepoId int) ([]Contribution, error) {
-	userContributionsInRepo, err := s.repositoryRepository.FetchUserContributionsInRepo(ctx, nil, githubRepoId)
+func (s *service) FetchUserContributionsInRepo(ctx context.Context, userId int, githubRepoId int) ([]Contribution, error) {
+	userContributionsInRepo, err := s.repositoryRepository.FetchUserContributionsInRepo(ctx, nil, userId, githubRepoId)
 	if err != nil {
 		slog.Error("error fetching users contribution in repository", "error", err)
 		return nil, err

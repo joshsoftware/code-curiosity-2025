@@ -7,12 +7,13 @@ import (
 
 	"github.com/joshsoftware/code-curiosity-2025/internal/config"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/apperrors"
+	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/middleware"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/response"
 )
 
 type handler struct {
 	authService Service
-	appConfig config.AppConfig
+	appConfig   config.AppConfig
 }
 
 type Handler interface {
@@ -24,7 +25,7 @@ type Handler interface {
 func NewHandler(authService Service, appConfig config.AppConfig) Handler {
 	return &handler{
 		authService: authService,
-		appConfig: appConfig,
+		appConfig:   appConfig,
 	}
 }
 
@@ -62,7 +63,16 @@ func (h *handler) GithubOAuthLoginCallback(w http.ResponseWriter, r *http.Reques
 func (h *handler) GetLoggedInUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	userInfo, err := h.authService.GetLoggedInUser(ctx)
+	userIdValue := ctx.Value(middleware.UserIdKey)
+	userId, ok := userIdValue.(int)
+	if !ok {
+		slog.Error("error obtaining user id from context")
+		status, errorMessage := apperrors.MapError(apperrors.ErrContextValue)
+		response.WriteJson(w, status, errorMessage, nil)
+		return
+	}
+
+	userInfo, err := h.authService.GetLoggedInUser(ctx, userId)
 	if err != nil {
 		slog.Error("error getting logged in user")
 		status, errorMessage := apperrors.MapError(err)

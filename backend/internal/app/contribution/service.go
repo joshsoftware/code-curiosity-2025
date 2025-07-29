@@ -64,7 +64,7 @@ type Service interface {
 	CreateContribution(ctx context.Context, contributionType string, contributionDetails ContributionResponse, repositoryId int, userId int) (Contribution, error)
 	HandleContributionCreation(ctx context.Context, repositoryID int, contribution ContributionResponse) (Contribution, error)
 	GetContributionScoreDetailsByContributionType(ctx context.Context, contributionType string) (ContributionScore, error)
-	FetchUserContributions(ctx context.Context) ([]FetchUserContributionsResponse, error)
+	FetchUserContributions(ctx context.Context, userId int) ([]FetchUserContributionsResponse, error)
 	GetContributionByGithubEventId(ctx context.Context, githubEventId string) (Contribution, error)
 	ListMonthlyContributionSummary(ctx context.Context, year int, monthParam int, userId int) ([]MonthlyContributionSummary, error)
 }
@@ -205,7 +205,6 @@ func (s *service) GetContributionType(ctx context.Context, contribution Contribu
 }
 
 func (s *service) CreateContribution(ctx context.Context, contributionType string, contributionDetails ContributionResponse, repositoryId int, userId int) (Contribution, error) {
-
 	contribution := Contribution{
 		UserId:           userId,
 		RepositoryId:     repositoryId,
@@ -264,8 +263,8 @@ func (s *service) GetContributionScoreDetailsByContributionType(ctx context.Cont
 	return ContributionScore(contributionScoreDetails), nil
 }
 
-func (s *service) FetchUserContributions(ctx context.Context) ([]FetchUserContributionsResponse, error) {
-	userContributions, err := s.contributionRepository.FetchUserContributions(ctx, nil)
+func (s *service) FetchUserContributions(ctx context.Context, userId int) ([]FetchUserContributionsResponse, error) {
+	userContributions, err := s.contributionRepository.FetchUserContributions(ctx, nil, userId)
 	if err != nil {
 		slog.Error("error occured while fetching user contributions", "error", err)
 		return nil, err
@@ -297,7 +296,6 @@ func (s *service) GetContributionByGithubEventId(ctx context.Context, githubEven
 }
 
 func (s *service) ListMonthlyContributionSummary(ctx context.Context, year int, month int, userId int) ([]MonthlyContributionSummary, error) {
-
 	MonthlyContributionSummaries, err := s.contributionRepository.ListMonthlyContributionSummary(ctx, nil, year, month, userId)
 	if err != nil {
 		slog.Error("error fetching monthly contribution summary", "error", err)

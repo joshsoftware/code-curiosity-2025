@@ -89,8 +89,6 @@ func (s *service) CreateTransactionForContribution(ctx context.Context, contribu
 }
 
 func (s *service) HandleTransactionCreation(ctx context.Context, contribution Contribution) (Transaction, error) {
-	var transaction Transaction
-
 	transaction, err := s.GetTransactionByContributionId(ctx, contribution.Id)
 	if err != nil {
 		if err == apperrors.ErrTransactionNotFound {

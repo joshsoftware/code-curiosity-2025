@@ -28,7 +28,16 @@ func NewHandler(contributionService Service) Handler {
 func (h *handler) FetchUserContributions(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	userContributions, err := h.contributionService.FetchUserContributions(ctx)
+	userIdValue := ctx.Value(middleware.UserIdKey)
+	userId, ok := userIdValue.(int)
+	if !ok {
+		slog.Error("error obtaining user id from context")
+		status, errorMessage := apperrors.MapError(apperrors.ErrContextValue)
+		response.WriteJson(w, status, errorMessage, nil)
+		return
+	}
+
+	userContributions, err := h.contributionService.FetchUserContributions(ctx, userId)
 	if err != nil {
 		slog.Error("error fetching user contributions", "error", err)
 		status, errorMessage := apperrors.MapError(err)

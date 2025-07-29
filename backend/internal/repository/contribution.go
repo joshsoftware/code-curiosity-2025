@@ -8,7 +8,6 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/apperrors"
-	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/middleware"
 )
 
 type contributionRepository struct {
@@ -19,7 +18,7 @@ type ContributionRepository interface {
 	RepositoryTransaction
 	CreateContribution(ctx context.Context, tx *sqlx.Tx, contributionDetails Contribution) (Contribution, error)
 	GetContributionScoreDetailsByContributionType(ctx context.Context, tx *sqlx.Tx, contributionType string) (ContributionScore, error)
-	FetchUserContributions(ctx context.Context, tx *sqlx.Tx) ([]Contribution, error)
+	FetchUserContributions(ctx context.Context, tx *sqlx.Tx, userId int) ([]Contribution, error)
 	GetContributionByGithubEventId(ctx context.Context, tx *sqlx.Tx, githubEventId string) (Contribution, error)
 	GetAllContributionTypes(ctx context.Context, tx *sqlx.Tx) ([]ContributionScore, error)
 	ListMonthlyContributionSummary(ctx context.Context, tx *sqlx.Tx, year int, month int, userId int) ([]MonthlyContributionSummary, error)
@@ -108,15 +107,7 @@ func (cr *contributionRepository) GetContributionScoreDetailsByContributionType(
 	return contributionScoreDetails, nil
 }
 
-func (cr *contributionRepository) FetchUserContributions(ctx context.Context, tx *sqlx.Tx) ([]Contribution, error) {
-	userIdValue := ctx.Value(middleware.UserIdKey)
-
-	userId, ok := userIdValue.(int)
-	if !ok {
-		slog.Error("error obtaining user id from context")
-		return nil, apperrors.ErrInternalServer
-	}
-
+func (cr *contributionRepository) FetchUserContributions(ctx context.Context, tx *sqlx.Tx, userId int) ([]Contribution, error) {
 	executer := cr.BaseRepository.initiateQueryExecuter(tx)
 
 	var userContributions []Contribution

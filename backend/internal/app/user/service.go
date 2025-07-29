@@ -22,7 +22,7 @@ type Service interface {
 	GetUserById(ctx context.Context, userId int) (User, error)
 	GetUserByGithubId(ctx context.Context, githubId int) (User, error)
 	CreateUser(ctx context.Context, userInfo CreateUserRequestBody) (User, error)
-	UpdateUserEmail(ctx context.Context, email string) error
+	UpdateUserEmail(ctx context.Context, userId int, email string) error
 	SoftDeleteUser(ctx context.Context, userId int) error
 	HardDeleteUsers(ctx context.Context) error
 	RecoverAccountInGracePeriod(ctx context.Context, userID int) error
@@ -71,15 +71,7 @@ func (s *service) CreateUser(ctx context.Context, userInfo CreateUserRequestBody
 	return User(user), nil
 }
 
-func (s *service) UpdateUserEmail(ctx context.Context, email string) error {
-	userIdValue := ctx.Value(middleware.UserIdKey)
-
-	userId, ok := userIdValue.(int)
-	if !ok {
-		slog.Error("error obtaining user id from context")
-		return apperrors.ErrInternalServer
-	}
-
+func (s *service) UpdateUserEmail(ctx context.Context, userId int, email string) error {
 	err := s.userRepository.UpdateUserEmail(ctx, nil, userId, email)
 	if err != nil {
 		slog.Error("failed to update user email", "error", err)

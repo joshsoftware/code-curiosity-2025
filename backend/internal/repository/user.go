@@ -21,8 +21,8 @@ type UserRepository interface {
 	GetUserByGithubId(ctx context.Context, tx *sqlx.Tx, githubId int) (User, error)
 	CreateUser(ctx context.Context, tx *sqlx.Tx, userInfo CreateUserRequestBody) (User, error)
 	UpdateUserEmail(ctx context.Context, tx *sqlx.Tx, userId int, email string) error
-	MarkUserAsDeleted(ctx context.Context, tx *sqlx.Tx, userID int, deletedAt time.Time) error
-	RecoverAccountInGracePeriod(ctx context.Context, tx *sqlx.Tx, userID int) error
+	MarkUserAsDeleted(ctx context.Context, tx *sqlx.Tx, userId int, deletedAt time.Time) error
+	RecoverAccountInGracePeriod(ctx context.Context, tx *sqlx.Tx, userId int) error
 	HardDeleteUsers(ctx context.Context, tx *sqlx.Tx) error
 	GetAllUsersGithubId(ctx context.Context, tx *sqlx.Tx) ([]int, error)
 	UpdateUserCurrentBalance(ctx context.Context, tx *sqlx.Tx, user User) error
@@ -159,10 +159,10 @@ func (ur *userRepository) UpdateUserEmail(ctx context.Context, tx *sqlx.Tx, user
 	return nil
 }
 
-func (ur *userRepository) MarkUserAsDeleted(ctx context.Context, tx *sqlx.Tx, userID int, deletedAt time.Time) error {
+func (ur *userRepository) MarkUserAsDeleted(ctx context.Context, tx *sqlx.Tx, userId int, deletedAt time.Time) error {
 	executer := ur.BaseRepository.initiateQueryExecuter(tx)
 
-	_, err := executer.ExecContext(ctx, markUserAsDeletedQuery, deletedAt, userID)
+	_, err := executer.ExecContext(ctx, markUserAsDeletedQuery, deletedAt, userId)
 	if err != nil {
 		slog.Error("unable to mark user as deleted", "error", err)
 		return apperrors.ErrInternalServer
@@ -171,10 +171,10 @@ func (ur *userRepository) MarkUserAsDeleted(ctx context.Context, tx *sqlx.Tx, us
 	return nil
 }
 
-func (ur *userRepository) RecoverAccountInGracePeriod(ctx context.Context, tx *sqlx.Tx, userID int) error {
+func (ur *userRepository) RecoverAccountInGracePeriod(ctx context.Context, tx *sqlx.Tx, userId int) error {
 	executer := ur.BaseRepository.initiateQueryExecuter(tx)
 
-	_, err := executer.ExecContext(ctx, recoverAccountInGracePeriodQuery, userID)
+	_, err := executer.ExecContext(ctx, recoverAccountInGracePeriodQuery, userId)
 	if err != nil {
 		slog.Error("unable to reverse the soft delete ", "error", err)
 		return apperrors.ErrInternalServer

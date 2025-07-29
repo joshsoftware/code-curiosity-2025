@@ -7,6 +7,7 @@ import (
 
 	"github.com/joshsoftware/code-curiosity-2025/internal/app/github"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/apperrors"
+	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/middleware"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/response"
 )
 
@@ -35,7 +36,16 @@ func (h *handler) FetchUsersContributedRepos(w http.ResponseWriter, r *http.Requ
 
 	client := &http.Client{}
 
-	usersContributedRepos, err := h.repositoryService.FetchUsersContributedRepos(ctx, client)
+	userIdValue := ctx.Value(middleware.UserIdKey)
+	userId, ok := userIdValue.(int)
+	if !ok {
+		slog.Error("error obtaining user id from context")
+		status, errorMessage := apperrors.MapError(apperrors.ErrContextValue)
+		response.WriteJson(w, status, errorMessage, nil)
+		return
+	}
+
+	usersContributedRepos, err := h.repositoryService.FetchUsersContributedRepos(ctx, client, userId)
 	if err != nil {
 		slog.Error("error fetching users conributed repos", "error", err)
 		status, errorMessage := apperrors.MapError(err)
@@ -102,6 +112,15 @@ func (h *handler) FetchParticularRepoContributors(w http.ResponseWriter, r *http
 func (h *handler) FetchUserContributionsInRepo(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
+	userIdValue := ctx.Value(middleware.UserIdKey)
+	userId, ok := userIdValue.(int)
+	if !ok {
+		slog.Error("error obtaining user id from context")
+		status, errorMessage := apperrors.MapError(apperrors.ErrContextValue)
+		response.WriteJson(w, status, errorMessage, nil)
+		return
+	}
+
 	repoIdPath := r.PathValue("repo_id")
 	repoId, err := strconv.Atoi(repoIdPath)
 	if err != nil {
@@ -111,7 +130,7 @@ func (h *handler) FetchUserContributionsInRepo(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	usersContributionsInRepo, err := h.repositoryService.FetchUserContributionsInRepo(ctx, repoId)
+	usersContributionsInRepo, err := h.repositoryService.FetchUserContributionsInRepo(ctx, userId, repoId)
 	if err != nil {
 		slog.Error("error fetching users contribution in repository", "error", err)
 		status, errorMessage := apperrors.MapError(err)

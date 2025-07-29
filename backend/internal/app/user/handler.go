@@ -31,6 +31,15 @@ func NewHandler(userService Service) Handler {
 func (h *handler) UpdateUserEmail(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
+	userIdValue := ctx.Value(middleware.UserIdKey)
+	userId, ok := userIdValue.(int)
+	if !ok {
+		slog.Error("error obtaining user id from context")
+		status, errorMessage := apperrors.MapError(apperrors.ErrContextValue)
+		response.WriteJson(w, status, errorMessage, nil)
+		return
+	}
+
 	var requestBody Email
 	err := json.NewDecoder(r.Body).Decode(&requestBody)
 	if err != nil {
@@ -39,7 +48,7 @@ func (h *handler) UpdateUserEmail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.userService.UpdateUserEmail(ctx, requestBody.Email)
+	err = h.userService.UpdateUserEmail(ctx, userId, requestBody.Email)
 	if err != nil {
 		slog.Error("failed to update user email", "error", err)
 		status, errorMessage := apperrors.MapError(err)
@@ -54,7 +63,6 @@ func (h *handler) SoftDeleteUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	userIdValue := ctx.Value(middleware.UserIdKey)
-
 	userId, ok := userIdValue.(int)
 	if !ok {
 		slog.Error("error obtaining user id from context")
@@ -92,7 +100,6 @@ func (h *handler) GetCurrentUserRank(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	userIdValue := ctx.Value(middleware.UserIdKey)
-
 	userId, ok := userIdValue.(int)
 	if !ok {
 		slog.Error("error obtaining user id from context")

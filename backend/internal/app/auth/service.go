@@ -9,7 +9,6 @@ import (
 	"github.com/joshsoftware/code-curiosity-2025/internal/config"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/apperrors"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/jwt"
-	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/middleware"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
 )
@@ -23,7 +22,7 @@ type service struct {
 type Service interface {
 	GithubOAuthLoginUrl(ctx context.Context) string
 	GithubOAuthLoginCallback(ctx context.Context, code string) (string, error)
-	GetLoggedInUser(ctx context.Context) (User, error)
+	GetLoggedInUser(ctx context.Context, userId int) (User, error)
 }
 
 func NewService(userService user.Service, appCfg config.AppConfig) Service {
@@ -94,15 +93,7 @@ func (s *service) GithubOAuthLoginCallback(ctx context.Context, code string) (st
 	return jwtToken, nil
 }
 
-func (s *service) GetLoggedInUser(ctx context.Context) (User, error) {
-	userIdValue := ctx.Value(middleware.UserIdKey)
-
-	userId, ok := userIdValue.(int)
-	if !ok {
-		slog.Error("error obtaining user id from context")
-		return User{}, apperrors.ErrInternalServer
-	}
-
+func (s *service) GetLoggedInUser(ctx context.Context, userId int) (User, error) {
 	user, err := s.userService.GetUserById(ctx, userId)
 	if err != nil {
 		slog.Error("failed to get logged in user", "error", err)
