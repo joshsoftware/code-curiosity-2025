@@ -19,7 +19,7 @@ type Service interface {
 	configureGithubApiHeaders() map[string]string
 	FetchRepositoryDetails(ctx context.Context, getUserRepoDetailsUrl string) (FetchRepositoryDetailsResponse, error)
 	FetchRepositoryLanguages(ctx context.Context, getRepoLanguagesURL string) (RepoLanguages, error)
-	FetchRepositoryContributors(ctx context.Context, getRepoContributorsURl string) ([]FetchRepoContributorsResponse, error)
+	FetchRepositoryContributors(ctx context.Context, getRepoContributorsURl string) ([]FetchRepositoryContributorsResponse, error)
 }
 
 func NewService(appCfg config.AppConfig, httpClient *http.Client) Service {
@@ -73,21 +73,26 @@ func (s *service) FetchRepositoryLanguages(ctx context.Context, getRepoLanguages
 	return repoLanguages, nil
 }
 
-func (s *service) FetchRepositoryContributors(ctx context.Context, getRepoContributorsURl string) ([]FetchRepoContributorsResponse, error) {
+func (s *service) FetchRepositoryContributors(ctx context.Context, getRepoContributorsURl string) ([]FetchRepositoryContributorsResponse, error) {
 	headers := s.configureGithubApiHeaders()
 
 	body, err := utils.DoGet(s.httpClient, getRepoContributorsURl, headers)
 	if err != nil {
 		slog.Error("error making a GET request", "error", err)
-		return []FetchRepoContributorsResponse{}, err
+		return nil, err
 	}
 
-	var repoContributors []FetchRepoContributorsResponse
+	var repoContributors []RepoContributorsResponse
 	err = json.Unmarshal(body, &repoContributors)
 	if err != nil {
 		slog.Error("error unmarshalling fetch contributors body", "error", err)
 		return nil, err
 	}
 
-	return repoContributors, nil
+	serviceRepoContributors := make([]FetchRepositoryContributorsResponse, len(repoContributors))
+	for i, c := range repoContributors {
+		serviceRepoContributors[i] = FetchRepositoryContributorsResponse(c)
+	}
+
+	return serviceRepoContributors, nil
 }

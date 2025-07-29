@@ -21,10 +21,18 @@ type FetchRepositoryDetailsResponse struct {
 
 type RepoLanguages map[string]int
 
-type FetchRepoContributorsResponse struct {
+type RepoContributorsResponse struct {
 	Id            int    `json:"id"`
 	Name          string `json:"login"`
 	AvatarUrl     string `json:"avatar_url"`
 	GithubUrl     string `json:"html_url"`
+	Contributions int    `json:"contributions"`
+}
+
+type FetchRepositoryContributorsResponse struct {
+	Id            int    `json:"id"`
+	Name          string `json:"name"`
+	AvatarUrl     string `json:"avatarUrl"`
+	GithubUrl     string `json:"githubUrl"`
 	Contributions int    `json:"contributions"`
 }
