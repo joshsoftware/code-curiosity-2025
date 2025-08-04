@@ -24,3 +24,9 @@ type CustomGoalLevelTarget struct {
 	ContributionType string `json:"contributionType"`
 	Target           int    `json:"target"`
 }
+
+type UserGoalLevelProgress struct {
+	ContributionType string `json:"contributionType"`
+	TargetCount      int    `json:"targetCount"`
+	AchievedCount    int    `json:"achievedCount"`
+}

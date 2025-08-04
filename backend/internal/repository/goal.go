@@ -131,6 +131,11 @@ func (gr *goalRepository) GetUserActiveGoalLevel(ctx context.Context, tx *sqlx.T
 	var userActiveGoalLevel string
 	err := executer.GetContext(ctx, &userActiveGoalLevel, getUserActiveGoalLevelQuery, userId)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			slog.Info("user does not have any active goal level")
+			return "", nil
+		}
+		
 		slog.Error("error getting users current active goal level name", "error", err)
 		return userActiveGoalLevel, apperrors.ErrInternalServer
 	}

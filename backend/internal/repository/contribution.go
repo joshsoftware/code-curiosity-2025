@@ -23,6 +23,7 @@ type ContributionRepository interface {
 	GetAllContributionTypes(ctx context.Context, tx *sqlx.Tx) ([]ContributionScore, error)
 	ListMonthlyContributionSummary(ctx context.Context, tx *sqlx.Tx, year int, month int, userId int) ([]MonthlyContributionSummary, error)
 	GetContributionTypeByContributionScoreId(ctx context.Context, tx *sqlx.Tx, contributionScoreId int) (string, error)
+	UpdateContributionTypeScore(ctx context.Context, tx *sqlx.Tx, configureContributionTypeScore []ConfigureContributionTypeScore) ([]ContributionScore, error)
 }
 
 func NewContributionRepository(db *sqlx.DB) ContributionRepository {
@@ -66,6 +67,8 @@ const (
   	month, contribution_type;`
 
 	getContributionTypeByContributionScoreIdQuery = `SELECT contribution_type from contribution_score where id=$1`
+
+	updateContributionTypeScoreQuery = "UPDATE contribution_score SET score = $1 where contribution_type = $2"
 )
 
 func (cr *contributionRepository) CreateContribution(ctx context.Context, tx *sqlx.Tx, contributionInfo Contribution) (Contribution, error) {
@@ -175,4 +178,25 @@ func (cr *contributionRepository) GetContributionTypeByContributionScoreId(ctx c
 	}
 
 	return contributionType, nil
+}
+
+func (cr *contributionRepository) UpdateContributionTypeScore(ctx context.Context, tx *sqlx.Tx, configureContributionTypeScore []ConfigureContributionTypeScore) ([]ContributionScore, error) {
+	executer := cr.BaseRepository.initiateQueryExecuter(tx)
+
+	for _, c := range configureContributionTypeScore {
+		_, err := executer.ExecContext(ctx, updateContributionTypeScoreQuery, c.Score, c.ContributionType)
+		if err != nil {
+			slog.Error("failed to update score for contribution type", "error", err)
+			return nil, apperrors.ErrInternalServer
+		}
+	}
+
+	var contributionTypeScores []ContributionScore
+	err := executer.SelectContext(ctx, &contributionTypeScores, getAllContributionTypesQuery)
+	if err != nil {
+		slog.Error("error fetching all contribution type scores", "error", err)
+		return nil, apperrors.ErrFetchingContributionTypes
+	}
+
+	return contributionTypeScores, nil
 }

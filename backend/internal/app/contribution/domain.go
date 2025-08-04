@@ -73,3 +73,8 @@ type FetchUserContributionsResponse struct {
 	Contribution
 	Repository
 }
+
+type ConfigureContributionTypeScore struct {
+	ContributionType string `json:"contributionType"`
+	Score            int    `json:"score"`
+}

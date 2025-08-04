@@ -9,6 +9,7 @@ import (
 	"github.com/joshsoftware/code-curiosity-2025/internal/config"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/apperrors"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/jwt"
+	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
 )
@@ -23,6 +24,7 @@ type Service interface {
 	GithubOAuthLoginUrl(ctx context.Context) string
 	GithubOAuthLoginCallback(ctx context.Context, code string) (string, error)
 	GetLoggedInUser(ctx context.Context, userId int) (User, error)
+	VerifyAdminCredentials(ctx context.Context, adminCredentials AdminLoginRequest) (Admin, error)
 }
 
 func NewService(userService user.Service, appCfg config.AppConfig) Service {
@@ -101,4 +103,31 @@ func (s *service) GetLoggedInUser(ctx context.Context, userId int) (User, error)
 	}
 
 	return User(user), nil
+}
+
+func (s *service) VerifyAdminCredentials(ctx context.Context, adminCredentials AdminLoginRequest) (Admin, error) {
+	adminInfo, err := s.userService.GetLoggedInAdmin(ctx, user.AdminLoginRequest(adminCredentials))
+	if err != nil {
+		slog.Error("failed to verify admin", "error", err)
+		return Admin{}, err
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(adminInfo.Password), []byte(adminCredentials.Password))
+	if err != nil {
+		slog.Error("failed to verify admin, invalid password", "error", err)
+		return Admin{}, apperrors.ErrInvalidCredentials
+	}
+
+	jwtToken, err := jwt.GenerateJWT(adminInfo.Id, adminInfo.IsAdmin, s.appCfg)
+	if err != nil {
+		slog.Error("failed to generate jwt token", "error", err)
+		return Admin{}, apperrors.ErrInternalServer
+	}
+
+	admin := Admin{
+		User:     User(adminInfo),
+		JwtToken: jwtToken,
+	}
+
+	return admin, nil
 }

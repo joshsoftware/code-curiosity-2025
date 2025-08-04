@@ -58,3 +58,8 @@ type LeaderboardUser struct {
 type GoalLevel struct {
 	Level string `json:"level"`
 }
+
+type AdminLoginRequest struct {
+	Email    string
+	Password string
+}

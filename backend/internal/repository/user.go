@@ -29,6 +29,7 @@ type UserRepository interface {
 	GetAllUsersRank(ctx context.Context, tx *sqlx.Tx) ([]LeaderboardUser, error)
 	GetCurrentUserRank(ctx context.Context, tx *sqlx.Tx, userId int) (LeaderboardUser, error)
 	UpdateCurrentActiveGoalId(ctx context.Context, tx *sqlx.Tx, userId int, goalId int) (int, error)
+	GetAdminByCredentials(ctx context.Context, tx *sqlx.Tx, adminInfo AdminLoginRequest) (User, error)
 }
 
 func NewUserRepository(db *sqlx.DB) UserRepository {
@@ -92,6 +93,8 @@ const (
 	WHERE id = $1;`
 
 	updateCurrentActiveGoalIdQuery = "UPDATE users SET current_active_goal_id=$1 where id=$2"
+
+	verifyAdminCredentialsQuery = "SELECT * FROM users where email = $1 and is_admin=true"
 )
 
 func (ur *userRepository) GetUserById(ctx context.Context, tx *sqlx.Tx, userId int) (User, error) {
@@ -259,4 +262,21 @@ func (ur *userRepository) UpdateCurrentActiveGoalId(ctx context.Context, tx *sql
 	}
 
 	return goalId, nil
+}
+
+func (ur *userRepository) GetAdminByCredentials(ctx context.Context, tx *sqlx.Tx, adminInfo AdminLoginRequest) (User, error) {
+	executer := ur.BaseRepository.initiateQueryExecuter(tx)
+
+	var admin User
+	err := executer.GetContext(ctx, &admin, verifyAdminCredentialsQuery, adminInfo.Email)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			slog.Error("invalid admin credentials", "error", err)
+			return User{}, apperrors.ErrInvalidCredentials
+		}
+		slog.Error("failed to verify admin credentials", "error", err)
+		return User{}, apperrors.ErrInternalServer
+	}
+
+	return admin, nil
 }

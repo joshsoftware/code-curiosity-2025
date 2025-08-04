@@ -119,3 +119,13 @@ type Badge struct {
 	CreatedAt time.Time `db:"created_at"`
 	UpdatedAt time.Time `db:"updated_at"`
 }
+
+type AdminLoginRequest struct {
+	Email    string `db:"email"`
+	Password string `db:"password"`
+}
+
+type ConfigureContributionTypeScore struct {
+	ContributionType string `db:"contribution_type"`
+	Score            int    `db:"score"`
+}

@@ -30,6 +30,7 @@ type Service interface {
 	GetAllUsersRank(ctx context.Context) ([]LeaderboardUser, error)
 	GetCurrentUserRank(ctx context.Context, userId int) (LeaderboardUser, error)
 	UpdateCurrentActiveGoalId(ctx context.Context, userId int, level string) (int, error)
+	GetLoggedInAdmin(ctx context.Context, adminInfo AdminLoginRequest) (User, error)
 }
 
 func NewService(userRepository repository.UserRepository, goalService goal.Service, repositoryService repoService.Service) Service {
@@ -199,4 +200,14 @@ func (s *service) UpdateCurrentActiveGoalId(ctx context.Context, userId int, lev
 	}
 
 	return goalId, err
+}
+
+func (s *service) GetLoggedInAdmin(ctx context.Context, adminInfo AdminLoginRequest) (User, error) {
+	admin, err := s.userRepository.GetAdminByCredentials(ctx, nil, repository.AdminLoginRequest(adminInfo))
+	if err != nil {
+		slog.Error("failed to verify admin credentials", "error", err)
+		return User{}, err
+	}
+
+	return User(admin), nil
 }

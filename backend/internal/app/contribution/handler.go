@@ -1,6 +1,7 @@
 package contribution
 
 import (
+	"encoding/json"
 	"log/slog"
 	"net/http"
 
@@ -17,6 +18,8 @@ type handler struct {
 type Handler interface {
 	FetchUserContributions(w http.ResponseWriter, r *http.Request)
 	ListMonthlyContributionSummary(w http.ResponseWriter, r *http.Request)
+	ListAllContributionTypes(w http.ResponseWriter, r *http.Request)
+	ConfigureContributionTypeScore(w http.ResponseWriter, r *http.Request)
 }
 
 func NewHandler(contributionService Service) Handler {
@@ -87,4 +90,49 @@ func (h *handler) ListMonthlyContributionSummary(w http.ResponseWriter, r *http.
 	}
 
 	response.WriteJson(w, http.StatusOK, "contribution type overview for month fetched successfully", monthlyContributionSummary)
+}
+
+func (h *handler) ListAllContributionTypes(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	contributionTypes, err := h.contributionService.ListAllContributionTypes(ctx)
+	if err != nil {
+		slog.Error("error fetching all contribution types", "error", err)
+		status, errorMessage := apperrors.MapError(err)
+		response.WriteJson(w, status, errorMessage, nil)
+		return
+	}
+
+	response.WriteJson(w, http.StatusOK, "all contribution types fetched successfully", contributionTypes)
+}
+
+func (h *handler) ConfigureContributionTypeScore(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// isAdminValue := ctx.Value(middleware.IsAdminKey)
+	// isAdmin, ok := isAdminValue.(bool)
+	// if !ok {
+	// 	slog.Error("error verifying admin from context")
+	// 	status, errorMessage := apperrors.MapError(apperrors.ErrContextValue)
+	// 	response.WriteJson(w, status, errorMessage, nil)
+	// 	return
+	// }
+
+	var configureContributionTypeScores []ConfigureContributionTypeScore
+	err := json.NewDecoder(r.Body).Decode(&configureContributionTypeScores)
+	if err != nil {
+		slog.Error(apperrors.ErrFailedMarshal.Error(), "error", err)
+		response.WriteJson(w, http.StatusBadRequest, apperrors.ErrInvalidRequestBody.Error(), nil)
+		return
+	}
+
+	contributionTypeScores, err := h.contributionService.ConfigureContributionTypeScore(ctx, configureContributionTypeScores)
+	if err != nil {
+		slog.Error("error configuring contribution type scores", "error", err)
+		status, errorMessage := apperrors.MapError(err)
+		response.WriteJson(w, status, errorMessage, nil)
+		return
+	}
+
+	response.WriteJson(w, http.StatusOK, "contribution types fscores configured successfully", contributionTypeScores)
 }
