@@ -20,16 +20,25 @@ var (
 	ErrNoAppConfigPath          = errors.New("no config path provided")
 	ErrFailedToLoadAppConfig    = errors.New("failed to load environment configuration")
 
-	ErrLoginWithGithubFailed    = errors.New("failed to login with Github")
+	ErrLoginWithGithubFailed     = errors.New("failed to login with Github")
 	ErrGithubTokenExchangeFailed = errors.New("failed to exchange Github token")
-	ErrFailedToGetGithubUser = errors.New("failed to get Github user info")
-	ErrFailedToGetUserEmail = errors.New("failed to get user email from Github")
+	ErrFailedToGetGithubUser     = errors.New("failed to get Github user info")
+	ErrFailedToGetUserEmail      = errors.New("failed to get user email from Github")
 
-	ErrUserNotFound = errors.New("user not found")
+	ErrUserNotFound       = errors.New("user not found")
 	ErrUserCreationFailed = errors.New("failed to create user")
 
-	ErrJWTCreationFailed = errors.New("failed to create jwt token")
-	ErrAuthorizationFailed=errors.New("failed to authorize user")
+	ErrJWTCreationFailed   = errors.New("failed to create jwt token")
+	ErrAuthorizationFailed = errors.New("failed to authorize user")
+
+	ErrRepoNotFound       = errors.New("repository not found")
+	ErrRepoCreationFailed = errors.New("failed to create repo for user")
+
+	ErrFetchingFromBigquery        = errors.New("error fetching contributions from bigquery service")
+	ErrNextContribution            = errors.New("error while loading next bigquery contribution")
+	ErrContributionCreationFailed  = errors.New("failed to create contrbitution")
+	ErrFetchingRecentContributions = errors.New("failed to fetch users five recent contributions")
+	ErrFetchingAllContributions    = errors.New("failed to fetch all contributions for user")
 )
 
 func MapError(err error) (statusCode int, errMessage string) {

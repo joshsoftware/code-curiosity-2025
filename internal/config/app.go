@@ -25,13 +25,19 @@ type GithubOauth struct {
 	RedirectURL  string `yaml:"redirect_url" required:"true"`
 }
 
+type BigqueryProject struct {
+	ProjectID string `yaml:"project_id" required:"true"`
+}
+
 type AppConfig struct {
-	IsProduction bool        `yaml:"is_production"`
-	HTTPServer   HTTPServer  `yaml:"http_server"`
-	Database     Database    `yaml:"database"`
-	JWTSecret    string      `yaml:"jwt_secret"`
-	ClientURL    string      `yaml:"client_url"`
-	GithubOauth  GithubOauth `yaml:"github_oauth"`
+	IsProduction              bool            `yaml:"is_production"`
+	HTTPServer                HTTPServer      `yaml:"http_server"`
+	Database                  Database        `yaml:"database"`
+	JWTSecret                 string          `yaml:"jwt_secret"`
+	ClientURL                 string          `yaml:"client_url"`
+	GithubOauth               GithubOauth     `yaml:"github_oauth"`
+	BigqueryProject           BigqueryProject `yaml:"bigquery_project"`
+	GithubPersonalAccessToken string          `yaml:"github_personal_access_token"`
 }
 
 func LoadAppConfig() (AppConfig, error) {

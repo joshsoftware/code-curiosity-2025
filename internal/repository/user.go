@@ -21,6 +21,7 @@ type UserRepository interface {
 	GetUserByGithubId(ctx context.Context, tx *sqlx.Tx, githubId int) (User, error)
 	CreateUser(ctx context.Context, tx *sqlx.Tx, userInfo CreateUserRequestBody) (User, error)
 	UpdateUserEmail(ctx context.Context, tx *sqlx.Tx, userId int, email string) error
+	GetAllUsersGithubUsernames(ctx context.Context, tx *sqlx.Tx) ([]string, error)
 }
 
 func NewUserRepository(db *sqlx.DB) UserRepository {
@@ -45,6 +46,8 @@ const (
 	RETURNING *`
 
 	updateEmailQuery = "UPDATE users SET email=$1, updated_at=$2 where id=$3"
+
+	getAllUsersGithubUsernamesQuery = "SELECT github_username from users"
 )
 
 func (ur *userRepository) GetUserById(ctx context.Context, tx *sqlx.Tx, userId int) (User, error) {
@@ -155,4 +158,25 @@ func (ur *userRepository) UpdateUserEmail(ctx context.Context, tx *sqlx.Tx, user
 	}
 
 	return nil
+}
+
+func (ur *userRepository) GetAllUsersGithubUsernames(ctx context.Context, tx *sqlx.Tx) ([]string, error) {
+	executer := ur.BaseRepository.initiateQueryExecuter(tx)
+	rows, err := executer.QueryContext(ctx, getAllUsersGithubUsernamesQuery)
+	if err != nil {
+		slog.Error("failed to get github usernames", "error", err)
+		return nil, apperrors.ErrInternalServer
+	}
+	defer rows.Close()
+
+	var githubUsernames []string
+	for rows.Next() {
+		var username string
+		if err := rows.Scan(&username); err != nil {
+			return nil, err
+		}
+		githubUsernames = append(githubUsernames, username)
+	}
+
+	return githubUsernames, nil
 }
