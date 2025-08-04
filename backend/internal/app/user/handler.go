@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"strconv"
 
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/apperrors"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/middleware"
@@ -20,6 +21,8 @@ type Handler interface {
 	ListUserRanks(w http.ResponseWriter, r *http.Request)
 	GetCurrentUserRank(w http.ResponseWriter, r *http.Request)
 	UpdateCurrentActiveGoalId(w http.ResponseWriter, r *http.Request)
+	ListAllUsers(w http.ResponseWriter, r *http.Request)
+	BlockOrUnblockUser(w http.ResponseWriter, r *http.Request)
 }
 
 func NewHandler(userService Service) Handler {
@@ -148,4 +151,49 @@ func (h *handler) UpdateCurrentActiveGoalId(w http.ResponseWriter, r *http.Reque
 	}
 
 	response.WriteJson(w, http.StatusOK, "Goal updated successfully", goalId)
+}
+
+func (h *handler) ListAllUsers(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	users, err := h.userService.ListAllUsers(ctx)
+	if err != nil {
+		slog.Error("failed to fetch all users", "error", err)
+		status, errorMessage := apperrors.MapError(err)
+		response.WriteJson(w, status, errorMessage, nil)
+		return
+	}
+
+	response.WriteJson(w, http.StatusOK, "users fetched successfully", users)
+}
+
+func (h *handler) BlockOrUnblockUser(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	userIdPath := r.PathValue("user_id")
+	userId, err := strconv.Atoi(userIdPath)
+	if err != nil {
+		slog.Error("error getting user id from request url", "error", err)
+		status, errorMessage := apperrors.MapError(err)
+		response.WriteJson(w, status, errorMessage, nil)
+		return
+	}
+
+	var status BlockOrUnblockUserRequest
+	err = json.NewDecoder(r.Body).Decode(&status)
+	if err != nil {
+		slog.Error(apperrors.ErrFailedMarshal.Error(), "error", err)
+		response.WriteJson(w, http.StatusBadRequest, apperrors.ErrInvalidRequestBody.Error(), nil)
+		return
+	}
+
+	err = h.userService.BlockOrUnblockUser(ctx, userId, status.Block)
+	if err != nil {
+		slog.Error("failed to block/unblock user", "error", err)
+		status, message := apperrors.MapError(err)
+		response.WriteJson(w, status, message, nil)
+		return
+	}
+
+	response.WriteJson(w, http.StatusOK, "user status updated successfully", nil)
 }

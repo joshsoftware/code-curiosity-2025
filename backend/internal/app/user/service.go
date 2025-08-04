@@ -31,6 +31,8 @@ type Service interface {
 	GetCurrentUserRank(ctx context.Context, userId int) (LeaderboardUser, error)
 	UpdateCurrentActiveGoalId(ctx context.Context, userId int, level string) (int, error)
 	GetLoggedInAdmin(ctx context.Context, adminInfo AdminLoginRequest) (User, error)
+	ListAllUsers(ctx context.Context) ([]User, error)
+	BlockOrUnblockUser(ctx context.Context, userID int, block bool) error
 }
 
 func NewService(userRepository repository.UserRepository, goalService goal.Service, repositoryService repoService.Service) Service {
@@ -210,4 +212,30 @@ func (s *service) GetLoggedInAdmin(ctx context.Context, adminInfo AdminLoginRequ
 	}
 
 	return User(admin), nil
+}
+
+func (s *service) ListAllUsers(ctx context.Context) ([]User, error) {
+	users, err := s.userRepository.GetAllUsers(ctx, nil)
+	if err != nil {
+		slog.Error("failed to fetch all users", "error", err)
+		return nil, apperrors.ErrInternalServer
+	}
+
+	serviceUsers := make([]User, len(users))
+
+	for i, u := range users {
+		serviceUsers[i] = User(u)
+	}
+
+	return serviceUsers, nil
+}
+
+func (s *service) BlockOrUnblockUser(ctx context.Context, userID int, block bool) error {
+	err := s.userRepository.UpdateUserBlockStatus(ctx, nil, userID, block)
+	if err != nil {
+		slog.Error("failed to block/unblock user", "error", err)
+		return err
+	}
+
+	return nil
 }

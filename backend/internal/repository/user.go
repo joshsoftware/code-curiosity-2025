@@ -30,6 +30,8 @@ type UserRepository interface {
 	GetCurrentUserRank(ctx context.Context, tx *sqlx.Tx, userId int) (LeaderboardUser, error)
 	UpdateCurrentActiveGoalId(ctx context.Context, tx *sqlx.Tx, userId int, goalId int) (int, error)
 	GetAdminByCredentials(ctx context.Context, tx *sqlx.Tx, adminInfo AdminLoginRequest) (User, error)
+	GetAllUsers(ctx context.Context, tx *sqlx.Tx) ([]User, error)
+	UpdateUserBlockStatus(ctx context.Context, tx *sqlx.Tx, userID int, block bool) error
 }
 
 func NewUserRepository(db *sqlx.DB) UserRepository {
@@ -61,7 +63,7 @@ const (
 
 	hardDeleteUsersQuery = "DELETE FROM users WHERE is_deleted = TRUE AND deleted_at <= $1"
 
-	getAllUsersGithubIdQuery = "SELECT github_id from users"
+	getAllUsersGithubIdQuery = "SELECT github_id from users where is_admin=false"
 
 	updateUserCurrentBalanceQuery = "UPDATE users SET current_balance=$1, updated_at=$2 where id=$3"
 
@@ -95,6 +97,10 @@ const (
 	updateCurrentActiveGoalIdQuery = "UPDATE users SET current_active_goal_id=$1 where id=$2"
 
 	verifyAdminCredentialsQuery = "SELECT * FROM users where email = $1 and is_admin=true"
+
+	getAllUsersQuery = "SELECT * FROM users where is_admin=false"
+
+	updateUserBlockStatusQuery = "UPDATE users SET is_blocked=$1 where id=$2"
 )
 
 func (ur *userRepository) GetUserById(ctx context.Context, tx *sqlx.Tx, userId int) (User, error) {
@@ -279,4 +285,29 @@ func (ur *userRepository) GetAdminByCredentials(ctx context.Context, tx *sqlx.Tx
 	}
 
 	return admin, nil
+}
+
+func (ur *userRepository) GetAllUsers(ctx context.Context, tx *sqlx.Tx) ([]User, error) {
+	executer := ur.BaseRepository.initiateQueryExecuter(tx)
+
+	var users []User
+	err := executer.SelectContext(ctx, &users, getAllUsersQuery)
+	if err != nil {
+		slog.Error("error occurred while getting all users", "error", err)
+		return nil, apperrors.ErrInternalServer
+	}
+
+	return users, nil
+}
+
+func (ur *userRepository) UpdateUserBlockStatus(ctx context.Context, tx *sqlx.Tx, userID int, block bool) error {
+	executer := ur.BaseRepository.initiateQueryExecuter(tx)
+
+	_, err := executer.ExecContext(ctx, updateUserBlockStatusQuery, block, userID)
+	if err != nil {
+		slog.Error("failed to update user block status", "error", err)
+		return apperrors.ErrInternalServer
+	}
+
+	return nil
 }

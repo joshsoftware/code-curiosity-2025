@@ -60,6 +60,10 @@ type GoalLevel struct {
 }
 
 type AdminLoginRequest struct {
-	Email    string
-	Password string
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type BlockOrUnblockUserRequest struct {
+	Block bool `json:"block"`
 }
