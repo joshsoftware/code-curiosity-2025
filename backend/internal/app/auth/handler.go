@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -20,6 +21,7 @@ type Handler interface {
 	GithubOAuthLoginUrl(w http.ResponseWriter, r *http.Request)
 	GithubOAuthLoginCallback(w http.ResponseWriter, r *http.Request)
 	GetLoggedInUser(w http.ResponseWriter, r *http.Request)
+	LoginAdmin(w http.ResponseWriter, r *http.Request)
 }
 
 func NewHandler(authService Service, appConfig config.AppConfig) Handler {
@@ -81,4 +83,26 @@ func (h *handler) GetLoggedInUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.WriteJson(w, http.StatusOK, "logged in user fetched successfully", userInfo)
+}
+
+func (h *handler) LoginAdmin(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var requestBody AdminLoginRequest
+	err := json.NewDecoder(r.Body).Decode(&requestBody)
+	if err != nil {
+		slog.Error(apperrors.ErrFailedMarshal.Error(), "error", err)
+		response.WriteJson(w, http.StatusBadRequest, apperrors.ErrInvalidRequestBody.Error(), nil)
+		return
+	}
+
+	adminInfo, err := h.authService.VerifyAdminCredentials(ctx, requestBody)
+	if err != nil {
+		slog.Error("failed to verify admin credentials", "error", err)
+		status, errorMessage := apperrors.MapError(apperrors.ErrContextValue)
+		response.WriteJson(w, status, errorMessage, nil)
+		return
+	}
+
+	response.WriteJson(w, http.StatusOK, "admin logged in successfully", adminInfo)
 }

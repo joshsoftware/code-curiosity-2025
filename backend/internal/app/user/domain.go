@@ -58,3 +58,12 @@ type LeaderboardUser struct {
 type GoalLevel struct {
 	Level string `json:"level"`
 }
+
+type AdminLoginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type BlockOrUnblockUserRequest struct {
+	Block bool `json:"block"`
+}

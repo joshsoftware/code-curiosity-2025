@@ -67,6 +67,8 @@ type Service interface {
 	FetchUserContributions(ctx context.Context, userId int) ([]FetchUserContributionsResponse, error)
 	GetContributionByGithubEventId(ctx context.Context, githubEventId string) (Contribution, error)
 	ListMonthlyContributionSummary(ctx context.Context, year int, monthParam int, userId int) ([]MonthlyContributionSummary, error)
+	ListAllContributionTypes(ctx context.Context) ([]ContributionScore, error)
+	ConfigureContributionTypeScore(ctx context.Context, configureContributionTypeScore []ConfigureContributionTypeScore) ([]ContributionScore, error)
 }
 
 func NewService(bigqueryService bigquery.Service, contributionRepository repository.ContributionRepository, repositoryService repoService.Service, userService user.Service, transactionService transaction.Service, httpClient *http.Client) Service {
@@ -309,4 +311,39 @@ func (s *service) ListMonthlyContributionSummary(ctx context.Context, year int, 
 	}
 
 	return serviceMonthlyContributionSummaries, nil
+}
+
+func (s *service) ListAllContributionTypes(ctx context.Context) ([]ContributionScore, error) {
+	contributionTypes, err := s.contributionRepository.GetAllContributionTypes(ctx, nil)
+	if err != nil {
+		slog.Error("error fetching all contribution types", "error", err)
+		return nil, err
+	}
+
+	serviceContributionTypes := make([]ContributionScore, len(contributionTypes))
+	for i, c := range contributionTypes {
+		serviceContributionTypes[i] = ContributionScore(c)
+	}
+
+	return serviceContributionTypes, nil
+}
+
+func (s *service) ConfigureContributionTypeScore(ctx context.Context, configureContributionTypeScore []ConfigureContributionTypeScore) ([]ContributionScore, error) {
+	repoConfigureContributionScore := make([]repository.ConfigureContributionTypeScore, len(configureContributionTypeScore))
+	for i, c := range configureContributionTypeScore {
+		repoConfigureContributionScore[i] = repository.ConfigureContributionTypeScore(c)
+	}
+
+	contributionTypeScores, err := s.contributionRepository.UpdateContributionTypeScore(ctx, nil, repoConfigureContributionScore)
+	if err != nil {
+		slog.Error("error updating contritbution types score", "error", err)
+		return nil, err
+	}
+
+	serviceContributionTypeScores := make([]ContributionScore, len(contributionTypeScores))
+	for i, c := range contributionTypeScores {
+		serviceContributionTypeScores[i] = ContributionScore(c)
+	}
+
+	return serviceContributionTypeScores, nil
 }

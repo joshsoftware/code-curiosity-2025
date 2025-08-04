@@ -1,7 +1,7 @@
-import UserDashboardLayout from "@/shared/layout/UserDashboardLayout";
+import Repositories from "./components/Repositories";
 
 const MyContributions = () => {
-  return <UserDashboardLayout></UserDashboardLayout>;
+  return <Repositories />;
 };
 
 export default MyContributions;

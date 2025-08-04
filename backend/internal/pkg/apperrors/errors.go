@@ -58,6 +58,8 @@ var (
 	ErrCustomGoalTargetCreationFailed = errors.New("failed to create targets for custom goal level")
 
 	ErrBadgeCreationFailed = errors.New("failed to create badge for user")
+
+	ErrInvalidCredentials = errors.New("error invalid credentials")
 )
 
 func MapError(err error) (statusCode int, errMessage string) {

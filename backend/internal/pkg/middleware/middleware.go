@@ -72,3 +72,21 @@ func Authentication(next http.HandlerFunc, appCfg config.AppConfig) http.Handler
 		next.ServeHTTP(w, r)
 	})
 }
+
+func AuthorizeAdmin(next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		isAdmin, ok := ctx.Value(IsAdminKey).(bool)
+		if !ok {
+			response.WriteJson(w, http.StatusInternalServerError, apperrors.ErrContextValue.Error(), nil)
+			return
+		}
+
+		if !isAdmin {
+			response.WriteJson(w, http.StatusUnauthorized, apperrors.ErrUnauthorizedAccess.Error(), nil)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}

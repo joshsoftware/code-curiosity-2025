@@ -17,12 +17,14 @@ func NewRouter(deps Dependencies) http.Handler {
 	router.HandleFunc("GET /api/v1/auth/github", deps.AuthHandler.GithubOAuthLoginUrl)
 	router.HandleFunc("GET /api/v1/auth/github/callback", deps.AuthHandler.GithubOAuthLoginCallback)
 	router.HandleFunc("GET /api/v1/auth/user", middleware.Authentication(deps.AuthHandler.GetLoggedInUser, deps.AppCfg))
+	router.HandleFunc("GET /api/v1/auth/admin", deps.AuthHandler.LoginAdmin)
 
 	router.HandleFunc("PATCH /api/v1/user/email", middleware.Authentication(deps.UserHandler.UpdateUserEmail, deps.AppCfg))
 	router.HandleFunc("DELETE /api/v1/user/delete/{user_id}", middleware.Authentication(deps.UserHandler.SoftDeleteUser, deps.AppCfg))
 
 	router.HandleFunc("GET /api/v1/user/contributions/all", middleware.Authentication(deps.ContributionHandler.FetchUserContributions, deps.AppCfg))
 	router.HandleFunc("GET /api/v1/user/overview", middleware.Authentication(deps.ContributionHandler.ListMonthlyContributionSummary, deps.AppCfg))
+	router.HandleFunc("GET /api/v1/contributions/types", middleware.Authentication(deps.ContributionHandler.ListAllContributionTypes, deps.AppCfg))
 
 	router.HandleFunc("GET /api/v1/user/repositories", middleware.Authentication(deps.RepositoryHandler.FetchUsersContributedRepos, deps.AppCfg))
 	router.HandleFunc("GET /api/v1/user/repositories/{repo_id}", middleware.Authentication(deps.RepositoryHandler.FetchParticularRepoDetails, deps.AppCfg))
@@ -33,13 +35,17 @@ func NewRouter(deps Dependencies) http.Handler {
 	router.HandleFunc("GET /api/v1/leaderboard", middleware.Authentication(deps.UserHandler.ListUserRanks, deps.AppCfg))
 	router.HandleFunc("GET /api/v1/user/leaderboard", middleware.Authentication(deps.UserHandler.GetCurrentUserRank, deps.AppCfg))
 
-	router.HandleFunc("GET /api/v1/user/goal/level", middleware.Authentication(deps.GoalHandler.ListGoalLevels, deps.AppCfg))
+	router.HandleFunc("GET /api/v1/goal/level", middleware.Authentication(deps.GoalHandler.ListGoalLevels, deps.AppCfg))
 	router.HandleFunc("PATCH /api/v1/user/goal/level", middleware.Authentication(deps.UserHandler.UpdateCurrentActiveGoalId, deps.AppCfg))
-	router.HandleFunc("GET /api/v1/user/goal/level/targets", middleware.Authentication(deps.GoalHandler.ListGoalLevelTargets, deps.AppCfg))
+	router.HandleFunc("GET /api/v1/user/goal/level", middleware.Authentication(deps.GoalHandler.GetUserActiveGoalLevel, deps.AppCfg))
 	router.HandleFunc("POST /api/v1/user/goal/level/custom/targets", middleware.Authentication(deps.GoalHandler.CreateCustomGoalLevelTarget, deps.AppCfg))
-	router.HandleFunc("GET /api/v1/user/goal/level/targets/achieved", middleware.Authentication(deps.GoalHandler.ListGoalLevelAchievedTarget, deps.AppCfg))
+	router.HandleFunc("GET /api/v1/user/goal/level/progress", middleware.Authentication(deps.GoalHandler.ListUserGoalLevelProgress, deps.AppCfg))
 
 	router.HandleFunc("GET /api/v1/user/badges", middleware.Authentication(deps.BadgeHandler.GetBadgeDetailsOfUser, deps.AppCfg))
+
+	router.HandleFunc("PATCH /api/v1/contributions/scores/configure", middleware.Authentication(middleware.AuthorizeAdmin(deps.ContributionHandler.ConfigureContributionTypeScore), deps.AppCfg))
+	router.HandleFunc("GET /api/v1/users", middleware.Authentication(middleware.AuthorizeAdmin(deps.UserHandler.ListAllUsers), deps.AppCfg))
+	router.HandleFunc("PATCH /api/v1/users/{user_id}", middleware.Authentication(middleware.AuthorizeAdmin(deps.UserHandler.BlockOrUnblockUser), deps.AppCfg))
 
 	return middleware.CorsMiddleware(router, deps.AppCfg)
 }

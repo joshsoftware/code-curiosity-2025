@@ -18,9 +18,9 @@ type service struct {
 type Service interface {
 	ListGoalLevels(ctx context.Context) ([]Goal, error)
 	GetGoalIdByGoalLevel(ctx context.Context, level string) (int, error)
-	ListGoalLevelTargetDetail(ctx context.Context, userId int) ([]GoalContribution, error)
+	GetUserActiveGoalLevel(ctx context.Context, userId int) (string, error)
 	CreateCustomGoalLevelTarget(ctx context.Context, userId int, customGoalLevelTarget []CustomGoalLevelTarget) ([]GoalContribution, error)
-	ListGoalLevelAchievedTarget(ctx context.Context, userId int) (map[string]int, error)
+	ListUserGoalLevelProgress(ctx context.Context, userId int) ([]UserGoalLevelProgress, error)
 }
 
 func NewService(goalRepository repository.GoalRepository, contributionRepository repository.ContributionRepository, badgeService badge.Service) Service {
@@ -58,19 +58,14 @@ func (s *service) GetGoalIdByGoalLevel(ctx context.Context, level string) (int, 
 	return goalId, err
 }
 
-func (s *service) ListGoalLevelTargetDetail(ctx context.Context, userId int) ([]GoalContribution, error) {
-	goalLevelTargets, err := s.goalRepository.ListUserGoalLevelTargets(ctx, nil, userId)
+func (s *service) GetUserActiveGoalLevel(ctx context.Context, userId int) (string, error) {
+	userGoalLevel, err := s.goalRepository.GetUserActiveGoalLevel(ctx, nil, userId)
 	if err != nil {
-		slog.Error("error fetching goal level targets", "error", err)
-		return nil, err
+		slog.Error("error fetching user active gaol level", "error", err)
+		return "", err
 	}
 
-	serviceGoalLevelTargets := make([]GoalContribution, len(goalLevelTargets))
-	for i, g := range goalLevelTargets {
-		serviceGoalLevelTargets[i] = GoalContribution(g)
-	}
-
-	return serviceGoalLevelTargets, nil
+	return userGoalLevel, nil
 }
 
 func (s *service) CreateCustomGoalLevelTarget(ctx context.Context, userId int, customGoalLevelTarget []CustomGoalLevelTarget) ([]GoalContribution, error) {
@@ -107,22 +102,12 @@ func (s *service) CreateCustomGoalLevelTarget(ctx context.Context, userId int, c
 	return goalContributions, nil
 }
 
-func (s *service) ListGoalLevelAchievedTarget(ctx context.Context, userId int) (map[string]int, error) {
+
+func (s *service) ListUserGoalLevelProgress(ctx context.Context, userId int) ([]UserGoalLevelProgress, error) {
 	goalLevelSetTargets, err := s.goalRepository.ListUserGoalLevelTargets(ctx, nil, userId)
 	if err != nil {
 		slog.Error("error fetching goal level targets", "error", err)
 		return nil, err
-	}
-
-	contributionTypes := make([]CustomGoalLevelTarget, len(goalLevelSetTargets))
-	for i, g := range goalLevelSetTargets {
-		contributionTypes[i].ContributionType, err = s.contributionRepository.GetContributionTypeByContributionScoreId(ctx, nil, g.ContributionScoreId)
-		if err != nil {
-			slog.Error("error fetching contribution type by contribution score id", "error", err)
-			return nil, err
-		}
-
-		contributionTypes[i].Target = g.TargetCount
 	}
 
 	year := int(time.Now().Year())
@@ -133,32 +118,43 @@ func (s *service) ListGoalLevelAchievedTarget(ctx context.Context, userId int) (
 		return nil, err
 	}
 
-	contributionsAchievedTarget := make(map[string]int, len(monthlyContributionCount))
-
+	contributionCountMap := make(map[string]int)
 	for _, m := range monthlyContributionCount {
-		contributionsAchievedTarget[m.Type] = m.Count
+		contributionCountMap[m.Type] = m.Count
 	}
 
-	var completedTarget int
-	for _, c := range contributionTypes {
-		if c.Target == contributionsAchievedTarget[c.ContributionType] {
-			completedTarget += 1
-		}
-	}
+	userGoalLevelProgress := make([]UserGoalLevelProgress, len(goalLevelSetTargets))
+	var contributionsCompleted int
 
-	if completedTarget == len(goalLevelSetTargets) {
-		userGoalLevel, err := s.goalRepository.GetUserActiveGoalLevel(ctx, nil, userId)
+	for i, g := range goalLevelSetTargets {
+		contributionType, err := s.contributionRepository.GetContributionTypeByContributionScoreId(ctx, nil, g.ContributionScoreId)
 		if err != nil {
-			slog.Error("error fetching user active gaol level", "error", err)
+			slog.Error("error")
 			return nil, err
 		}
 
-		_, err = s.badgeService.HandleBadgeCreation(ctx, userId, userGoalLevel)
-		if err != nil {
-			slog.Error("error handling user badge creation", "error", err)
-			return nil, err
+		userGoalLevelProgress[i].ContributionType = contributionType
+		userGoalLevelProgress[i].TargetCount = g.TargetCount
+		userGoalLevelProgress[i].AchievedCount = contributionCountMap[contributionType]
+
+		if userGoalLevelProgress[i].AchievedCount == g.TargetCount {
+			contributionsCompleted++
+		}
+
+		if contributionsCompleted == len(goalLevelSetTargets) {
+			userGoalLevel, err := s.goalRepository.GetUserActiveGoalLevel(ctx, nil, userId)
+			if err != nil {
+				slog.Error("error fetching user active gaol level", "error", err)
+				return nil, err
+			}
+
+			_, err = s.badgeService.HandleBadgeCreation(ctx, userId, userGoalLevel)
+			if err != nil {
+				slog.Error("error handling user badge creation", "error", err)
+				return nil, err
+			}
 		}
 	}
 
-	return contributionsAchievedTarget, nil
+	return userGoalLevelProgress, nil
 }
