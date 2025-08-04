@@ -20,9 +20,9 @@ const ContributorsList = () => {
   const contributorsData = viewAll ? contributors : contributors?.slice(0, 20);
 
   return (
-    <div className="mx-auto flex h-full max-w-4xl flex-col gap-2 overflow-auto p-2 shadow-none">
+    <div className="mx-auto flex h-full flex-col gap-2 overflow-auto p-6 shadow-none">
       <div className="flex items-center justify-between">
-        <p className="text-md font-bold text-cc-app-blue">
+        <p className="text-md text-cc-app-blue font-bold">
           Contributors {contributors.length}
         </p>
         <Button
@@ -47,6 +47,7 @@ const ContributorsList = () => {
           <div className="*:data-[slot=avatar]:ring-background flex -space-x-4 *:data-[slot=avatar]:ring-2 *:data-[slot=avatar]:grayscale">
             {contributorsData?.map(contributor => (
               <ContributorsCard
+                key={contributor.id}
                 name={contributor.name}
                 avatarUrl={contributor.avatarUrl}
                 githubUrl={contributor.githubUrl}

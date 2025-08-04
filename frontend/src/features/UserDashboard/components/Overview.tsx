@@ -91,12 +91,7 @@ const Overview: FC<OverviewProps> = ({ className }) => {
         <div className="flex h-full w-full flex-col items-center justify-center text-center">
           <TrendingUp className="mb-3 h-12 w-12 text-gray-400" />
           <p className="mb-2 text-lg font-medium text-gray-600">
-            No overview data
-          </p>
-          <p className="text-sm text-gray-500">
-            No activity found for the selected period.
-            <br />
-            Try selecting a different month or start contributing!
+            No overview data for the selected period.
           </p>
         </div>
       ) : (

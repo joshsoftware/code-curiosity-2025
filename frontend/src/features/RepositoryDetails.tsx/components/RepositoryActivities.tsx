@@ -6,6 +6,7 @@ import ActivityCard from "@/shared/components/common/ActivityCard";
 import { Link, useParams } from "react-router-dom";
 import { TrendingUp } from "lucide-react";
 import { useRepositoryActivities } from "@/api/queries/RepostoryActivities";
+import CoinsInfo from "@/shared/components/common/CoinsInfo";
 
 interface RepositoryActivitiesProps {
   className?: string;
@@ -26,6 +27,49 @@ const RepositoryActivities: FC<RepositoryActivitiesProps> = ({ className }) => {
     ? repositoryActivities
     : repositoryActivities?.slice(0, 4);
 
+  let content;
+  if (isLoading) {
+    content = (
+      <div className="flex h-full w-full items-center justify-center">
+        <div className="border-t-cc-app-blue h-12 w-12 animate-spin rounded-full border-4 border-gray-200"></div>
+      </div>
+    );
+  } else if (repositoryActivitiesData?.length === 0) {
+    content = (
+      <div className="flex h-full w-full flex-col items-center justify-center text-center">
+        <TrendingUp className="mb-3 h-12 w-12 text-gray-400" />
+        <p className="mb-2 text-lg font-medium text-gray-600">
+          No recent activities found
+        </p>
+      </div>
+    );
+  } else {
+    content = (
+      <div
+        className={clsx(
+          "flex h-full flex-col items-center justify-between pt-2",
+          viewAll ? "no-scrollbar overflow-auto" : ""
+        )}
+      >
+        {repositoryActivitiesData?.map((activity, index) => (
+          <ActivityCard
+            key={activity.id ?? `${activity.contributionType}-${activity.contributedAt}-${index}`}
+            contributionType={activity.contributionType}
+            contributedAt={activity.contributedAt}
+            balanceChange={activity.balanceChange}
+            showLine={index < repositoryActivities.length - 1}
+            isRepositoryActivity={true}
+          />
+        ))}
+         {!viewAll && (
+            <div className="w-full text-right">
+              <CoinsInfo />
+            </div>
+          )}
+      </div>
+    );
+  }
+
   return (
     <Card
       className={clsx(
@@ -43,47 +87,7 @@ const RepositoryActivities: FC<RepositoryActivitiesProps> = ({ className }) => {
           {viewAll ? "View Less" : "View All"}
         </Button>
       </div>
-
-      {isLoading ? (
-        <div className="flex h-full w-full items-center justify-center">
-          <div className="border-t-cc-app-blue h-12 w-12 animate-spin rounded-full border-4 border-gray-200"></div>
-        </div>
-      ) : repositoryActivitiesData?.length === 0 ? (
-        <div className="flex h-full w-full flex-col items-center justify-center text-center">
-          <TrendingUp className="mb-3 h-12 w-12 text-gray-400" />
-          <p className="mb-2 text-lg font-medium text-gray-600">
-            No recent activities found
-          </p>
-        </div>
-      ) : (
-        <div
-          className={clsx(
-            "flex h-full flex-col items-center justify-between pt-2",
-            viewAll ? "no-scrollbar overflow-auto" : ""
-          )}
-        >
-          {repositoryActivitiesData?.map((activity, index) => (
-            <ActivityCard
-              key={index}
-              contributionType={activity.contributionType}
-              contributedAt={activity.contributedAt}
-              balanceChange={activity.balanceChange}
-              showLine={index < repositoryActivities.length - 1}
-              isRepositoryActivity={true}
-            />
-          ))}
-          {!viewAll && (
-            <div className="w-full">
-              <Link
-                to={""}
-                className="text-cc-app-blue hover:text-cc-app-blue cursor-pointer bg-transparent text-xs font-semibold hover:bg-transparent hover:underline"
-              >
-                How does points work?
-              </Link>
-            </div>
-          )}
-        </div>
-      )}
+      {content}
     </Card>
   );
 };

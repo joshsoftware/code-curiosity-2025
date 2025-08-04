@@ -15,6 +15,7 @@ module.exports = {
         ccappblue: "hsl(var(--cc-app-blue))",
         ccappgraybackground: "hsl(var(--cc-app-gray-background))",
         ccapporange: "hsl(var(--cc-app-orange))",
+        ccappyellow: "hsl(var(--cc-app-yellow))",
 
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",

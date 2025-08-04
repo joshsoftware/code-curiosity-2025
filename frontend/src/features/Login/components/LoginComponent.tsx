@@ -14,7 +14,7 @@ const LoginComponent = () => {
     window.location.href = GITHUB_AUTH_URL || "";
     localStorage.setItem(
       ACCESS_TOKEN_KEY,
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VySWQiOjIsIklzQWRtaW4iOmZhbHNlLCJleHAiOjE3NTQxMzI3NTh9.VKEboNEvSeVKYnqLuBrvTyvx9IglhYzEyeE57x7Qzto"
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VySWQiOjIsIklzQWRtaW4iOmZhbHNlLCJleHAiOjE3NTQzNzUwMDF9.FL-pl22Idc5Ge2iEiXTxYx5c1WBH06GZg5AYoonHiuI"
     );
   };
 

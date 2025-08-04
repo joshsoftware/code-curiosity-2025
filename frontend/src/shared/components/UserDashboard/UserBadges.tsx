@@ -1,12 +1,13 @@
 import { useUserBadges } from "@/api/queries/UserBadges";
-import { Star } from "lucide-react";
 import type { Badge } from "@/shared/types/types";
+import bronzeBadge from "@/assets/bronzeBadge.svg";
+import silverBadge from "@/assets/silverBadge.svg";
+import goldBadge from "@/assets/goldBadge.svg";
 
 const badgeColorMap: Record<string, string> = {
-  BEGINNER: "text-[#cd7f32]",
-  INTERMEDIATE: "text-[#c0c0c0]",
-  ADVANCED: "text-[#ffd700]",
-  CUSTOM: "text-orange-400",
+  BEGINNER: bronzeBadge,
+  INTERMEDIATE: silverBadge,
+  ADVANCED: goldBadge
 };
 
 const UserBadges = () => {
@@ -27,16 +28,17 @@ const UserBadges = () => {
       </p>
       <div className="flex flex-wrap gap-4">
         {Object.entries(grouped).map(([type, badgeList]) => {
-          const color = badgeColorMap[type] ?? "text-gray-400";
+          const badge = badgeColorMap[type] ?? "";
           return (
-            <div key={type} className="relative group flex flex-col items-center">
-              <Star
-                className={`${color} h-6 w-6 fill-current`}
-              />
+            <div
+              key={type}
+              className="group relative flex flex-col items-center"
+            >
+              <img src={badge} alt="Badge" className="h-10 w-10" />
               {badgeList.length > 1 && (
-                <span className="text-xs mt-1">×{badgeList.length}</span>
+                <span className="mt-1 text-xs text-white">×{badgeList.length}</span>
               )}
-              <div className="absolute bottom-8 z-10 hidden w-max rounded bg-gray-600 px-2 py-1 text-xs text-white group-hover:block">
+              <div className="absolute bottom-8 z-10 hidden w-max rounded bg- px-2 py-1 text-xs text-white group-hover:block">
                 {type} <br />
               </div>
             </div>

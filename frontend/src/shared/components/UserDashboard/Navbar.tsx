@@ -17,7 +17,7 @@ const Navbar = () => {
           className={`rounded-full px-6 py-3 font-medium text-white transition-colors duration-200 ${
             isActive(option.path)
               ? "bg-cc-app-mid-blue"
-              : "hover:bg-cc-app-mid-blue"
+              : "hover:bg-[#003aa5]"
           } `}
         >
           {option.name}

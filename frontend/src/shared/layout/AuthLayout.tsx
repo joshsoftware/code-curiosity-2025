@@ -1,5 +1,5 @@
 import { type FC, type ReactNode, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { CheckCircle } from "lucide-react";
 
 import { Card } from "@/shared/components/ui/card";
@@ -70,9 +70,14 @@ const AuthLayout: FC<AuthLayoutProps> = ({ children }) => {
             </div>
           </div>
         </Card>
-
         <Card className="bg-cc-app-gray-background flex w-1/2 flex-1 items-center justify-center p-6">
           {children}
+          <Link
+            to="/admin/login"
+            className="text-cc-app-blue mt-4 text-sm underline hover:text-blue-900"
+          >
+            Log in as admin?
+          </Link>
         </Card>
       </div>
     </div>

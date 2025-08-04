@@ -114,3 +114,70 @@ export interface RepositoryActivity {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface GoalLevel {
+  id: number;
+  level: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GoalLevelProgress {
+  contributionType: string;
+  targetCount: number;
+  achievedCount: number;
+}
+
+export interface CustomGoalLevelTarget {
+  contributionType: string;
+  target: number;
+}
+
+export interface CustomGoalLevelTargetResponse {
+  id: number;
+  goalId: number;
+  contributionScoreId: number;
+  targetCount: number;
+  isCustom: boolean;
+  setByUserId: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ContributionTypeDetail {
+  id: number;
+  adminId: number;
+  contributionType: string;
+  score: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Admin {
+  userId: number;
+  githubId: number;
+  githubUsername: string;
+  email: string;
+  avatarUrl: string;
+  currentBalance: number;
+  currentActiveGoalId: {
+    Int64: number;
+    Valid: boolean;
+  };
+  isBlocked: boolean;
+  isAdmin: boolean;
+  password: string;
+  isDeleted: boolean;
+  deletedAt: {
+    Time: string;
+    Valid: boolean;
+  };
+  createdAt: string;
+  updatedAt: string;
+  jwtToken: string;
+}
+
+export interface AdminCredentials {
+  email: string;
+  password: string;
+}

@@ -30,14 +30,12 @@ const ActivityCard: FC<ActivityCardProps> = ({
       <div className="ml-4 flex w-full items-start justify-between pb-4">
         <div className="flex-1">
           <div className="text-sm font-semibold text-gray-900">
-            {contributionType}
+            {contributionType.replace(/([A-Z])/g, " $1")}
           </div>
           {isRepositoryActivity ? null : (
             <div className="text-cc-app-mid-blue mt-1 text-xs">
-              Contributed to
-              <span className="font-medium text-blue-600">
+              Contributed to 
                 &lt;{repositoryName}&gt;
-              </span>
             </div>
           )}
 

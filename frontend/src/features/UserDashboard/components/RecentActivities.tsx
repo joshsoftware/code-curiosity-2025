@@ -4,8 +4,8 @@ import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
 import ActivityCard from "@/shared/components/common/ActivityCard";
 import { useRecentActivities } from "@/api/queries/RecentActivities";
-import { Link } from "react-router-dom";
 import { TrendingUp } from "lucide-react";
+import CoinsInfo from "@/shared/components/common/CoinsInfo";
 
 interface RecentActivitiesProps {
   className?: string;
@@ -72,13 +72,8 @@ const RecentActivities: FC<RecentActivitiesProps> = ({ className }) => {
             />
           ))}
           {!viewAll && (
-            <div className="w-full">
-              <Link
-                to={""}
-                className="text-cc-app-blue hover:text-cc-app-blue cursor-pointer bg-transparent text-xs font-semibold hover:bg-transparent hover:underline"
-              >
-                How does points work?
-              </Link>
+            <div className="w-full text-right">
+              <CoinsInfo />
             </div>
           )}
         </div>

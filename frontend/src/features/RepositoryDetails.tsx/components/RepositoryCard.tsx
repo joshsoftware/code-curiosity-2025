@@ -21,15 +21,15 @@ const RepositoryCard: FC<RepositoriesCardProps> = ({
   return (
     <div>
       <div className="flex items-start justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 hover:text-blue-600">
           {name}
           <a
             href={repoUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xl font-medium text-blue-600 hover:underline"
+            className="text-xl font-medium text-blue-600 "
           >
-            <ExternalLink size={14} className="mt-[1px] text-blue-600" />
+            <ExternalLink size={14} className="mt-[1px] text-black hover:text-blue-600" />
           </a>
         </div>
         <p className="text-l text-gray-700">

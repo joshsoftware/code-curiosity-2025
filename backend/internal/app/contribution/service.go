@@ -17,22 +17,23 @@ import (
 
 // github event names
 const (
-	pullRequestEvent  = "PullRequestEvent"
-	issuesEvent       = "IssuesEvent"
-	pushEvent         = "PushEvent"
-	issueCommentEvent = "IssueCommentEvent"
+	pullRequestEvent        = "PullRequestEvent"
+	issuesEvent             = "IssuesEvent"
+	issueCommentEvent       = "IssueCommentEvent"
+	pullRequestCommentEvent = "PullRequestReviewCommentEvent"
+	pullRequestReviewEvent  = "PullRequestReviewEvent"
 )
 
 // app contribution types
 const (
-	pullRequestMerged  = "PullRequestMerged"
-	pullRequestOpened  = "PullRequestOpened"
-	issueOpened        = "IssueOpened"
-	issueClosed        = "IssueClosed"
-	issueResolved      = "IssueResolved"
-	pullRequestUpdated = "PullRequestUpdated"
-	issueComment       = "IssueComment"
-	pullRequestComment = "PullRequestComment"
+	pullRequestMerged   = "PullRequestMerged"
+	pullRequestOpened   = "PullRequestOpened"
+	issueOpened         = "IssueOpened"
+	issueClosed         = "IssueClosed"
+	issueResolved       = "IssueResolved"
+	issueComment        = "IssueComment"
+	pullRequestComment  = "PullRequestComment"
+	pullRequestReviewed = "PullRequestReviewed"
 )
 
 // payload
@@ -46,6 +47,8 @@ const (
 	PayloadOpenedKey      = "opened"
 	PayloadNotPlannedKey  = "not_planned"
 	PayloadCompletedKey   = "completed"
+	PayloadCreatedKey     = "created"
+	PayloadApprovedKey    = "approved"
 )
 
 type service struct {
@@ -112,7 +115,7 @@ func (s *service) ProcessFetchedContributions(ctx context.Context) error {
 		err := s.ProcessEachContribution(ctx, contribution)
 		if err != nil {
 			slog.Error("error processing contribution with github event id", "github event id", "error", contribution.ID, err)
-			return err
+			continue
 		}
 	}
 
@@ -165,14 +168,18 @@ func (s *service) GetContributionType(ctx context.Context, contribution Contribu
 	var isMerged bool
 	if pullRequestPayload, ok := contributionPayload[payloadPullRequestKey]; ok {
 		pullRequest = pullRequestPayload.(map[string]interface{})
-		isMerged = pullRequest[PayloadMergedKey].(bool)
+		if isMergedVal, ok := pullRequest[PayloadMergedKey]; ok {
+			isMerged = isMergedVal.(bool)
+		}
 	}
 
 	var issue map[string]interface{}
 	var stateReason string
 	if issuePayload, ok := contributionPayload[PayloadIssueKey]; ok {
 		issue = issuePayload.(map[string]interface{})
-		stateReason = issue[PayloadStateReasonKey].(string)
+		if stateReasonVal, ok := issue[PayloadStateReasonKey]; ok {
+			stateReason = stateReasonVal.(string)
+		}
 	}
 
 	var contributionType string
@@ -193,14 +200,22 @@ func (s *service) GetContributionType(ctx context.Context, contribution Contribu
 			contributionType = issueResolved
 		}
 
-	case pushEvent:
-		contributionType = pullRequestUpdated
+	// case pushEvent:
+	// 	contributionType = pullRequestUpdated
+
+	case pullRequestReviewEvent:
+		if action == PayloadCreatedKey || action == PayloadApprovedKey {
+			contributionType = pullRequestReviewed
+		}
 
 	case issueCommentEvent:
 		contributionType = issueComment
 
-	case pullRequestComment:
-		contributionType = pullRequestComment
+	//if user.login not equal to contribution login
+	case pullRequestCommentEvent:
+		if action == PayloadCreatedKey {
+			contributionType = pullRequestComment
+		}
 	}
 
 	return contributionType, nil
@@ -241,7 +256,7 @@ func (s *service) HandleContributionCreation(ctx context.Context, repositoryID i
 	}
 
 	contributionType, err := s.GetContributionType(ctx, contribution)
-	if err != nil {
+	if err != nil || contributionType == "" {
 		slog.Error("error getting contribution type", "error", err)
 		return Contribution{}, err
 	}

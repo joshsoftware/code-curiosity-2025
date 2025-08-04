@@ -1,8 +1,8 @@
+import coinSvg from "@/assets/Coin.svg";
+
 const Coin = () => {
   return (
-    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-yellow-400">
-      <div className="bg-cc-app-orange h-4 w-4 rounded-full"></div>
-    </div>
+      <img src={coinSvg} alt="Coin" className="h-6 w-6" />
   );
 };
 

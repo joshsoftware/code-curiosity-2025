@@ -62,6 +62,7 @@
   --cc-app-blue: oklch(0.3876 0.1761 261.76);
   --cc-app-gray-background: oklch(0.9585 0.0195 270.21);
   --cc-app-orange: oklch(0.7362 0.1641 62.07);
+  --cc-app-yellow: oklch(0.9136 0.174 99.92);
 }
 
 @media (prefers-color-scheme: light) {
@@ -116,6 +117,7 @@
   --color-cc-app-blue: var(--cc-app-blue);
   --color-cc-app-gray-background: var(--cc-app-gray-background);
   --color-cc-app-orange: var(--cc-app-orange);
+  --color-cc-app-yellow: var(--cc-app-yellow);
 }
 
 .dark {
