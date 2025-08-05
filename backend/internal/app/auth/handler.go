@@ -2,7 +2,6 @@ package auth
 
 import (
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -47,19 +46,11 @@ func (h *handler) GithubOAuthLoginCallback(w http.ResponseWriter, r *http.Reques
 	token, err := h.authService.GithubOAuthLoginCallback(ctx, code)
 	if err != nil {
 		slog.Error("failed to login with github", "error", err)
-		http.Redirect(w, r, fmt.Sprintf("%s?authError=%s", h.appConfig.ClientURL, LoginWithGithubFailed), http.StatusTemporaryRedirect)
+		response.WriteJson(w, http.StatusUnauthorized, "failed to log in with github", nil)
 		return
 	}
 
-	cookie := &http.Cookie{
-		Name:  AccessTokenCookieName,
-		Value: token,
-		//TODO set domain before deploying to production
-		// Domain: "yourdomain.com",
-		HttpOnly: true,
-	}
-	http.SetCookie(w, cookie)
-	http.Redirect(w, r, h.appConfig.ClientURL, http.StatusPermanentRedirect)
+	response.WriteJson(w, http.StatusOK, "successfully logged in with github", token)
 }
 
 func (h *handler) GetLoggedInUser(w http.ResponseWriter, r *http.Request) {

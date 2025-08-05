@@ -17,7 +17,6 @@ func NewRouter(deps Dependencies) http.Handler {
 	router.HandleFunc("GET /api/v1/auth/github", deps.AuthHandler.GithubOAuthLoginUrl)
 	router.HandleFunc("GET /api/v1/auth/github/callback", deps.AuthHandler.GithubOAuthLoginCallback)
 	router.HandleFunc("GET /api/v1/auth/user", middleware.Authentication(deps.AuthHandler.GetLoggedInUser, deps.AppCfg))
-	router.HandleFunc("GET /api/v1/auth/admin", deps.AuthHandler.LoginAdmin)
 
 	router.HandleFunc("PATCH /api/v1/user/email", middleware.Authentication(deps.UserHandler.UpdateUserEmail, deps.AppCfg))
 	router.HandleFunc("DELETE /api/v1/user/delete/{user_id}", middleware.Authentication(deps.UserHandler.SoftDeleteUser, deps.AppCfg))
@@ -43,6 +42,7 @@ func NewRouter(deps Dependencies) http.Handler {
 
 	router.HandleFunc("GET /api/v1/user/badges", middleware.Authentication(deps.BadgeHandler.GetBadgeDetailsOfUser, deps.AppCfg))
 
+	router.HandleFunc("POST /api/v1/auth/admin", deps.AuthHandler.LoginAdmin)
 	router.HandleFunc("PATCH /api/v1/contributions/scores/configure", middleware.Authentication(middleware.AuthorizeAdmin(deps.ContributionHandler.ConfigureContributionTypeScore), deps.AppCfg))
 	router.HandleFunc("GET /api/v1/users", middleware.Authentication(middleware.AuthorizeAdmin(deps.UserHandler.ListAllUsers), deps.AppCfg))
 	router.HandleFunc("PATCH /api/v1/users/{user_id}", middleware.Authentication(middleware.AuthorizeAdmin(deps.UserHandler.BlockOrUnblockUser), deps.AppCfg))

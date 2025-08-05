@@ -22,6 +22,7 @@ const (
 	issueCommentEvent       = "IssueCommentEvent"
 	pullRequestCommentEvent = "PullRequestReviewCommentEvent"
 	pullRequestReviewEvent  = "PullRequestReviewEvent"
+	pushEvent               = "PushEvent"
 )
 
 // app contribution types
@@ -34,6 +35,7 @@ const (
 	issueComment        = "IssueComment"
 	pullRequestComment  = "PullRequestComment"
 	pullRequestReviewed = "PullRequestReviewed"
+	CommitAdded         = "CommitAdded"
 )
 
 // payload
@@ -200,8 +202,8 @@ func (s *service) GetContributionType(ctx context.Context, contribution Contribu
 			contributionType = issueResolved
 		}
 
-	// case pushEvent:
-	// 	contributionType = pullRequestUpdated
+	case pushEvent:
+		contributionType = CommitAdded
 
 	case pullRequestReviewEvent:
 		if action == PayloadCreatedKey || action == PayloadApprovedKey {
