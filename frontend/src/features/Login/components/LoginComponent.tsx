@@ -7,15 +7,35 @@ import {
 } from "@/shared/components/ui/card";
 import { GITHUB_AUTH_URL } from "@/shared/constants/endpoints";
 import Coder from "@/assets/coder.svg";
-import { ACCESS_TOKEN_KEY } from "@/shared/constants/local-storage";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect } from "react";
+import { setAccessToken } from "@/shared/utils/local-storage";
+import { useGithubOauthLogin } from "@/api/queries/Auth";
+import { toast } from "sonner";
 
 const LoginComponent = () => {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  const code = searchParams.get("code");
+  const { data, isSuccess, isError } = useGithubOauthLogin(code);
+
+  useEffect(() => {
+    if (!code) return;
+
+    if (isSuccess && data?.data) {
+      const token = data.data;
+      setAccessToken(token);
+      navigate("/");
+    }
+
+    if (isError) {
+      toast.error("OAuth login failed:");
+    }
+  }, [isSuccess, isError, data, navigate]);
+
   const handleGithubLogin = () => {
     window.location.href = GITHUB_AUTH_URL || "";
-    localStorage.setItem(
-      ACCESS_TOKEN_KEY,
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VySWQiOjIsIklzQWRtaW4iOmZhbHNlLCJleHAiOjE3NTQzNzUwMDF9.FL-pl22Idc5Ge2iEiXTxYx5c1WBH06GZg5AYoonHiuI"
-    );
   };
 
   return (

@@ -6,13 +6,15 @@ import { Button } from "@/shared/components/ui/button";
 import DefaultProfilePic from "@/assets/default-profile-pic.svg";
 import { Separator } from "@/shared/components/ui/separator";
 import { useLoggedInUser } from "@/api/queries/UserProfileDetails";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import UserProfileMenu from "./UserProfileMenu";
 import UserEmail from "./UserEmail";
 import SettingsDialog from "./SettingsDialog";
+import { clearAccessToken } from "@/shared/utils/local-storage";
 
 const UserProfileDetails = () => {
+  const navigate = useNavigate();
   const { data } = useLoggedInUser();
   const user = data?.data;
 
@@ -20,7 +22,10 @@ const UserProfileDetails = () => {
   const [showEmailDialog, setShowEmailDialog] = useState(false);
 
   const handleSettingsClick = () => setShowSettingsDialog(true);
-  const handleLogoutClick = () => console.log("Logout clicked");
+  const handleLogoutClick = () => {
+    clearAccessToken();
+    navigate("/login");
+  };
 
   const handleDeleteAccount = () => {
     console.log("Delete account clicked");

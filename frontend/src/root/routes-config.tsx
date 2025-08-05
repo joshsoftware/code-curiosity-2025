@@ -10,7 +10,9 @@ import {
   USER_DASHBOARD_PATH
 } from "@/shared/constants/routes";
 import RepositoryDetails from "@/features/RepositoryDetails.tsx";
-
+import AdminLogin from "@/features/Admin/AdminLogin";
+import { AllUsersList } from "@/features/Admin/Users.tsx";
+import ScoreConfigure from "@/features/Admin/ScoreConfigure";
 export interface RoutesType {
   path: string;
   element: ReactNode;
@@ -28,19 +30,37 @@ export const routesConfig: RoutesType[] = [
   {
     path: USER_DASHBOARD_PATH,
     element: <UserDashboard />,
-    isProtected: false,
+    isProtected: true,
     layout: Layout.DashboardLayout
   },
   {
     path: MY_CONTRIBUTIONS_PATH,
     element: <MyContributions />,
-    isProtected: false,
+    isProtected: true,
     layout: Layout.DashboardLayout
   },
   {
     path: REPOSITORY_DETAILS_PATH,
     element: <RepositoryDetails />,
-    isProtected: false,
+    isProtected: true,
     layout: Layout.DashboardLayout
+  },
+  {
+    path: "/admin/login",
+    element: <AdminLogin />,
+    isProtected: false,
+    layout: Layout.AuthLayout
+  },
+  {
+    path: "/admin/users",
+    element: <AllUsersList />,
+    isProtected: true,
+    layout: Layout.AdminLayout
+  },
+  {
+    path: "/admin/configure/score",
+    element: <ScoreConfigure />,
+    isProtected: true,
+    layout: Layout.AdminLayout
   }
 ];

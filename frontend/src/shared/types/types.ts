@@ -181,3 +181,17 @@ export interface AdminCredentials {
   email: string;
   password: string;
 }
+
+export interface ContributionScore {
+  id: number;
+  adminId: number;
+  contributionType: string;
+  score: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ContributionScoreUpdate {
+  contributionType: string;
+  score: number;
+}

@@ -72,12 +72,21 @@ const AuthLayout: FC<AuthLayoutProps> = ({ children }) => {
         </Card>
         <Card className="bg-cc-app-gray-background flex w-1/2 flex-1 items-center justify-center p-6">
           {children}
-          <Link
-            to="/admin/login"
-            className="text-cc-app-blue mt-4 text-sm underline hover:text-blue-900"
-          >
-            Log in as admin?
-          </Link>
+          {location.pathname.startsWith("/admin") ? (
+            <Link
+              to={LOGIN_PATH}
+              className="text-cc-app-blue mt-4 text-sm underline hover:text-blue-900"
+            >
+              Log in as user?
+            </Link>
+          ) : (
+            <Link
+              to="/admin/login"
+              className="text-cc-app-blue mt-4 text-sm underline hover:text-blue-900"
+            >
+              Log in as admin?
+            </Link>
+          )}
         </Card>
       </div>
     </div>

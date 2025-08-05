@@ -5,6 +5,7 @@ import { type RoutesType, routesConfig } from "@/root/routes-config";
 import { Layout } from "@/shared/constants/layout";
 import AuthLayout from "@/shared/layout/AuthLayout";
 import UserDashboardLayout from "@/shared/layout/UserDashboardLayout";
+import AdminLayout from "@/shared/layout/AdminLayout";
 
 const generateRoutes = (routes: RoutesType[]) => {
   return routes.map(({ path, element, isProtected, layout }) => {
@@ -23,6 +24,12 @@ const generateRoutes = (routes: RoutesType[]) => {
         <UserDashboardLayout>{wrappedElement}</UserDashboardLayout>
       );
     }
+
+    if(layout == Layout.AdminLayout) {   
+      wrappedElement = (
+        <AdminLayout>{wrappedElement}</AdminLayout>
+      );
+    } 
 
     return { path, element: wrappedElement };
   });
