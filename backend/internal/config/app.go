@@ -30,6 +30,7 @@ type BigqueryProject struct {
 }
 
 type AppConfig struct {
+	AppName                   string          `yaml:"app_name"`
 	IsProduction              bool            `yaml:"is_production"`
 	HTTPServer                HTTPServer      `yaml:"http_server"`
 	Database                  Database        `yaml:"database"`
