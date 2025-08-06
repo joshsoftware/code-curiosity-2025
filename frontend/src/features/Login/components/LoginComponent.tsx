@@ -12,7 +12,9 @@ import { useEffect } from "react";
 import { setAccessToken } from "@/shared/utils/local-storage";
 import { useGithubOauthLogin } from "@/api/queries/Auth";
 import { toast } from "sonner";
-
+import { useLoggedInUser } from "@/api/queries/UserProfileDetails";
+import { ACCOUNT_INFO_PATH } from "@/shared/constants/routes";
+import githubIcon from "@/assets/github-white-icon.svg";
 const LoginComponent = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -20,12 +22,21 @@ const LoginComponent = () => {
   const code = searchParams.get("code");
   const { data, isSuccess, isError } = useGithubOauthLogin(code);
 
+  const { refetch } = useLoggedInUser(false);
+
   useEffect(() => {
     if (!code) return;
 
     if (isSuccess && data?.data) {
       const token = data.data;
       setAccessToken(token);
+
+      refetch().then(({ data: userData }) => {
+        if (userData?.data?.isBlocked) {
+          navigate(ACCOUNT_INFO_PATH);
+        }
+      });
+
       navigate("/");
     }
 
@@ -47,9 +58,9 @@ const LoginComponent = () => {
       <CardContent className="space-y-6">
         <Button
           onClick={handleGithubLogin}
-          className="bg-cc-app-orange h-10 w-3/4 rounded-md font-semibold text-white"
+          className="bg-cc-app-orange hover:bg-cc-app-blue h-10 w-3/4 rounded-md font-semibold text-white"
         >
-          Login via GitHub
+          <img src={githubIcon} className="h-4 w-4" /> Sign in with GitHub
         </Button>
         <hr className="border-gray-200" />
       </CardContent>

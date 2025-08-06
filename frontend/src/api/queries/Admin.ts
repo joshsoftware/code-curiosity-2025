@@ -8,6 +8,10 @@ import type {
   ContributionScore,
   ContributionScoreUpdate
 } from "@/shared/types/types";
+import {
+  CONTRIBUTION_TYPES_QUERY_KEY,
+  GET_ALL_USERS_QUERY_KEY
+} from "@/shared/constants/query-keys";
 
 const LogInAdmin = async (
   adminCredentials: AdminCredentials
@@ -41,7 +45,7 @@ const getAllUsers = async (): Promise<ApiResponse<Admin[]>> => {
 
 export const useGetAllUsers = () => {
   return useQuery({
-    queryKey: ["getAllUsers"],
+    queryKey: [GET_ALL_USERS_QUERY_KEY],
     queryFn: getAllUsers
   });
 };
@@ -80,7 +84,7 @@ const fetchContributionTypes = async (): Promise<
 
 export const useFetchContributionTypes = () => {
   return useQuery({
-    queryKey: ["fetch-contribution-types"],
+    queryKey: [CONTRIBUTION_TYPES_QUERY_KEY],
     queryFn: fetchContributionTypes
   });
 };

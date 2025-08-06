@@ -27,11 +27,6 @@ const UserProfileDetails = () => {
     navigate("/login");
   };
 
-  const handleDeleteAccount = () => {
-    console.log("Delete account clicked");
-    setShowSettingsDialog(false);
-  };
-
   const handleUpdateEmail = () => {
     setShowSettingsDialog(false);
     setShowEmailDialog(true);

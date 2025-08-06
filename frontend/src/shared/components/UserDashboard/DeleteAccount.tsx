@@ -11,6 +11,8 @@ import {
   useLoggedInUser,
   useSoftDeleteUser
 } from "@/api/queries/UserProfileDetails";
+import { clearAccessToken } from "@/shared/utils/local-storage";
+import { useNavigate } from "react-router-dom";
 
 interface Props {
   open: boolean;
@@ -18,6 +20,7 @@ interface Props {
 }
 
 const DeleteAccount = ({ open, onClose }: Props) => {
+  const navigate = useNavigate();
   const { data } = useLoggedInUser();
   const user = data?.data;
   const { mutate: softDeleteUser, isPending } = useSoftDeleteUser();
@@ -27,6 +30,8 @@ const DeleteAccount = ({ open, onClose }: Props) => {
     softDeleteUser(user.userId, {
       onSuccess: () => {
         onClose();
+        clearAccessToken();
+        navigate("/login");
       }
     });
   };

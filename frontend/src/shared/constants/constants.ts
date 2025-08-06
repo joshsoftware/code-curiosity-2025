@@ -1,8 +1,10 @@
 export const AuthLayoutDetails = [
-  "Earn and Upskill",
-  "Set Your Goals",
-  "Leader Board",
-  "Open Source Contribution"
+  "Fuel your open-source journey — stay consistent, stay rewarded.",
+  "Every commit, issue & comment earns real rewards (Virtual money).",
+  "Beginner-friendly — even small contributions count.",
+  "Set monthly goals and track your GitHub activity automatically.",
+  "Join a community driven by passion, not ads or data sales.",
+  "Supported by developers. Funded by developers. Built for developers."
 ];
 
 export const LangColor: Record<string, string> = {

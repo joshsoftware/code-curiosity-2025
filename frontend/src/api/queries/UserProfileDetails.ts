@@ -14,10 +14,12 @@ const fetchLoggedInUser = async (): Promise<ApiResponse<User>> => {
   return response.data;
 };
 
-export const useLoggedInUser = () => {
+export const useLoggedInUser = (enabled: boolean = true) => {
   return useQuery({
     queryKey: [LOGGED_IN_USER_QUERY_KEY],
-    queryFn: fetchLoggedInUser
+    queryFn: fetchLoggedInUser,
+    enabled,
+    retry: false
   });
 };
 

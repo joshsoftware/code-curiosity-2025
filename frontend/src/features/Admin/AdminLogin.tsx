@@ -4,6 +4,7 @@ import { useLogInAdmin } from "@/api/queries/Admin";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { ACCESS_TOKEN_KEY } from "@/shared/constants/local-storage";
+import { Button } from "@/shared/components/ui/button";
 
 const AdminLogin: FC = () => {
   const {
@@ -11,10 +12,9 @@ const AdminLogin: FC = () => {
     handleSubmit,
     formState: { errors }
   } = useForm<AdminCredentials>();
-
   const navigate = useNavigate();
-
   const { mutate, isPending, isError, error } = useLogInAdmin();
+
   const onSubmit = async (
     data: AdminCredentials,
     event?: React.BaseSyntheticEvent
@@ -22,7 +22,6 @@ const AdminLogin: FC = () => {
     try {
       event?.preventDefault();
       console.log(" Submitting admin login", data);
-
       mutate(data, {
         onSuccess: res => {
           console.log(" Admin login success", res);
@@ -53,7 +52,7 @@ const AdminLogin: FC = () => {
         <input
           id="email"
           type="email"
-          className="w-full rounded-md border border-gray-300 p-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+          className="w-full rounded-md border border-gray-300 bg-white p-2 text-sm shadow-sm focus:border-blue-500 focus:bg-white focus:ring-0 focus:outline-none"
           {...register("email", { required: "Email is required" })}
         />
         {errors.email && (
@@ -71,7 +70,7 @@ const AdminLogin: FC = () => {
         <input
           id="password"
           type="password"
-          className="w-full rounded-md border border-gray-300 p-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+          className="w-full rounded-md border border-gray-300 bg-white p-2 text-sm shadow-sm focus:border-blue-500 focus:bg-white focus:ring-0 focus:outline-none"
           {...register("password", { required: "Password is required" })}
         />
         {errors.password && (
@@ -81,17 +80,17 @@ const AdminLogin: FC = () => {
 
       {isError && (
         <p className="text-sm text-red-600">
-          {(error as Error)?.message || "Failed to log in"}
+          {error?.message || "Failed to log in"}
         </p>
       )}
 
-      <button
+      <Button
         type="submit"
         disabled={isPending}
-        className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
+        className="bg-cc-app-orange w-full rounded-md px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
       >
         {isPending ? "Logging in..." : "Log in as Admin"}
-      </button>
+      </Button>
     </form>
   );
 };

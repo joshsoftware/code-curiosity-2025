@@ -2,7 +2,6 @@ import { useState } from "react";
 
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
-import { Card } from "@/shared/components/ui/card";
 import {
   useFetchContributionTypes,
   useConfigureContributionScore
@@ -53,7 +52,7 @@ const ScoreConfigure = () => {
   };
 
   return (
-    <Card className="mx-auto max-w-4xl p-6">
+    <div className="mx-auto max-w-4xl p-6">
       <div className="mb-6">
         <h1 className="mb-2 text-2xl font-bold text-gray-900">
           Configure Contribution Scores
@@ -86,7 +85,7 @@ const ScoreConfigure = () => {
           {isPending ? "Saving..." : "Save All"}
         </Button>
       </div>
-    </Card>
+    </div>
   );
 };
 
