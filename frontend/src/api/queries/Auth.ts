@@ -17,6 +17,7 @@ export const useGithubOauthLogin = (code: string | null) => {
   return useQuery({
     queryKey: [GITHUB_OAUTH_LOGIN_QUERY_KEY, code],
     queryFn: () => githubOauthLogin(code!),
-    enabled: !!code
+    enabled: !!code,
+    retry: false,
   });
 };

@@ -12,18 +12,16 @@ import { useEffect } from "react";
 import { setAccessToken } from "@/shared/utils/local-storage";
 import { useGithubOauthLogin } from "@/api/queries/Auth";
 import { toast } from "sonner";
-import { useLoggedInUser } from "@/api/queries/UserProfileDetails";
-import { ACCOUNT_INFO_PATH } from "@/shared/constants/routes";
 import githubIcon from "@/assets/github-white-icon.svg";
 const LoginComponent = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
   const code = searchParams.get("code");
+  console.log("code", code);
   const { data, isSuccess, isError } = useGithubOauthLogin(code);
-
-  const { refetch } = useLoggedInUser(false);
-
+  console.log("data", data);
+  console.log("isSuccess", isSuccess);
   useEffect(() => {
     if (!code) return;
 
@@ -31,12 +29,7 @@ const LoginComponent = () => {
       const token = data.data;
       setAccessToken(token);
 
-      refetch().then(({ data: userData }) => {
-        if (userData?.data?.isBlocked) {
-          navigate(ACCOUNT_INFO_PATH);
-        }
-      });
-
+      console.log("hello");
       navigate("/");
     }
 

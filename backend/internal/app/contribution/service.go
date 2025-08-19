@@ -179,8 +179,10 @@ func (s *service) GetContributionType(ctx context.Context, contribution Contribu
 	var stateReason string
 	if issuePayload, ok := contributionPayload[PayloadIssueKey]; ok {
 		issue = issuePayload.(map[string]interface{})
-		if stateReasonVal, ok := issue[PayloadStateReasonKey]; ok {
-			stateReason = stateReasonVal.(string)
+		if stateReasonVal, ok := issue[PayloadStateReasonKey]; ok && stateReasonVal != nil {
+			if v, ok := stateReasonVal.(string); ok {
+				stateReason = v
+			}
 		}
 	}
 

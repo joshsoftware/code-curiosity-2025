@@ -3,7 +3,7 @@ import clsx from "clsx";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
 import ActivityCard from "@/shared/components/common/ActivityCard";
-import { Link, useParams } from "react-router-dom";
+import {  useParams } from "react-router-dom";
 import { TrendingUp } from "lucide-react";
 import { useRepositoryActivities } from "@/api/queries/RepostoryActivities";
 import CoinsInfo from "@/shared/components/common/CoinsInfo";

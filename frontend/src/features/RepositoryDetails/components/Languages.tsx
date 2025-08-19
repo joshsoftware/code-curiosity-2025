@@ -1,7 +1,7 @@
 import { type FC } from "react";
-import LanguageCard from "../../RepositoryDetails.tsx/components/LanguagesCard";
 import { useRepositoryLanguages } from "@/api/queries/Languages";
 import { useParams } from "react-router-dom";
+import LanguageCard from "./LanguagesCard";
 
 interface LanguagesProps {
   className?: string;

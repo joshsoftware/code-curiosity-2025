@@ -12,11 +12,11 @@ type FetchRepositoryDetailsResponse struct {
 	Id              int       `json:"id"`
 	Name            string    `json:"name"`
 	Description     string    `json:"description"`
-	LanguagesURL    string    `json:"languagesUrl"`
-	UpdateDate      time.Time `json:"updatedAt"`
+	LanguagesURL    string    `json:"languages_url"`
+	UpdateDate      time.Time `json:"updated_at"`
 	RepoOwnerName   RepoOwner `json:"owner"`
-	ContributorsUrl string    `json:"contributorsUrl"`
-	RepoUrl         string    `json:"repoUrl"`
+	ContributorsUrl string    `json:"contributors_url"`
+	RepoUrl         string    `json:"html_url"`
 }
 
 type RepoLanguages map[string]int
@@ -32,7 +32,7 @@ type RepoContributorsResponse struct {
 type FetchRepositoryContributorsResponse struct {
 	Id            int    `json:"id"`
 	Name          string `json:"name"`
-	AvatarUrl     string `json:"avatarUrl"`
-	GithubUrl     string `json:"githubUrl"`
+	AvatarUrl     string `json:"avatar_url"`
+	GithubUrl     string `json:"github_url"`
 	Contributions int    `json:"contributions"`
 }

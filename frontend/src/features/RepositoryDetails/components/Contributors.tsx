@@ -49,8 +49,8 @@ const ContributorsList = () => {
               <ContributorsCard
                 key={contributor.id}
                 name={contributor.name}
-                avatarUrl={contributor.avatarUrl}
-                githubUrl={contributor.githubUrl}
+                avatarUrl={contributor.avatar_url}
+                githubUrl={contributor.github_url}
                 contributions={contributor.contributions}
               />
             ))}

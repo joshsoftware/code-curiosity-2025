@@ -34,9 +34,9 @@ type User struct {
 type GithubUserResponse struct {
 	GithubId       int    `json:"id"`
 	GithubUsername string `json:"login"`
-	AvatarUrl      string `json:"avatarUrl"`
+	AvatarUrl      string `json:"avatar_url"`
 	Email          string `json:"email"`
-	IsAdmin        bool   `json:"isAdmin"`
+	IsAdmin        bool   `json:"is_admin"`
 }
 
 type AdminLoginRequest struct {

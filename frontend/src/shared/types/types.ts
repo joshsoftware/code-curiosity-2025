@@ -97,8 +97,8 @@ export interface Repository {
 export interface Contributor {
   id: number;
   name: string;
-  avatarUrl: string;
-  githubUrl: string;
+  avatar_url: string;
+  github_url: string;
   contributions: number;
 }
 

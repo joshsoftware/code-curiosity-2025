@@ -17,7 +17,7 @@ const CoinsInfo = () => {
       <DialogTrigger asChild>
         <Button
           variant="link"
-          className="text-cc-app-blue px-0 text-xs font-semibold underline"
+          className="text-cc-app-blue px-0 text-xs font-semibold underline cursor-pointer"
         >
           How do points work?
         </Button>

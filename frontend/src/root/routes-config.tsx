@@ -13,11 +13,11 @@ import {
   REPOSITORY_DETAILS_PATH,
   USER_DASHBOARD_PATH
 } from "@/shared/constants/routes";
-import RepositoryDetails from "@/features/RepositoryDetails.tsx";
 import AdminLogin from "@/features/Admin/AdminLogin";
 import { AllUsersList } from "@/features/Admin/Users.tsx";
 import ScoreConfigure from "@/features/Admin/ScoreConfigure";
 import BlockedAccountPage from "@/shared/components/common/BlockedAccountPage";
+import RepositoryDetails from "@/features/RepositoryDetails";
 export interface RoutesType {
   path: string;
   element: ReactNode;
