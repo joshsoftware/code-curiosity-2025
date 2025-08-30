@@ -45,7 +45,7 @@ func main() {
 	router := app.NewRouter(dependencies)
 
 	newCronSchedular := cronJob.NewCronSchedular()
-	newCronSchedular.InitCronJobs(dependencies.ContributionService)
+	newCronSchedular.InitCronJobs(dependencies.ContributionService, dependencies.UserService)
 
 	server := http.Server{
 		Addr:    fmt.Sprintf(":%s", cfg.HTTPServer.Port),

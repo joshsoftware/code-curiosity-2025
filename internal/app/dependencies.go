@@ -18,6 +18,7 @@ import (
 
 type Dependencies struct {
 	ContributionService contribution.Service
+	UserService         user.Service
 	AuthHandler         auth.Handler
 	UserHandler         user.Handler
 	ContributionHandler contribution.Handler
@@ -47,6 +48,7 @@ func InitDependencies(db *sqlx.DB, appCfg config.AppConfig, client config.Bigque
 
 	return Dependencies{
 		ContributionService: contributionService,
+		UserService:         userService,
 		AuthHandler:         authHandler,
 		UserHandler:         userHandler,
 		RepositoryHandler:   repositoryHandler,

@@ -113,28 +113,28 @@ CREATE TABLE "goal_contribution"(
 );
 
 ALTER TABLE
-    "goal_contribution" ADD CONSTRAINT "goal_contribution_set_by_user_id_foreign" FOREIGN KEY("set_by_user_id") REFERENCES "users"("id");
+    "goal_contribution" ADD CONSTRAINT "goal_contribution_set_by_user_id_foreign" FOREIGN KEY("set_by_user_id") REFERENCES "users"("id") ON DELETE CASCADE;
 ALTER TABLE
     "goal_contribution" ADD CONSTRAINT "goal_contribution_contribution_score_id_foreign" FOREIGN KEY("contribution_score_id") REFERENCES "contribution_score"("id");
 ALTER TABLE
-    "contribution_score" ADD CONSTRAINT "contribution_score_admin_id_foreign" FOREIGN KEY("admin_id") REFERENCES "users"("id");
+    "contribution_score" ADD CONSTRAINT "contribution_score_admin_id_foreign" FOREIGN KEY("admin_id") REFERENCES "users"("id") ON DELETE CASCADE;
 ALTER TABLE
-    "summary" ADD CONSTRAINT "summary_user_id_foreign" FOREIGN KEY("user_id") REFERENCES "users"("id");
+    "summary" ADD CONSTRAINT "summary_user_id_foreign" FOREIGN KEY("user_id") REFERENCES "users"("id") ON DELETE CASCADE;
 ALTER TABLE
-    "transactions" ADD CONSTRAINT "transactions_user_id_foreign" FOREIGN KEY("user_id") REFERENCES "users"("id");
+    "transactions" ADD CONSTRAINT "transactions_user_id_foreign" FOREIGN KEY("user_id") REFERENCES "users"("id") ON DELETE CASCADE;
 ALTER TABLE
     "contributions" ADD CONSTRAINT "contributions_contribution_score_id_foreign" FOREIGN KEY("contribution_score_id") REFERENCES "contribution_score"("id");
 ALTER TABLE
-    "badges" ADD CONSTRAINT "badges_user_id_foreign" FOREIGN KEY("user_id") REFERENCES "users"("id");
+    "badges" ADD CONSTRAINT "badges_user_id_foreign" FOREIGN KEY("user_id") REFERENCES "users"("id") ON DELETE CASCADE;
 ALTER TABLE
     "goal_contribution" ADD CONSTRAINT "goal_contribution_goal_id_foreign" FOREIGN KEY("goal_id") REFERENCES "goal"("id");
 ALTER TABLE
     "transactions" ADD CONSTRAINT "transactions_contribution_id_foreign" FOREIGN KEY("contribution_id") REFERENCES "contributions"("id");
 ALTER TABLE
-    "contributions" ADD CONSTRAINT "contributions_user_id_foreign" FOREIGN KEY("user_id") REFERENCES "users"("id");
+    "contributions" ADD CONSTRAINT "contributions_user_id_foreign" FOREIGN KEY("user_id") REFERENCES "users"("id") ON DELETE CASCADE;
 ALTER TABLE
     "contributions" ADD CONSTRAINT "contributions_repository_id_foreign" FOREIGN KEY("repository_id") REFERENCES "repositories"("id");
 ALTER TABLE
-    "leaderboard_hourly" ADD CONSTRAINT "leaderboard_hourly_user_id_foreign" FOREIGN KEY("user_id") REFERENCES "users"("id");
+    "leaderboard_hourly" ADD CONSTRAINT "leaderboard_hourly_user_id_foreign" FOREIGN KEY("user_id") REFERENCES "users"("id") ON DELETE CASCADE;
 ALTER TABLE
     "summary" ADD CONSTRAINT "summary_contribution_id_foreign" FOREIGN KEY("contribution_id") REFERENCES "contributions"("id");

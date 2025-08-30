@@ -83,6 +83,14 @@ func (s *service) GithubOAuthLoginCallback(ctx context.Context, code string) (st
 		return "", apperrors.ErrInternalServer
 	}
 
+	if userData.IsDeleted {
+		err = s.userService.RecoverAccountInGracePeriod(ctx, userData.Id)
+		if err != nil {
+			slog.Error("error in recovering account in grace period during login", "error", err)
+			return "", apperrors.ErrInternalServer
+		}
+	}
+
 	return jwtToken, nil
 }
 
