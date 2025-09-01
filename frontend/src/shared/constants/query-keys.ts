@@ -1,0 +1,6 @@
+export const LOGGED_IN_USER_QUERY_KEY = "logged-in-user"
+export const USER_BADGES_QUERY_KEY = "user-badges"
+export const LEADERBOARD_QUERY_KEY="leaderboard"
+export const CURRENT_USER_RANK_QUERY_KEY="current-user-rank"
+export const RECENT_ACTIVITIES_QUERY_KEY="recent-activities"
+export const OVERVIEW_QUERY_KEY="overview"
