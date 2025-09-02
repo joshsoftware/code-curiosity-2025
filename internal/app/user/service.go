@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"log/slog"
+	"time"
 
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/apperrors"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/middleware"
@@ -18,6 +19,8 @@ type Service interface {
 	GetUserByGithubId(ctx context.Context, githubId int) (User, error)
 	CreateUser(ctx context.Context, userInfo CreateUserRequestBody) (User, error)
 	UpdateUserEmail(ctx context.Context, email string) error
+	SoftDeleteUser(ctx context.Context, userID int) (User, error)
+	RecoverAccountInGracePeriod(ctx context.Context, userID int) error
 }
 
 func NewService(userRepository repository.UserRepository) Service {
@@ -72,5 +75,24 @@ func (s *service) UpdateUserEmail(ctx context.Context, email string) error {
 		return err
 	}
 
+	return nil
+}
+
+func (s *service) SoftDeleteUser(ctx context.Context, userID int) (User, error) {
+	now := time.Now()
+	user, err := s.userRepository.MarkUserAsDeleted(ctx, nil, userID, now)
+	if err != nil {
+		slog.Error("unable to softdelete user", "error", err)
+		return User{}, apperrors.ErrInternalServer
+	}
+	return User(user), nil
+}
+
+func (s *service) RecoverAccountInGracePeriod(ctx context.Context, userID int) error {
+	err := s.userRepository.AccountScheduledForDelete(ctx, nil, userID)
+	if err != nil {
+		slog.Error("failed to recover account in grace period", "error", err)
+		return err
+	}
 	return nil
 }
