@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/joshsoftware/code-curiosity-2025/internal/app/bigquery"
+	"github.com/joshsoftware/code-curiosity-2025/internal/app/goal"
 	repoService "github.com/joshsoftware/code-curiosity-2025/internal/app/repository"
 	"github.com/joshsoftware/code-curiosity-2025/internal/app/transaction"
 	"github.com/joshsoftware/code-curiosity-2025/internal/app/user"
@@ -59,6 +60,7 @@ type service struct {
 	repositoryService      repoService.Service
 	userService            user.Service
 	transactionService     transaction.Service
+	goalService            goal.Service
 	httpClient             *http.Client
 }
 
@@ -76,13 +78,14 @@ type Service interface {
 	ConfigureContributionTypeScore(ctx context.Context, configureContributionTypeScore []ConfigureContributionTypeScore) ([]ContributionScore, error)
 }
 
-func NewService(bigqueryService bigquery.Service, contributionRepository repository.ContributionRepository, repositoryService repoService.Service, userService user.Service, transactionService transaction.Service, httpClient *http.Client) Service {
+func NewService(bigqueryService bigquery.Service, contributionRepository repository.ContributionRepository, repositoryService repoService.Service, userService user.Service, transactionService transaction.Service, goalService goal.Service, httpClient *http.Client) Service {
 	return &service{
 		bigqueryService:        bigqueryService,
 		contributionRepository: contributionRepository,
 		repositoryService:      repositoryService,
 		userService:            userService,
 		transactionService:     transactionService,
+		goalService:            goalService,
 		httpClient:             httpClient,
 	}
 }
@@ -269,6 +272,24 @@ func (s *service) HandleContributionCreation(ctx context.Context, repositoryID i
 	if err != nil {
 		slog.Error("error creating contribution", "error", err)
 		return Contribution{}, err
+	}
+
+	err = s.goalService.SyncUserGoalProgressWithContributions(ctx, user.Id)
+	if err != nil {
+		slog.Error("error syncing goal progress with contibutions", "error", err)
+		return obtainedContribution, err
+	}
+
+	err = s.goalService.AllocateBadge(ctx, user.Id)
+	if err != nil {
+		slog.Error("error allocating badge", "error", err)
+		return obtainedContribution, err
+	}
+
+	_, err = s.goalService.CreateUserGoalSummary(ctx, user.Id)
+	if err != nil {
+		slog.Error("error creating goal summary for user", "error", err)
+		return obtainedContribution, err
 	}
 
 	return obtainedContribution, nil

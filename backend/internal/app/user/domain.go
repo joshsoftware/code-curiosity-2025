@@ -28,6 +28,7 @@ type CreateUserRequestBody struct {
 	AvatarUrl      string `json:"avatarUrl"`
 	Email          string `json:"email"`
 	IsAdmin        bool   `json:"isAdmin"`
+	IsBlocked      bool   `json:"isBlocked"`
 }
 
 type Email struct {

@@ -28,6 +28,7 @@ type CreateUserRequestBody struct {
 	AvatarUrl      string `db:"avatar_url"`
 	Email          string `db:"email"`
 	IsAdmin        bool   `db:"is_admin"`
+	IsBlocked      bool   `db:"is_blocked"`
 }
 
 type Contribution struct {
@@ -93,22 +94,57 @@ type MonthlyContributionSummary struct {
 	Month      time.Time `db:"month"`
 }
 
-type Goal struct {
+const (
+	GoalStatusInProgress = "inProgress"
+	GoalStatusCompleted  = "completed"
+	GoalStatusIncomplete = "incomplete"
+)
+
+const (
+	GoalLevelBeginner     = "Beginner"
+	GoalLevelIntermediate = "Intermediate"
+	GoalLevelAdvanced     = "Advanced"
+	GoalLevelCustom       = "Custom"
+)
+
+type GoalLevel struct {
 	Id        int       `db:"id"`
 	Level     string    `db:"level"`
 	CreatedAt time.Time `db:"created_at"`
 	UpdatedAt time.Time `db:"updated_at"`
 }
 
-type GoalContribution struct {
+type UserGoal struct {
+	Id             int       `db:"id"`
+	UserId         int       `db:"user_id"`
+	GoalLevelId    int       `db:"goal_level_id"`
+	Status         string    `db:"status"`
+	MonthStartedAt time.Time `db:"month_started_at"`
+	CreatedAt      time.Time `db:"created_at"`
+	UpdatedAt      time.Time `db:"updated_at"`
+}
+
+type GoalLevelTarget struct {
 	Id                  int       `db:"id"`
-	GoalId              int       `db:"goal_id"`
+	GoalLevelId         int       `db:"goal_level_id"`
 	ContributionScoreId int       `db:"contribution_score_id"`
-	TargetCount         int       `db:"target_count"`
-	IsCustom            bool      `db:"is_custom"`
-	SetByUserId         int       `db:"set_by_user_id"`
+	Target              int       `db:"target"`
 	CreatedAt           time.Time `db:"created_at"`
 	UpdatedAt           time.Time `db:"updated_at"`
+}
+
+type UserGoalTarget struct {
+	Id                  int       `db:"id"`
+	UserGoalId          int       `db:"user_goal_id"`
+	ContributionScoreId int       `db:"contribution_score_id"`
+	Target              int       `db:"target"`
+	CreatedAt           time.Time `db:"created_at"`
+	UpdatedAt           time.Time `db:"updated_at"`
+}
+
+type UserGoalProgress struct {
+	UserGoalTargetId int `db:"user_goal_target_id"`
+	ContributionId   int `db:"contribution_id"`
 }
 
 type Badge struct {
@@ -128,4 +164,15 @@ type AdminLoginRequest struct {
 type ConfigureContributionTypeScore struct {
 	ContributionType string `db:"contribution_type"`
 	Score            int    `db:"score"`
+}
+
+type GoalSummary struct {
+	Id                   int       `db:"id"`
+	UserId               int       `db:"user_id"`
+	SnapshotDate         time.Time `db:"snapshot_date"`
+	IncompleteGoalsCount int       `db:"incomplete_goals_count"`
+	TargetSet            int       `db:"target_set"`
+	TargetCompleted      int       `db:"target_completed"`
+	CreatedAt            time.Time `db:"created_at"`
+	UpdatedAt            time.Time `db:"updated_at"`
 }

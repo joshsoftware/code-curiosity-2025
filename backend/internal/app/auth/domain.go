@@ -37,6 +37,7 @@ type GithubUserResponse struct {
 	AvatarUrl      string `json:"avatar_url"`
 	Email          string `json:"email"`
 	IsAdmin        bool   `json:"is_admin"`
+	IsBlocked      bool   `json:"is_blocked"`
 }
 
 type AdminLoginRequest struct {

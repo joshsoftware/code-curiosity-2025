@@ -64,7 +64,7 @@ const AdminLayout: FC<AdminLayoutProps> = ({ children }) => {
                 <button
                   key={item.name}
                   onClick={() => handleMenuClick(item.name, item.path)}
-                  className={`group relative flex w-full items-center justify-between rounded-xl px-4 py-3 text-left font-medium transition-all duration-200 ${
+                  className={`group relative flex w-full cursor-pointer items-center justify-between rounded-xl px-4 py-3 text-left font-medium transition-all duration-200 ${
                     isActive
                       ? "from-cc-app-blue to-cc-app-mid-blue scale-[1.02] transform bg-gradient-to-r text-white shadow-lg"
                       : "text-white hover:bg-gray-50 hover:text-gray-900 hover:shadow-md"

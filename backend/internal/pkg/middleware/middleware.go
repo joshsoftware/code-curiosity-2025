@@ -19,8 +19,9 @@ var txKey = txKeyType{}
 type contextKey string
 
 const (
-	UserIdKey  contextKey = "userId"
-	IsAdminKey contextKey = "isAdmin"
+	UserIdKey    contextKey = "userId"
+	IsBlockedKey contextKey = "isBlocked"
+	IsAdminKey   contextKey = "isAdmin"
 )
 
 func EmbedTxInContext(ctx context.Context, tx *sqlx.Tx) context.Context {
@@ -66,7 +67,27 @@ func Authentication(next http.HandlerFunc, appCfg config.AppConfig) http.Handler
 		ctx := context.WithValue(r.Context(), UserIdKey, userId)
 		isAdmin := token.IsAdmin
 		ctx = context.WithValue(ctx, IsAdminKey, isAdmin)
+		IsBlocked := token.IsBlocked
+		ctx = context.WithValue(ctx, IsBlockedKey, IsBlocked)
 		r = r.WithContext(ctx)
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func AuthorizeUnblockedUser(next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		isBlocked, ok := ctx.Value(IsBlockedKey).(bool)
+		if !ok {
+			response.WriteJson(w, http.StatusInternalServerError, apperrors.ErrContextValue.Error(), nil)
+			return
+		}
+
+		if isBlocked {
+			response.WriteJson(w, http.StatusForbidden, apperrors.ErrUserBlocked.Error(), nil)
+			return
+		}
 
 		next.ServeHTTP(w, r)
 	})

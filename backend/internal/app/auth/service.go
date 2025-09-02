@@ -78,7 +78,7 @@ func (s *service) GithubOAuthLoginCallback(ctx context.Context, code string) (st
 		}
 	}
 
-	jwtToken, err := jwt.GenerateJWT(userData.Id, userInfo.IsAdmin, s.appCfg)
+	jwtToken, err := jwt.GenerateJWT(userData.Id, userInfo.IsAdmin, userData.IsBlocked, s.appCfg)
 	if err != nil {
 		slog.Error("error generating jwt", "error", err)
 		return "", apperrors.ErrInternalServer
@@ -118,7 +118,7 @@ func (s *service) VerifyAdminCredentials(ctx context.Context, adminCredentials A
 		return Admin{}, apperrors.ErrInvalidCredentials
 	}
 
-	jwtToken, err := jwt.GenerateJWT(adminInfo.Id, adminInfo.IsAdmin, s.appCfg)
+	jwtToken, err := jwt.GenerateJWT(adminInfo.Id, adminInfo.IsAdmin, adminInfo.IsBlocked, s.appCfg)
 	if err != nil {
 		slog.Error("failed to generate jwt token", "error", err)
 		return Admin{}, apperrors.ErrInternalServer

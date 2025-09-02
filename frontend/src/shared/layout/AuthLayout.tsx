@@ -84,7 +84,7 @@ const AuthLayout: FC<AuthLayoutProps> = ({ children }) => {
               to="/admin/login"
               className="text-cc-app-blue mt-4 text-sm underline hover:text-blue-900"
             >
-              Log in as admin?
+              {/* Log in as admin? */}
             </Link>
           )}
         </Card>

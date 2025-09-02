@@ -51,7 +51,7 @@ const LoginComponent = () => {
       <CardContent className="space-y-6">
         <Button
           onClick={handleGithubLogin}
-          className="bg-cc-app-orange hover:bg-cc-app-blue h-10 w-3/4 rounded-md font-semibold text-white"
+          className="bg-cc-app-orange hover:bg-cc-app-blue h-10 w-3/4 rounded-md font-semibold text-white hover:cursor-pointer"
         >
           <img src={githubIcon} className="h-4 w-4" /> Sign in with GitHub
         </Button>

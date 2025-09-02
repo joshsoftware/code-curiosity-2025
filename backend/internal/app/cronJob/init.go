@@ -14,13 +14,9 @@ type CronSchedular struct {
 }
 
 func NewCronSchedular() *CronSchedular {
-	location, err := time.LoadLocation("Asia/Kolkata")
-	if err != nil {
-		slog.Error("failed to load IST timezone", "error", err)
-	}
-
+	//CHANGE AND SET TO UTC TIMEZONE
 	return &CronSchedular{
-		cron: cron.New(cron.WithLocation(location)),
+		cron: cron.New(cron.WithLocation(time.UTC)),
 	}
 }
 

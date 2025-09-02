@@ -4,7 +4,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
+  DropdownMenuSeparator
 } from "@/shared/components/ui/dropdown-menu";
 import { Button } from "@/shared/components/ui/button";
 
@@ -26,9 +26,19 @@ const UserProfileMenu = ({ onSettingsClick, onLogoutClick }: Props) => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
-        <DropdownMenuItem onClick={onSettingsClick}>Settings</DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={onSettingsClick}
+          className="hover:cursor-pointer"
+        >
+          Settings
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={onLogoutClick}>Logout</DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={onLogoutClick}
+          className="hover:cursor-pointer"
+        >
+          Logout
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

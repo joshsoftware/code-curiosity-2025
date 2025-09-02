@@ -9,13 +9,15 @@ import (
 
 type Claims struct {
 	UserId  int
+	IsBlocked bool
 	IsAdmin bool
 	jwt.RegisteredClaims
 }
 
-func GenerateJWT(userId int, isAdmin bool, appCfg config.AppConfig) (string, error) {
+func GenerateJWT(userId int, isAdmin bool, isBlocked bool, appCfg config.AppConfig) (string, error) {
 	claims := Claims{
 		UserId:  userId,
+		IsBlocked: isBlocked,
 		IsAdmin: isAdmin,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),

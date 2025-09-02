@@ -11,12 +11,27 @@ import { Link, useNavigate } from "react-router-dom";
 import UserProfileMenu from "./UserProfileMenu";
 import UserEmail from "./UserEmail";
 import SettingsDialog from "./SettingsDialog";
-import { clearAccessToken } from "@/shared/utils/local-storage";
+import {
+  clearAccessToken,
+  clearUserCredentials,
+  setUserData
+} from "@/shared/utils/local-storage";
+import { toast } from "sonner";
+import type { AxiosError } from "axios";
 
 const UserProfileDetails = () => {
   const navigate = useNavigate();
-  const { data } = useLoggedInUser();
+  const { data, error, isError } = useLoggedInUser();
   const user = data?.data;
+
+  if (isError) {
+    const axiosError = error as AxiosError<{ message: string }>;
+    toast.error(axiosError.response?.data?.message);
+    clearUserCredentials();
+    navigate("/login");
+  }
+
+  setUserData(user);
 
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const [showEmailDialog, setShowEmailDialog] = useState(false);
@@ -90,7 +105,7 @@ const UserProfileDetails = () => {
       />
       {showEmailDialog && (
         <UserEmail
-          defaultEmail={user?.email || ""}
+          defaultEmail={user?.email || "default"}
           onClose={() => setShowEmailDialog(false)}
         />
       )}

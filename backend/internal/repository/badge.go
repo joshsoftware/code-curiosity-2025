@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"log/slog"
 	"time"
 
@@ -51,6 +53,10 @@ func (br *badgeRepository) GetUserCurrentMonthBadge(ctx context.Context, tx *sql
 	var badge Badge
 	err := executer.GetContext(ctx, &badge, getUserCurrentMonthBadgeQuery, userId)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			slog.Error("badge does not exist for user", "error", err)
+			return Badge{}, err
+		}
 		slog.Error("error fetching current month earned badge for user", "error", err)
 		return Badge{}, apperrors.ErrBadgeCreationFailed
 	}

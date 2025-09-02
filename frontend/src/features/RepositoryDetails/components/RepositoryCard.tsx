@@ -21,17 +21,22 @@ const RepositoryCard: FC<RepositoriesCardProps> = ({
   return (
     <div>
       <div className="flex items-start justify-between">
-        <div className="flex items-center gap-2 hover:text-blue-600">
-          {name}
-          <a
-            href={repoUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xl font-medium text-blue-600 "
-          >
-            <ExternalLink size={14} className="mt-[1px] text-black hover:text-blue-600" />
-          </a>
-        </div>
+        <a
+          href={repoUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-l font-medium"
+        >
+          <div className="flex items-center gap-2 hover:text-blue-600 group">
+            {name}
+
+            <ExternalLink
+              size={14}
+              className="mt-[1px] text-black group-hover:text-blue-600"
+            />
+          </div>
+        </a>
+
         <p className="text-l text-gray-700">
           Owned By: <span className="font-semibold">{owner}</span>
         </p>

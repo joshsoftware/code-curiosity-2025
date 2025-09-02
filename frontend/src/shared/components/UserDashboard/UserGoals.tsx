@@ -12,24 +12,22 @@ import {
 import { Loader2 } from "lucide-react";
 import {
   useAllContributionTypes,
-  useCustomGoalLevelTarget,
   useGoalLevels,
+  useResetUserGoalStatus,
   useSetUserGoalLevel,
-  useUserActiveGoalLevel,
-  useUserGoalLevelProgress
+  useUserCurrentGoalStatus
 } from "@/api/queries/UserGoals";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  USER_ACTIVE_GOAL_LEVEL_QUERY_KEY,
-  USER_GOAL_LEVEL_PROGRESS_QUERY_KEY
-} from "@/shared/constants/query-keys";
+import { USER_ACTIVE_GOAL_LEVEL_QUERY_KEY } from "@/shared/constants/query-keys";
 import type {
   ContributionTypeDetail,
   CustomGoalLevelTarget
 } from "@/shared/types/types";
+import { toast } from "sonner";
 
 const UserGoals = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [isSettingLevel, setIsSettingLevel] = useState(false);
   const [isCustomDialogOpen, setIsCustomDialogOpen] = useState(false);
 
@@ -38,46 +36,74 @@ const UserGoals = () => {
   const [target, setTarget] = useState("");
 
   const { data: userGoalLevelRes, isLoading: isGoalLevelLoading } =
-    useUserActiveGoalLevel();
+    useUserCurrentGoalStatus();
   const { data: goalLevelsRes, isLoading: isGoalLevelsLoading } =
     useGoalLevels();
-  const { data: userProgressRes, isLoading: isProgressLoading } =
-    useUserGoalLevelProgress();
   const { mutate: setGoalLevel } = useSetUserGoalLevel();
+  const { mutate: resetGoalStatus } = useResetUserGoalStatus();
   const { data: contributionTypesRes } = useAllContributionTypes();
-  const { mutate: setCustomTarget, isPending: isSettingCustom } =
-    useCustomGoalLevelTarget();
 
   const queryClient = useQueryClient();
 
-  const userLevel = userGoalLevelRes?.data ?? "";
+  const userLevel = userGoalLevelRes?.data ?? null;
   const goalLevels = goalLevelsRes?.data ?? [];
-  const userProgress = userProgressRes?.data ?? [];
   const allTypes: ContributionTypeDetail[] = contributionTypesRes?.data ?? [];
+
+  const createdAt = userLevel?.createdAt
+    ? new Date(userLevel?.createdAt)
+    : null;
+
+  const isWithin48HoursOrGreaterThan30Days = (createdAt?: Date | null) => {
+    if (!createdAt) return false;
+    const diff = Date.now() - createdAt.getTime();
+    return diff < 48 * 60 * 60 * 1000 || diff > 30 * 24 * 60 * 60 * 1000;
+  };
 
   const handleLevelSelect = (level: string) => {
     setIsSettingLevel(true);
-    setGoalLevel(level, {
+
+    if (level.toLowerCase() === "custom") {
+      setDialogOpen(false);
+      setIsCustomDialogOpen(true);
+      setIsSettingLevel(false);
+      return;
+    }
+
+    setGoalLevel(
+      { level, customTargets: [] },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({
+            queryKey: [USER_ACTIVE_GOAL_LEVEL_QUERY_KEY]
+          });
+          toast.success("goal set successfully");
+          setIsSettingLevel(false);
+          setDialogOpen(false);
+        },
+        onError: () => {
+          toast.error("Failed to set user goal level");
+          setIsSettingLevel(false);
+        }
+      }
+    );
+  };
+
+  const handleGoalReset = () => {
+    resetGoalStatus(undefined, {
       onSuccess: () => {
-        queryClient.invalidateQueries({
+        queryClient.removeQueries({
           queryKey: [USER_ACTIVE_GOAL_LEVEL_QUERY_KEY]
         });
-        queryClient.invalidateQueries({
-          queryKey: [USER_GOAL_LEVEL_PROGRESS_QUERY_KEY]
+        queryClient.refetchQueries({
+          queryKey: [USER_ACTIVE_GOAL_LEVEL_QUERY_KEY]
         });
-
-        setIsSettingLevel(false);
-
-        if (level.toLowerCase() === "custom") {
-          setDialogOpen(false); // close default dialog
-          setIsCustomDialogOpen(true); // open custom dialog
-        } else {
-          setDialogOpen(false);
-        }
+        toast.success("goal reset successfully");
+        setResetDialogOpen(false);
       },
-      onError: () => {
-        console.error("Failed to set user goal level");
-        setIsSettingLevel(false);
+      onError: (err: any) => {
+        const message =
+          err?.response?.data?.message || "Failed to reset goal status";
+        toast.error(message);
       }
     });
   };
@@ -85,37 +111,32 @@ const UserGoals = () => {
   const handleAddCustomGoal = () => {
     if (!selectedType || !target) return;
     if (customGoals.some(g => g.contributionType === selectedType)) return;
-
     setCustomGoals(prev => [
       ...prev,
-      {
-        contributionType: selectedType,
-        target: Number(target)
-      }
+      { contributionType: selectedType, target: Number(target) }
     ]);
     setSelectedType("");
     setTarget("");
   };
 
   const handleSubmitCustomGoals = () => {
-    setCustomTarget(customGoals, {
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: [USER_ACTIVE_GOAL_LEVEL_QUERY_KEY]
-        });
-        queryClient.invalidateQueries({
-          queryKey: [USER_GOAL_LEVEL_PROGRESS_QUERY_KEY]
-        });
-        setIsCustomDialogOpen(false);
-        setCustomGoals([]);
-      },
-      onError: () => {
-        console.error("Failed to set custom goal targets");
+    setGoalLevel(
+      { level: "Custom", customTargets: customGoals },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({
+            queryKey: [USER_ACTIVE_GOAL_LEVEL_QUERY_KEY]
+          });
+          toast.success("goal set successfully");
+          setIsCustomDialogOpen(false);
+          setCustomGoals([]);
+        },
+        onError: () => toast.error("Failed to set custom goal targets")
       }
-    });
+    );
   };
 
-  if (isGoalLevelLoading || isGoalLevelsLoading || isProgressLoading) {
+  if (isGoalLevelLoading || isGoalLevelsLoading) {
     return (
       <div className="flex items-center gap-2 text-white">
         <Loader2 className="h-5 w-5 animate-spin" />
@@ -126,25 +147,56 @@ const UserGoals = () => {
 
   return (
     <div>
-      <p className="text-cc-app-light-blue mb-4 text-left font-semibold">
-        MY GOALS {userLevel && `(${userLevel.toUpperCase()})`}
-      </p>
+      <div className="mb-4 flex items-center justify-between">
+        <p className="text-cc-app-light-blue mb-4 text-left font-semibold">
+          MY GOALS {userLevel?.level && `(${userLevel.level.toUpperCase()})`}
+        </p>
+        {isWithin48HoursOrGreaterThan30Days(createdAt) && (
+          <Dialog
+            open={resetDialogOpen}
+            onOpenChange={open => setResetDialogOpen(open)}
+          >
+            <DialogTrigger asChild>
+              <Button variant="ccAppOutlineMidBlue">Reset</Button>
+            </DialogTrigger>
+            <DialogContent className="bg-cc-app-gray-background text-black">
+              <DialogHeader>
+                <DialogTitle>Confirm Goal Reset</DialogTitle>
+              </DialogHeader>
+              <p className="mb-4 text-sm">
+                - Reset is available within 48 hours of setting a goal.
+                <br />- After 48 hours, goals reset automatically after 30 days.
+              </p>
+              <DialogFooter>
+                <Button
+                  variant="ghost"
+                  onClick={() => setResetDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button variant="ccAppOutlineMidBlue" onClick={handleGoalReset}>
+                  Confirm Reset
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+      </div>
 
       {userLevel ? (
         <div className="space-y-6 text-white">
-          {userProgress.map((goal, index) => {
-            const percent = goal.targetCount
-              ? Math.min((goal.achievedCount / goal.targetCount) * 100, 100)
+          {userLevel.goalTargetProgress?.map((goal, idx) => {
+            const percent = goal.target
+              ? Math.min((goal.progress / goal.target) * 100, 100)
               : 0;
-
             return (
-              <div key={index + goal.targetCount}>
+              <div key={idx + goal.contributionType}>
                 <div className="mb-2 flex items-center justify-between">
                   <span className="text-sm capitalize">
                     {goal.contributionType.replace(/([A-Z])/g, " $1")}
                   </span>
                   <span className="text-sm">
-                    {goal.achievedCount}/{goal.targetCount}
+                    {goal.progress}/{goal.target}
                   </span>
                 </div>
                 <Progress
@@ -157,20 +209,19 @@ const UserGoals = () => {
           })}
         </div>
       ) : (
-        <div className="bg-cc-app-mid-blue rounded-xl border border-gray-200 p-6 text-white shadow-md">
+        <div className="bg-cc-app-mid-blue rounded-xl border p-6 text-white shadow-md">
           <p className="mb-2 text-lg font-semibold">No Active Goal Set</p>
-          <p className="mb-4 text-sm text-white">
-            You haven't selected a goal level for this month yet. Choose a level
-            to start tracking your contributions.
+          <p className="mb-4 text-sm">
+            You haven't selected a goal level yet. Choose a level to start
+            tracking contributions.
           </p>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="ccAppOutlineMidBlue">Set My Goal</Button>
             </DialogTrigger>
-
-            <DialogContent className="bg-cc-app-mid-blue text-black">
+            <DialogContent className="bg-white text-black">
               <DialogHeader>
-                <DialogTitle>Select Goal Level for the month</DialogTitle>
+                <DialogTitle>Select Goal Level</DialogTitle>
               </DialogHeader>
 
               {!isSettingLevel ? (
@@ -179,7 +230,7 @@ const UserGoals = () => {
                     <Button
                       key={level.id}
                       variant="outline"
-                      className="hover:bg-cc-app-sky-blue w-full capitalize hover:cursor-pointer"
+                      className="hover:bg-cc-app-blue bg-cc-app-mid-blue w-full text-white capitalize hover:cursor-pointer"
                       onClick={() => handleLevelSelect(level.level)}
                     >
                       {level.level}
@@ -203,8 +254,9 @@ const UserGoals = () => {
         </div>
       )}
 
+      {/* Custom Goal Dialog */}
       <Dialog open={isCustomDialogOpen} onOpenChange={setIsCustomDialogOpen}>
-        <DialogContent className="bg-cc-app-mid-blue text-black">
+        <DialogContent className="bg-white text-black">
           <DialogHeader>
             <DialogTitle>Set Custom Contribution Goals</DialogTitle>
           </DialogHeader>
@@ -244,7 +296,7 @@ const UserGoals = () => {
                 {customGoals.map((goal, idx) => (
                   <div
                     key={goal.contributionType}
-                    className="flex justify-between rounded bg-white/20 px-3 py-2 text-white"
+                    className="flex justify-between rounded bg-gray-100 px-3 py-2"
                   >
                     <span className="capitalize">{goal.contributionType}</span>
                     <span>{goal.target}</span>
@@ -265,16 +317,10 @@ const UserGoals = () => {
 
           <DialogFooter className="pt-4">
             <Button
-              disabled={customGoals.length === 0 || isSettingCustom}
+              disabled={customGoals.length === 0}
               onClick={handleSubmitCustomGoals}
             >
-              {isSettingCustom ? (
-                <div className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" /> Saving...
-                </div>
-              ) : (
-                "Save Custom Goal"
-              )}
+              Save Custom Goal
             </Button>
             <Button
               variant="ghost"

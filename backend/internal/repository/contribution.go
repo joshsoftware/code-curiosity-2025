@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"log/slog"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/apperrors"
@@ -24,6 +25,7 @@ type ContributionRepository interface {
 	ListMonthlyContributionSummary(ctx context.Context, tx *sqlx.Tx, year int, month int, userId int) ([]MonthlyContributionSummary, error)
 	GetContributionTypeByContributionScoreId(ctx context.Context, tx *sqlx.Tx, contributionScoreId int) (string, error)
 	UpdateContributionTypeScore(ctx context.Context, tx *sqlx.Tx, configureContributionTypeScore []ConfigureContributionTypeScore) ([]ContributionScore, error)
+	FetchUserContributionsForMonth(ctx context.Context, tx *sqlx.Tx, userId int, monthStartedAt time.Time) ([]Contribution, error)
 }
 
 func NewContributionRepository(db *sqlx.DB) ContributionRepository {
@@ -69,6 +71,13 @@ const (
 	getContributionTypeByContributionScoreIdQuery = `SELECT contribution_type from contribution_score where id=$1`
 
 	updateContributionTypeScoreQuery = "UPDATE contribution_score SET score = $1 where contribution_type = $2"
+
+	fetchUserContributionsForMonthQuery = `
+	SELECT * FROM contributions
+	WHERE user_id = $1
+  	AND contributed_at >= $2
+  	AND contributed_at < ($2 + INTERVAL '1 month');
+	`
 )
 
 func (cr *contributionRepository) CreateContribution(ctx context.Context, tx *sqlx.Tx, contributionInfo Contribution) (Contribution, error) {
@@ -199,4 +208,17 @@ func (cr *contributionRepository) UpdateContributionTypeScore(ctx context.Contex
 	}
 
 	return contributionTypeScores, nil
+}
+
+func (cr *contributionRepository) FetchUserContributionsForMonth(ctx context.Context, tx *sqlx.Tx, userId int, monthStartedAt time.Time) ([]Contribution, error) {
+	executer := cr.BaseRepository.initiateQueryExecuter(tx)
+
+	var userContributionsForMonth []Contribution
+	err := executer.SelectContext(ctx, &userContributionsForMonth, fetchUserContributionsForMonthQuery, userId, monthStartedAt)
+	if err != nil {
+		slog.Error("error fetching user contributions for month", "error", err)
+		return nil, apperrors.ErrFetchingUserContributionsForMonth
+	}
+
+	return userContributionsForMonth, nil
 }

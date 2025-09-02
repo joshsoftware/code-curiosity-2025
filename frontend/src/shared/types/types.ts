@@ -5,7 +5,6 @@ export interface User {
   email: string;
   avatarUrl: string;
   currentBalance: number;
-  currentActiveGoalId: number;
   isBlocked: boolean;
   isAdmin: boolean;
   password: string;
@@ -122,10 +121,34 @@ export interface GoalLevel {
   updatedAt: string;
 }
 
-export interface GoalLevelProgress {
+export interface UserGoalTargetProgress {
   contributionType: string;
-  targetCount: number;
-  achievedCount: number;
+  target: number;
+  progress: number;
+}
+
+export interface UserCurrentGoalStatus {
+  userGoalId: number;
+  level: string;
+  status: string;
+  monthStartedAt: string;
+  createdAt: string;
+  updatedAt: string;
+  goalTargetProgress: UserGoalTargetProgress[];
+}
+
+export interface UserGoal {
+  id: number;
+  userId: number;
+  goalId: number;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SetUserGoalLevelRequest {
+  level: string;
+  customTargets: CustomGoalLevelTarget[];
 }
 
 export interface CustomGoalLevelTarget {
@@ -133,22 +156,20 @@ export interface CustomGoalLevelTarget {
   target: number;
 }
 
-export interface CustomGoalLevelTargetResponse {
-  id: number;
-  goalId: number;
-  contributionScoreId: number;
-  targetCount: number;
-  isCustom: boolean;
-  setByUserId: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export interface ContributionTypeDetail {
   id: number;
   adminId: number;
   contributionType: string;
   score: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UserGoalLevelStatus {
+  id: number;
+  userId: number;
+  goalId: number;
+  status: string;
   createdAt: string;
   updatedAt: string;
 }

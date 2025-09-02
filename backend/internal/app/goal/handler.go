@@ -16,9 +16,10 @@ type handler struct {
 
 type Handler interface {
 	ListGoalLevels(w http.ResponseWriter, r *http.Request)
-	GetUserActiveGoalLevel(w http.ResponseWriter, r *http.Request)
-	CreateCustomGoalLevelTarget(w http.ResponseWriter, r *http.Request)
-	ListUserGoalLevelProgress(w http.ResponseWriter, r *http.Request)
+	CreateUserGoalInProgress(w http.ResponseWriter, r *http.Request)
+	ResetUserCurrentGoalStatus(w http.ResponseWriter, r *http.Request)
+	GetUserCurrentGoalStatus(w http.ResponseWriter, r *http.Request)
+	FetchUserMonthlyGoalSummary(w http.ResponseWriter, r *http.Request)
 }
 
 func NewHandler(goalService Service) Handler {
@@ -32,7 +33,7 @@ func (h *handler) ListGoalLevels(w http.ResponseWriter, r *http.Request) {
 
 	gaols, err := h.goalService.ListGoalLevels(ctx)
 	if err != nil {
-		slog.Error("error fetching users conributed repos", "error", err)
+		slog.Error("error fetching goal levels", "error", err)
 		status, errorMessage := apperrors.MapError(err)
 		response.WriteJson(w, status, errorMessage, nil)
 		return
@@ -41,7 +42,7 @@ func (h *handler) ListGoalLevels(w http.ResponseWriter, r *http.Request) {
 	response.WriteJson(w, http.StatusOK, "goal levels fetched successfully", gaols)
 }
 
-func (h *handler) GetUserActiveGoalLevel(w http.ResponseWriter, r *http.Request) {
+func (h *handler) CreateUserGoalInProgress(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	userIdCtxVal := ctx.Value(middleware.UserIdKey)
@@ -53,48 +54,26 @@ func (h *handler) GetUserActiveGoalLevel(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	userGoalLevel, err := h.goalService.GetUserActiveGoalLevel(ctx, userId)
-	if err != nil {
-		slog.Error("error fetching users active goal level", "error", err)
-		status, errorMessage := apperrors.MapError(err)
-		response.WriteJson(w, status, errorMessage, nil)
-		return
-	}
-
-	response.WriteJson(w, http.StatusOK, "user active goal level fetched successfully", userGoalLevel)
-}
-
-func (h *handler) CreateCustomGoalLevelTarget(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	userIdCtxVal := ctx.Value(middleware.UserIdKey)
-	userId, ok := userIdCtxVal.(int)
-	if !ok {
-		slog.Error("error obtaining user id from context")
-		status, errorMessage := apperrors.MapError(apperrors.ErrContextValue)
-		response.WriteJson(w, status, errorMessage, nil)
-		return
-	}
-
-	var customGoalLevelTarget []CustomGoalLevelTarget
-	err := json.NewDecoder(r.Body).Decode(&customGoalLevelTarget)
+	var userSelecetdGoal CreateUserGoalRequest
+	err := json.NewDecoder(r.Body).Decode(&userSelecetdGoal)
 	if err != nil {
 		slog.Error(apperrors.ErrFailedMarshal.Error(), "error", err)
 		response.WriteJson(w, http.StatusBadRequest, apperrors.ErrInvalidRequestBody.Error(), nil)
 		return
 	}
 
-	createdCustomGoalLevelTargets, err := h.goalService.CreateCustomGoalLevelTarget(ctx, userId, customGoalLevelTarget)
+	userGoal, err := h.goalService.CreateUserGoalInProgress(ctx, userSelecetdGoal, userId)
 	if err != nil {
-		slog.Error(apperrors.ErrFailedMarshal.Error(), "error", err)
-		response.WriteJson(w, http.StatusBadRequest, err.Error(), nil)
+		slog.Error("failed to create user goal status", "error", err)
+		status, errorMessage := apperrors.MapError(err)
+		response.WriteJson(w, status, errorMessage, nil)
 		return
 	}
 
-	response.WriteJson(w, http.StatusOK, "custom goal level targets created successfully", createdCustomGoalLevelTargets)
+	response.WriteJson(w, http.StatusOK, "Goal created successfully", userGoal)
 }
 
-func (h *handler) ListUserGoalLevelProgress(w http.ResponseWriter, r *http.Request) {
+func (h *handler) ResetUserCurrentGoalStatus(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	userIdCtxVal := ctx.Value(middleware.UserIdKey)
@@ -106,13 +85,59 @@ func (h *handler) ListUserGoalLevelProgress(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	userGoalLevelProgress, err := h.goalService.ListUserGoalLevelProgress(ctx, userId)
+	userResetGoalStatus, err := h.goalService.ResetUserCurrentGoalStatus(ctx, userId)
 	if err != nil {
-		slog.Error("error failed to fetch user goal level progress", "error", err)
-		response.WriteJson(w, http.StatusBadRequest, err.Error(), nil)
+		slog.Error("error resetting user current goal status", "error", err)
+		status, errorMessage := apperrors.MapError(err)
+		response.WriteJson(w, status, errorMessage, nil)
 		return
 	}
 
-	response.WriteJson(w, http.StatusOK, "user goal level progress fetched successfully", userGoalLevelProgress)
+	response.WriteJson(w, http.StatusOK, "user current goal status reset successfully", userResetGoalStatus)
+}
 
+func (h *handler) GetUserCurrentGoalStatus(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	userIdCtxVal := ctx.Value(middleware.UserIdKey)
+	userId, ok := userIdCtxVal.(int)
+	if !ok {
+		slog.Error("error obtaining user id from context")
+		status, errorMessage := apperrors.MapError(apperrors.ErrContextValue)
+		response.WriteJson(w, status, errorMessage, nil)
+		return
+	}
+
+	userCurrentGoalStatus, err := h.goalService.GetUserCurrentGoalStatus(ctx, userId)
+	if err != nil {
+		slog.Error("error getting current goal status for user", "error", err)
+		status, errorMessage := apperrors.MapError(err)
+		response.WriteJson(w, status, errorMessage, nil)
+		return
+	}
+
+	response.WriteJson(w, http.StatusOK, "user current goal status fetched successfully", userCurrentGoalStatus)
+}
+
+func (h *handler) FetchUserMonthlyGoalSummary(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	userIdCtxVal := ctx.Value(middleware.UserIdKey)
+	userId, ok := userIdCtxVal.(int)
+	if !ok {
+		slog.Error("error obtaining user id from context")
+		status, errorMessage := apperrors.MapError(apperrors.ErrContextValue)
+		response.WriteJson(w, status, errorMessage, nil)
+		return
+	}
+
+	userMonthlyGoalSummary, err := h.goalService.FetchUserGoalSummary(ctx, userId)
+	if err != nil {
+		slog.Error("error etching user monthly goal summary", "error", err)
+		status, errorMessage := apperrors.MapError(err)
+		response.WriteJson(w, status, errorMessage, nil)
+		return
+	}
+
+	response.WriteJson(w, http.StatusOK, "user monthly goal summary fetched successfully", userMonthlyGoalSummary)
 }

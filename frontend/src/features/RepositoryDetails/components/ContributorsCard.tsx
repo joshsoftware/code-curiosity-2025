@@ -25,7 +25,7 @@ const ContributorsCard: FC<ContributorsCardProps> = ({
             className="h-15 w-15 rounded-full"
           />
           <AvatarFallback>Contributors-Image</AvatarFallback>
-          <div className="left absolute bottom-[-2.5rem] z-1 hidden w-max -translate-y-140 rounded bg-yellow-100 px-2 py-1 text-xs text-gray-600 shadow group-hover:block">
+          <div className="left absolute bottom-[-5.5rem] z-1 hidden w-max -translate-y-140 rounded bg-yellow-100 px-2 py-1 text-xs text-gray-600 shadow group-hover:block">
             {name} <br />
             {contributions} Contributions
             <br />

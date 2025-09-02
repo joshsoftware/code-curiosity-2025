@@ -29,7 +29,7 @@ type Service interface {
 	UpdateUserCurrentBalance(ctx context.Context, transaction Transaction) error
 	GetAllUsersRank(ctx context.Context) ([]LeaderboardUser, error)
 	GetCurrentUserRank(ctx context.Context, userId int) (LeaderboardUser, error)
-	UpdateCurrentActiveGoalId(ctx context.Context, userId int, level string) (int, error)
+	// UpdateCurrentActiveGoalId(ctx context.Context, userId int, level string) (int, error)
 	GetLoggedInAdmin(ctx context.Context, adminInfo AdminLoginRequest) (User, error)
 	ListAllUsers(ctx context.Context) ([]User, error)
 	BlockOrUnblockUser(ctx context.Context, userID int, block bool) error
@@ -186,23 +186,23 @@ func (s *service) GetCurrentUserRank(ctx context.Context, userId int) (Leaderboa
 	return leaderboardUser, nil
 }
 
-func (s *service) UpdateCurrentActiveGoalId(ctx context.Context, userId int, level string) (int, error) {
+// func (s *service) UpdateCurrentActiveGoalId(ctx context.Context, userId int, level string) (int, error) {
 
-	goalId, err := s.goalService.GetGoalIdByGoalLevel(ctx, level)
+// 	goalId, err := s.goalService.GetGoalIdByGoalLevel(ctx, level)
 
-	if err != nil {
-		slog.Error("error occured while fetching goal id by goal level")
-		return 0, err
-	}
+// 	if err != nil {
+// 		slog.Error("error occured while fetching goal id by goal level")
+// 		return 0, err
+// 	}
 
-	goalId, err = s.userRepository.UpdateCurrentActiveGoalId(ctx, nil, userId, goalId)
+// 	goalId, err = s.userRepository.UpdateCurrentActiveGoalId(ctx, nil, userId, goalId)
 
-	if err != nil {
-		slog.Error("failed to update current active goal id", "error", err)
-	}
+// 	if err != nil {
+// 		slog.Error("failed to update current active goal id", "error", err)
+// 	}
 
-	return goalId, err
-}
+// 	return goalId, err
+// }
 
 func (s *service) GetLoggedInAdmin(ctx context.Context, adminInfo AdminLoginRequest) (User, error) {
 	admin, err := s.userRepository.GetAdminByCredentials(ctx, nil, repository.AdminLoginRequest(adminInfo))

@@ -1,0 +1,10 @@
+CREATE TABLE "goal_summary" (
+    "id" BIGSERIAL PRIMARY KEY,
+    "user_id" BIGINT NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+    "snapshot_date" TIMESTAMPTZ NOT NULL,
+    "incomplete_goals_count" BIGINT NOT NULL DEFAULT 0,
+    "target_set" BIGINT NOT NULL DEFAULT 0,
+    "target_completed" BIGINT NOT NULL DEFAULT 0,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

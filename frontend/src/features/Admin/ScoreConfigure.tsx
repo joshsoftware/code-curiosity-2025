@@ -16,33 +16,46 @@ const ScoreConfigure = () => {
   const { data, isLoading, isError } = useFetchContributionTypes();
   const { mutate: configureScore, isPending } = useConfigureContributionScore();
 
-  const [scores, setScores] = useState<Record<string, number>>({});
+  // keep all scores in state (so empty can be tracked)
+  const [scores, setScores] = useState<Record<string, string>>({});
 
   if (isLoading) return <div>Loading...</div>;
   if (isError || !data?.data)
     return <div>Failed to load contribution types.</div>;
 
-  const handleScoreChange = (contributionType: string, newScore: number) => {
+  // Initialize state with current scores (so they are controlled)
+  if (Object.keys(scores).length === 0) {
+    const init: Record<string, string> = {};
+    data.data.forEach((item: ContributionScore) => {
+      init[item.contributionType] = String(item.score);
+    });
+    setScores(init);
+  }
+
+  const handleScoreChange = (contributionType: string, newScore: string) => {
     setScores(prev => ({ ...prev, [contributionType]: newScore }));
   };
 
   const handleSaveAll = () => {
+    // validate: no empty or invalid scores
+    const invalid = Object.entries(scores).some(
+      ([, score]) => score === "" || isNaN(Number(score))
+    );
+    if (invalid) {
+      toast.error("All scores must be valid numbers (no empty fields).");
+      return;
+    }
+
     const updates: ContributionScoreUpdate[] = Object.entries(scores).map(
       ([contributionType, score]) => ({
         contributionType,
-        score
+        score: Number(score)
       })
     );
-
-    if (updates.length === 0) {
-      toast.info("No changes to save.");
-      return;
-    }
 
     configureScore(updates, {
       onSuccess: () => {
         toast.success("Contribution scores updated successfully.");
-        setScores({});
       },
       onError: () => {
         toast.error("Failed to update contribution scores.");
@@ -71,9 +84,11 @@ const ScoreConfigure = () => {
             <Input
               type="number"
               className="mr-4 w-24"
-              defaultValue={item.score}
+              min={0}
+              required
+              value={scores[item.contributionType] ?? ""}
               onChange={e =>
-                handleScoreChange(item.contributionType, Number(e.target.value))
+                handleScoreChange(item.contributionType, e.target.value)
               }
             />
           </div>

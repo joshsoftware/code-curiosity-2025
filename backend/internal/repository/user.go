@@ -28,7 +28,6 @@ type UserRepository interface {
 	UpdateUserCurrentBalance(ctx context.Context, tx *sqlx.Tx, user User) error
 	GetAllUsersRank(ctx context.Context, tx *sqlx.Tx) ([]LeaderboardUser, error)
 	GetCurrentUserRank(ctx context.Context, tx *sqlx.Tx, userId int) (LeaderboardUser, error)
-	UpdateCurrentActiveGoalId(ctx context.Context, tx *sqlx.Tx, userId int, goalId int) (int, error)
 	GetAdminByCredentials(ctx context.Context, tx *sqlx.Tx, adminInfo AdminLoginRequest) (User, error)
 	GetAllUsers(ctx context.Context, tx *sqlx.Tx) ([]User, error)
 	UpdateUserBlockStatus(ctx context.Context, tx *sqlx.Tx, userID int, block bool) error
@@ -57,9 +56,9 @@ const (
 
 	updateEmailQuery = "UPDATE users SET email=$1, updated_at=$2 where id=$3"
 
-	markUserAsDeletedQuery = "UPDATE users SET is_deleted = TRUE, deleted_at=$1 where id = $2"
+	markUserAsDeletedQuery = "UPDATE users SET is_deleted = TRUE, deleted_at=$1, updated_at=$2 where id = $3"
 
-	recoverAccountInGracePeriodQuery = "UPDATE users SET is_deleted = false, deleted_at = NULL where id = $1"
+	recoverAccountInGracePeriodQuery = "UPDATE users SET is_deleted = false, deleted_at = NULL, updated_at=$1 where id = $2"
 
 	hardDeleteUsersQuery = "DELETE FROM users WHERE is_deleted = TRUE AND deleted_at <= $1"
 
@@ -94,13 +93,11 @@ const (
 	ranked_users
 	WHERE id = $1;`
 
-	updateCurrentActiveGoalIdQuery = "UPDATE users SET current_active_goal_id=$1 where id=$2"
-
 	verifyAdminCredentialsQuery = "SELECT * FROM users where email = $1 and is_admin=true"
 
 	getAllUsersQuery = "SELECT * FROM users where is_admin=false"
 
-	updateUserBlockStatusQuery = "UPDATE users SET is_blocked=$1 where id=$2"
+	updateUserBlockStatusQuery = "UPDATE users SET is_blocked=$1, updated_at=$2 where id=$3"
 )
 
 func (ur *userRepository) GetUserById(ctx context.Context, tx *sqlx.Tx, userId int) (User, error) {
@@ -171,7 +168,7 @@ func (ur *userRepository) UpdateUserEmail(ctx context.Context, tx *sqlx.Tx, user
 func (ur *userRepository) MarkUserAsDeleted(ctx context.Context, tx *sqlx.Tx, userId int, deletedAt time.Time) error {
 	executer := ur.BaseRepository.initiateQueryExecuter(tx)
 
-	_, err := executer.ExecContext(ctx, markUserAsDeletedQuery, deletedAt, userId)
+	_, err := executer.ExecContext(ctx, markUserAsDeletedQuery, deletedAt, time.Now(), userId)
 	if err != nil {
 		slog.Error("unable to mark user as deleted", "error", err)
 		return apperrors.ErrInternalServer
@@ -183,7 +180,7 @@ func (ur *userRepository) MarkUserAsDeleted(ctx context.Context, tx *sqlx.Tx, us
 func (ur *userRepository) RecoverAccountInGracePeriod(ctx context.Context, tx *sqlx.Tx, userId int) error {
 	executer := ur.BaseRepository.initiateQueryExecuter(tx)
 
-	_, err := executer.ExecContext(ctx, recoverAccountInGracePeriodQuery, userId)
+	_, err := executer.ExecContext(ctx, recoverAccountInGracePeriodQuery, time.Now(), userId)
 	if err != nil {
 		slog.Error("unable to reverse the soft delete ", "error", err)
 		return apperrors.ErrInternalServer
@@ -258,18 +255,6 @@ func (ur *userRepository) GetCurrentUserRank(ctx context.Context, tx *sqlx.Tx, u
 	return currentUserRank, nil
 }
 
-func (ur *userRepository) UpdateCurrentActiveGoalId(ctx context.Context, tx *sqlx.Tx, userId int, goalId int) (int, error) {
-	executer := ur.BaseRepository.initiateQueryExecuter(tx)
-
-	_, err := executer.ExecContext(ctx, updateCurrentActiveGoalIdQuery, goalId, userId)
-	if err != nil {
-		slog.Error("failed to update current active goal id", "error", err)
-		return 0, apperrors.ErrInternalServer
-	}
-
-	return goalId, nil
-}
-
 func (ur *userRepository) GetAdminByCredentials(ctx context.Context, tx *sqlx.Tx, adminInfo AdminLoginRequest) (User, error) {
 	executer := ur.BaseRepository.initiateQueryExecuter(tx)
 
@@ -303,7 +288,7 @@ func (ur *userRepository) GetAllUsers(ctx context.Context, tx *sqlx.Tx) ([]User,
 func (ur *userRepository) UpdateUserBlockStatus(ctx context.Context, tx *sqlx.Tx, userID int, block bool) error {
 	executer := ur.BaseRepository.initiateQueryExecuter(tx)
 
-	_, err := executer.ExecContext(ctx, updateUserBlockStatusQuery, block, userID)
+	_, err := executer.ExecContext(ctx, updateUserBlockStatusQuery, block, time.Now(), userID)
 	if err != nil {
 		slog.Error("failed to update user block status", "error", err)
 		return apperrors.ErrInternalServer

@@ -1,19 +1,18 @@
-import { type FC } from "react";
+import { type FC, useState } from "react";
 import type { AdminCredentials } from "@/shared/types/types";
 import { useLogInAdmin } from "@/api/queries/Admin";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { ACCESS_TOKEN_KEY } from "@/shared/constants/local-storage";
 import { Button } from "@/shared/components/ui/button";
+import { toast } from "sonner";
+import { Eye, EyeOff } from "lucide-react";
 
 const AdminLogin: FC = () => {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors }
-  } = useForm<AdminCredentials>();
+  const { register, handleSubmit } = useForm<AdminCredentials>();
   const navigate = useNavigate();
-  const { mutate, isPending, isError, error } = useLogInAdmin();
+  const { mutate, isPending } = useLogInAdmin();
+  const [showPassword, setShowPassword] = useState(false);
 
   const onSubmit = async (
     data: AdminCredentials,
@@ -29,11 +28,12 @@ const AdminLogin: FC = () => {
           navigate("/admin/users");
         },
         onError: err => {
-          console.error(" Admin login error", err);
+          toast.error("Invalid credentials");
+          console.error("Admin login error", err);
         }
       });
     } catch (err) {
-      console.error(" Unexpected submit error", err);
+      console.error("Unexpected submit error", err);
     }
   };
 
@@ -47,17 +47,15 @@ const AdminLogin: FC = () => {
           htmlFor="email"
           className="block text-sm font-medium text-gray-700"
         >
-          Email
+          Email <span className="text-red-500">*</span>
         </label>
         <input
           id="email"
           type="email"
+          placeholder="example@gmail.com"
           className="w-full rounded-md border border-gray-300 bg-white p-2 text-sm shadow-sm focus:border-blue-500 focus:bg-white focus:ring-0 focus:outline-none"
           {...register("email", { required: "Email is required" })}
         />
-        {errors.email && (
-          <p className="text-sm text-red-600">{errors.email.message}</p>
-        )}
       </div>
 
       <div className="space-y-2">
@@ -65,24 +63,25 @@ const AdminLogin: FC = () => {
           htmlFor="password"
           className="block text-sm font-medium text-gray-700"
         >
-          Password
+          Password <span className="text-red-500">*</span>
         </label>
-        <input
-          id="password"
-          type="password"
-          className="w-full rounded-md border border-gray-300 bg-white p-2 text-sm shadow-sm focus:border-blue-500 focus:bg-white focus:ring-0 focus:outline-none"
-          {...register("password", { required: "Password is required" })}
-        />
-        {errors.password && (
-          <p className="text-sm text-red-600">{errors.password.message}</p>
-        )}
+        <div className="relative">
+          <input
+            id="password"
+            type={showPassword ? "text" : "password"}
+            placeholder="password"
+            className="w-full rounded-md border border-gray-300 bg-white p-2 pr-10 text-sm shadow-sm focus:border-blue-500 focus:bg-white focus:ring-0 focus:outline-none"
+            {...register("password", { required: "Password is required" })}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(prev => !prev)}
+            className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 focus:outline-none"
+          >
+            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
+        </div>
       </div>
-
-      {isError && (
-        <p className="text-sm text-red-600">
-          {error?.message || "Failed to log in"}
-        </p>
-      )}
 
       <Button
         type="submit"

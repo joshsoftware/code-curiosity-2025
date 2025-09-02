@@ -9,17 +9,17 @@ import { Separator } from "@/shared/components/ui/separator";
 const RepositoryDetails = () => {
   const navigate = useNavigate();
   return (
-    <div className="space-y-6 px-30 p-8">
-      <div className="flex cursor-pointer items-center space-x-2">
+    <div className="space-y-6 p-8 px-30">
+      <div
+        className="flex cursor-pointer items-center space-x-2"
+        onClick={() => navigate("/my-contributions")}
+      >
         <ArrowLeft className="h-5 w-5 text-gray-600" />
-        <span
-          className="text-lg font-medium text-blue-600"
-          onClick={() => navigate("/my-contributions")}
-        >
+        <span className="text-cc-app-blue text-lg font-medium">
           Repository Details
         </span>
       </div>
-      <div className="">
+      <div>
         <div className="rounded-xl border border-gray-300">
           <Repository />
           <Separator className="w-max border-t border-dashed border-gray-300" />

@@ -13,20 +13,30 @@ const Repositories = () => {
     );
   return (
     <div className="mx-auto max-w-4xl p-6">
-      {repositoriesData?.map(repo => (
-        <>
-          <RepositoriesCard
-            key={repo.id}
-            id={repo.id}
-            name={repo.repoName}
-            languages={repo.languages}
-            description={repo.description}
-            updatedOn={repo.updateDate}
-            coins={repo.totalCoinsEarned}
-          />
-          <Separator />
-        </>
-      ))}
+      {repositoriesData?.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <p className="text-lg font-semibold text-gray-700">
+            You haven't contributed to any repositories yet
+          </p>
+          <p className="mt-2 text-sm text-gray-500">
+            Start contributing to earn coins and track your progress 
+          </p>
+        </div>
+      ) : (
+        repositoriesData?.map(repo => (
+          <div key={repo.id}>
+            <RepositoriesCard
+              id={repo.id}
+              name={repo.repoName}
+              languages={repo.languages}
+              description={repo.description}
+              updatedOn={repo.updateDate}
+              coins={repo.totalCoinsEarned}
+            />
+            <Separator />
+          </div>
+        ))
+      )}
     </div>
   );
 };

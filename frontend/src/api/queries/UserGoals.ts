@@ -5,51 +5,16 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   CONTRIBUTION_TYPES_QUERY_KEY,
   GOAL_LEVELS_QUERY_KEY,
-  USER_ACTIVE_GOAL_LEVEL_QUERY_KEY,
-  USER_GOAL_LEVEL_PROGRESS_QUERY_KEY
+  USER_ACTIVE_GOAL_LEVEL_QUERY_KEY
 } from "@/shared/constants/query-keys";
 import type {
   ContributionTypeDetail,
-  CustomGoalLevelTarget,
-  CustomGoalLevelTargetResponse,
   GoalLevel,
-  GoalLevelProgress
+  SetUserGoalLevelRequest,
+  UserCurrentGoalStatus,
+  UserGoal,
+  UserGoalLevelStatus
 } from "@/shared/types/types";
-
-const fetchUserActiveGoalLevel = async (): Promise<ApiResponse<string>> => {
-  const response = await api.get<{
-    message: string;
-    data: string;
-  }>(`${BACKEND_URL}/api/v1/user/goal/level`);
-
-  return response.data;
-};
-
-export const useUserActiveGoalLevel = () => {
-  return useQuery({
-    queryKey: [USER_ACTIVE_GOAL_LEVEL_QUERY_KEY],
-    queryFn: fetchUserActiveGoalLevel
-  });
-};
-
-const setUserGoalLevel = async (
-  selectedLevel: string
-): Promise<ApiResponse<number>> => {
-  const response = await api.patch<{
-    message: string;
-    data: number;
-  }>(`${BACKEND_URL}/api/v1/user/goal/level`, {
-    level: selectedLevel
-  });
-
-  return response.data;
-};
-
-export const useSetUserGoalLevel = () => {
-  return useMutation({
-    mutationFn: (selectedLevel: string) => setUserGoalLevel(selectedLevel)
-  });
-};
 
 const fetchGoalLevels = async (): Promise<ApiResponse<GoalLevel[]>> => {
   const response = await api.get<{
@@ -67,43 +32,55 @@ export const useGoalLevels = () => {
   });
 };
 
-const fetchUserGoalLevelProgress = async (): Promise<
-  ApiResponse<GoalLevelProgress[]>
+const fetchUserCurrentGoalStatus = async (): Promise<
+  ApiResponse<UserCurrentGoalStatus>
 > => {
   const response = await api.get<{
     message: string;
-    data: GoalLevelProgress[];
-  }>(`${BACKEND_URL}/api/v1/user/goal/level/progress`);
+    data: UserCurrentGoalStatus;
+  }>(`${BACKEND_URL}/api/v1/user/goal/level`);
 
   return response.data;
 };
 
-export const useUserGoalLevelProgress = () => {
+export const useUserCurrentGoalStatus = () => {
   return useQuery({
-    queryKey: [USER_GOAL_LEVEL_PROGRESS_QUERY_KEY],
-    queryFn: fetchUserGoalLevelProgress
+    queryKey: [USER_ACTIVE_GOAL_LEVEL_QUERY_KEY],
+    queryFn: fetchUserCurrentGoalStatus,
   });
 };
 
-const createCustomGoalLevelTarget = async (
-  customGoalLevelTarget: CustomGoalLevelTarget[]
-): Promise<ApiResponse<CustomGoalLevelTargetResponse[]>> => {
+const setUserGoalLevel = async (
+  userGoalLevelRequest: SetUserGoalLevelRequest
+): Promise<ApiResponse<UserGoalLevelStatus>> => {
   const response = await api.post<{
     message: string;
-    data: CustomGoalLevelTargetResponse[];
-  }>(
-    `${BACKEND_URL}/api/v1/user/goal/level/custom/targets`,
-    customGoalLevelTarget
-  );
+    data: UserGoalLevelStatus;
+  }>(`${BACKEND_URL}/api/v1/user/goal/level`, userGoalLevelRequest);
 
   return response.data;
 };
 
-export const useCustomGoalLevelTarget = () => {
+export const useSetUserGoalLevel = () => {
   return useMutation({
-    mutationFn: (customGoalLevelTarget: CustomGoalLevelTarget[]) =>
-      createCustomGoalLevelTarget(customGoalLevelTarget)
+    mutationFn: (userGoalLevelRequest: SetUserGoalLevelRequest) =>
+      setUserGoalLevel(userGoalLevelRequest)
   });
+};
+
+const resetUserGoalStatus = async (): Promise<ApiResponse<UserGoal>> => {
+  const response = await api.post<{
+    message: string;
+    data: UserGoal;
+  }>(`${BACKEND_URL}/api/v1/user/goal/level/reset`);
+
+  return response.data;
+};
+
+export const useResetUserGoalStatus = () => {
+  return useMutation({
+    mutationFn: () => resetUserGoalStatus(),
+  },);
 };
 
 const fetchAllContributionTypes = async (): Promise<
