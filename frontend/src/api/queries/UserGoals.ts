@@ -5,11 +5,13 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   CONTRIBUTION_TYPES_QUERY_KEY,
   GOAL_LEVELS_QUERY_KEY,
-  USER_ACTIVE_GOAL_LEVEL_QUERY_KEY
+  USER_ACTIVE_GOAL_LEVEL_QUERY_KEY,
+  USER_GOAL_LEVEL_SUMMARY_QUERY_KEY
 } from "@/shared/constants/query-keys";
 import type {
   ContributionTypeDetail,
   GoalLevel,
+  GoalSummary,
   SetUserGoalLevelRequest,
   UserCurrentGoalStatus,
   UserGoal,
@@ -46,7 +48,7 @@ const fetchUserCurrentGoalStatus = async (): Promise<
 export const useUserCurrentGoalStatus = () => {
   return useQuery({
     queryKey: [USER_ACTIVE_GOAL_LEVEL_QUERY_KEY],
-    queryFn: fetchUserCurrentGoalStatus,
+    queryFn: fetchUserCurrentGoalStatus
   });
 };
 
@@ -79,8 +81,8 @@ const resetUserGoalStatus = async (): Promise<ApiResponse<UserGoal>> => {
 
 export const useResetUserGoalStatus = () => {
   return useMutation({
-    mutationFn: () => resetUserGoalStatus(),
-  },);
+    mutationFn: () => resetUserGoalStatus()
+  });
 };
 
 const fetchAllContributionTypes = async (): Promise<
@@ -98,5 +100,21 @@ export const useAllContributionTypes = () => {
   return useQuery({
     queryKey: [CONTRIBUTION_TYPES_QUERY_KEY],
     queryFn: fetchAllContributionTypes
+  });
+};
+
+const fetchUserGoalSummary = async (): Promise<ApiResponse<GoalSummary[]>> => {
+  const response = await api.get<{
+    message: string;
+    data: GoalSummary[];
+  }>(`${BACKEND_URL}/api/v1/user/goal/summary`);
+
+  return response.data;
+};
+
+export const useUserGoalSummary = () => {
+  return useQuery({
+    queryKey: [USER_GOAL_LEVEL_SUMMARY_QUERY_KEY],
+    queryFn: fetchUserGoalSummary
   });
 };

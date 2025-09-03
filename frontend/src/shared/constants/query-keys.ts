@@ -15,5 +15,6 @@ export const USER_GOAL_LEVEL_PROGRESS_QUERY_KEY = "goal-level-progresss";
 export const CONTRIBUTION_TYPES_QUERY_KEY = "contribution-types";
 export const GITHUB_OAUTH_LOGIN_QUERY_KEY = "github-oauth-login";
 export const USER_GOAL_LEVEL_UPDATE_QUERY_KEY = "user-goal-level-update";
+export const USER_GOAL_LEVEL_SUMMARY_QUERY_KEY="user-goal-level-summary"
 
 export const GET_ALL_USERS_QUERY_KEY = "get-all-users";

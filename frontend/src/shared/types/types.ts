@@ -216,3 +216,14 @@ export interface ContributionScoreUpdate {
   contributionType: string;
   score: number;
 }
+
+export interface GoalSummary {
+  id: number;
+  userId: number;
+  snapshotDate: string;
+  incompleteGoalsCount: number;
+  targetSet: number;
+  targetCompleted: number;
+  createdAt: string;
+  updatedAt: string;
+}
