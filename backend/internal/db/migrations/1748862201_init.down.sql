@@ -1,5 +1,4 @@
 DROP TABLE IF EXISTS "goal_contribution";
-DROP TABLE IF EXISTS "goal";
 DROP TABLE IF EXISTS "summary";
 DROP TABLE IF EXISTS "badges";
 DROP TABLE IF EXISTS "leaderboard_hourly";
@@ -8,3 +7,4 @@ DROP TABLE IF EXISTS "contributions";
 DROP TABLE IF EXISTS "repositories";
 DROP TABLE IF EXISTS "contribution_score";
 DROP TABLE IF EXISTS "users";
+DROP TABLE IF EXISTS "goal";

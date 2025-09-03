@@ -3,6 +3,7 @@ package goal
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -315,7 +316,7 @@ func (s *service) SyncUserGoalProgressWithContributions(ctx context.Context, use
 		return err
 	}
 
-	serviceUserCurrentGoalTargets := make([]UserGoalTarget, 0)
+	serviceUserCurrentGoalTargets := make([]UserGoalTarget, len(userCurrentGoalTargets))
 	for i, userCurrentGoalTarget := range userCurrentGoalTargets {
 		serviceUserCurrentGoalTargets[i] = UserGoalTarget(userCurrentGoalTarget)
 	}
@@ -390,11 +391,14 @@ func (s *service) UpdateUserGoalStatusMonthly(ctx context.Context) error {
 }
 
 func (s *service) CreateUserGoalSummary(ctx context.Context, userId int) (GoalSummary, error) {
+	fmt.Println("in create user goal summary ")
 	userIncompleteGoalCount, err := s.goalRepository.CalculateUserIncompleteGoalsUntilDay(ctx, nil, userId)
 	if err != nil {
 		slog.Error("error calculating user incomplete goalstatus until day", "error", err)
 		return GoalSummary{}, err
 	}
+
+	fmt.Println("in create user goal summary  2", userIncompleteGoalCount)
 
 	userCurrentGoalStatus, err := s.GetUserCurrentGoalStatus(ctx, userId)
 	if err != nil {
@@ -417,7 +421,13 @@ func (s *service) CreateUserGoalSummary(ctx context.Context, userId int) (GoalSu
 		TargetCompleted:      totalTargetCompleted,
 	}
 
-	return userMonthlyGoalSummary, nil
+	createdUserGoalSummary, err := s.goalRepository.CreateUserGoalSummary(ctx, nil, repository.GoalSummary(userMonthlyGoalSummary))
+	if err != nil {
+		slog.Error("error creating user goal summary", "error", err)
+		return GoalSummary{}, err
+	}
+
+	return GoalSummary(createdUserGoalSummary), nil
 }
 
 func (s *service) FetchUserGoalSummary(ctx context.Context, userId int) ([]GoalSummary, error) {
@@ -427,7 +437,7 @@ func (s *service) FetchUserGoalSummary(ctx context.Context, userId int) ([]GoalS
 		return nil, err
 	}
 
-	serviceUserGoalSummary := make([]GoalSummary, 0, len(usersGoalSummary))
+	serviceUserGoalSummary := make([]GoalSummary, len(usersGoalSummary))
 	for i, userGoalSummary := range usersGoalSummary {
 		serviceUserGoalSummary[i] = GoalSummary(userGoalSummary)
 	}

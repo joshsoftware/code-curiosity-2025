@@ -25,7 +25,8 @@ WHERE
     'PullRequestEvent', 
     'PullRequestReviewEvent', 
     'IssueCommentEvent', 
-    'PullRequestReviewCommentEvent'
+    'PullRequestReviewCommentEvent',
+    'PushEvent'
   )
   AND (
     actor.id IN (%s) 

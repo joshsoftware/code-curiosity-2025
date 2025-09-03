@@ -30,6 +30,7 @@ type GoalRepository interface {
 	GetGoalLevelById(ctx context.Context, tx *sqlx.Tx, goalLevelId int) (GoalLevel, error)
 	FetchInProgressUserGoalsOfPreviousMonth(ctx context.Context, tx *sqlx.Tx) ([]UserGoal, error)
 	CalculateUserIncompleteGoalsUntilDay(ctx context.Context, tx *sqlx.Tx, userID int) (int, error)
+	CreateUserGoalSummary(ctx context.Context, tx *sqlx.Tx, userGoalSummary GoalSummary) (GoalSummary, error)
 	FetchUserGoalSummary(ctx context.Context, tx *sqlx.Tx, userId int) ([]GoalSummary, error)
 }
 

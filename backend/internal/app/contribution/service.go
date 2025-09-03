@@ -3,6 +3,7 @@ package contribution
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -76,6 +77,7 @@ type Service interface {
 	ListMonthlyContributionSummary(ctx context.Context, year int, monthParam int, userId int) ([]MonthlyContributionSummary, error)
 	ListAllContributionTypes(ctx context.Context) ([]ContributionScore, error)
 	ConfigureContributionTypeScore(ctx context.Context, configureContributionTypeScore []ConfigureContributionTypeScore) ([]ContributionScore, error)
+	HandleGoalSynchronization(ctx context.Context, userId int) error
 }
 
 func NewService(bigqueryService bigquery.Service, contributionRepository repository.ContributionRepository, repositoryService repoService.Service, userService user.Service, transactionService transaction.Service, goalService goal.Service, httpClient *http.Client) Service {
@@ -150,6 +152,12 @@ func (s *service) ProcessEachContribution(ctx context.Context, contribution Cont
 	_, err = s.transactionService.HandleTransactionCreation(ctx, transaction.Contribution(obtainedContribution))
 	if err != nil {
 		slog.Error("error handling transaction creation", "error", err)
+		return err
+	}
+
+	err = s.HandleGoalSynchronization(ctx, obtainedContribution.UserId)
+	if err != nil {
+		slog.Error("error handling goal synchronization", "error", err)
 		return err
 	}
 
@@ -274,24 +282,6 @@ func (s *service) HandleContributionCreation(ctx context.Context, repositoryID i
 		return Contribution{}, err
 	}
 
-	err = s.goalService.SyncUserGoalProgressWithContributions(ctx, user.Id)
-	if err != nil {
-		slog.Error("error syncing goal progress with contibutions", "error", err)
-		return obtainedContribution, err
-	}
-
-	err = s.goalService.AllocateBadge(ctx, user.Id)
-	if err != nil {
-		slog.Error("error allocating badge", "error", err)
-		return obtainedContribution, err
-	}
-
-	_, err = s.goalService.CreateUserGoalSummary(ctx, user.Id)
-	if err != nil {
-		slog.Error("error creating goal summary for user", "error", err)
-		return obtainedContribution, err
-	}
-
 	return obtainedContribution, nil
 }
 
@@ -386,4 +376,27 @@ func (s *service) ConfigureContributionTypeScore(ctx context.Context, configureC
 	}
 
 	return serviceContributionTypeScores, nil
+}
+
+func (s *service) HandleGoalSynchronization(ctx context.Context, userId int) error {
+	err := s.goalService.SyncUserGoalProgressWithContributions(ctx, userId)
+	if err != nil {
+		slog.Error("error syncing goal progress with contibutions", "error", err)
+		return err
+	}
+
+	err = s.goalService.AllocateBadge(ctx, userId)
+	if err != nil {
+		slog.Error("error allocating badge", "error", err)
+		return err
+	}
+
+	fmt.Println("before create user")
+	_, err = s.goalService.CreateUserGoalSummary(ctx, userId)
+	if err != nil {
+		slog.Error("error creating goal summary for user", "error", err)
+		return err
+	}
+
+	return nil
 }
