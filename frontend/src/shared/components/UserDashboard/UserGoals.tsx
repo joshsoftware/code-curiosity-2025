@@ -215,22 +215,23 @@ const UserGoals = () => {
             You haven't selected a goal level yet. Choose a level to start
             tracking contributions.
           </p>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen} >
+            <DialogTrigger asChild >
               <Button variant="ccAppOutlineMidBlue">Set My Goal</Button>
             </DialogTrigger>
-            <DialogContent className="bg-white text-black">
-              <DialogHeader>
-                <DialogTitle>Select Goal Level</DialogTitle>
+            <DialogContent className="flex w-[20%] flex-col rounded-md bg-white p-4 text-black shadow-sm">
+              <DialogHeader className="pb-3">
+                <DialogTitle className=" text-lg">
+                  Select Goal Level
+                </DialogTitle>
               </DialogHeader>
-
               {!isSettingLevel ? (
-                <div className="space-y-2">
+                <div className="flex flex-col items-center gap-3 px-2">
                   {goalLevels.map(level => (
                     <Button
                       key={level.id}
                       variant="outline"
-                      className="hover:bg-cc-app-blue bg-cc-app-mid-blue w-full text-white capitalize hover:cursor-pointer"
+                      className="hover:bg-cc-app-blue bg-cc-app-mid-blue w-full rounded-lg px-5 py-2.5 text-white capitalize transition-colors duration-200 hover:cursor-pointer"
                       onClick={() => handleLevelSelect(level.level)}
                     >
                       {level.level}
@@ -238,14 +239,17 @@ const UserGoals = () => {
                   ))}
                 </div>
               ) : (
-                <div className="text-cc-app-light-blue flex items-center justify-center gap-2 py-6">
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  Setting your goal...
+                <div className="text-cc-app-light-blue flex items-center justify-center gap-2 py-5">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="text-sm">Setting your goal...</span>
                 </div>
               )}
-
-              <DialogFooter>
-                <Button variant="ghost" onClick={() => setDialogOpen(false)}>
+              <DialogFooter className="pt-3">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setDialogOpen(false)}
+                >
                   Cancel
                 </Button>
               </DialogFooter>

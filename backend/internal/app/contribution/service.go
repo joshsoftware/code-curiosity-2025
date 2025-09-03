@@ -3,7 +3,6 @@ package contribution
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -391,7 +390,6 @@ func (s *service) HandleGoalSynchronization(ctx context.Context, userId int) err
 		return err
 	}
 
-	fmt.Println("before create user")
 	_, err = s.goalService.CreateUserGoalSummary(ctx, userId)
 	if err != nil {
 		slog.Error("error creating goal summary for user", "error", err)

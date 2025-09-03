@@ -3,7 +3,6 @@ package goal
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 	"time"
 
@@ -185,7 +184,7 @@ func (s *service) SyncUserGoalProgress(ctx context.Context, userGoalTargets []Us
 				created, err := s.goalRepository.CreateUserGoalProgress(ctx, nil, repository.UserGoalProgress(userGoalProgress))
 				if err != nil {
 					slog.Error("error creating user goal progress", "error", err)
-					return nil, err
+					continue
 				}
 
 				createdUserGoalProgresses = append(createdUserGoalProgresses, UserGoalProgress(created))
@@ -391,14 +390,11 @@ func (s *service) UpdateUserGoalStatusMonthly(ctx context.Context) error {
 }
 
 func (s *service) CreateUserGoalSummary(ctx context.Context, userId int) (GoalSummary, error) {
-	fmt.Println("in create user goal summary ")
 	userIncompleteGoalCount, err := s.goalRepository.CalculateUserIncompleteGoalsUntilDay(ctx, nil, userId)
 	if err != nil {
 		slog.Error("error calculating user incomplete goalstatus until day", "error", err)
 		return GoalSummary{}, err
 	}
-
-	fmt.Println("in create user goal summary  2", userIncompleteGoalCount)
 
 	userCurrentGoalStatus, err := s.GetUserCurrentGoalStatus(ctx, userId)
 	if err != nil {

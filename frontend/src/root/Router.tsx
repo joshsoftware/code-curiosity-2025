@@ -6,10 +6,12 @@ import { Layout } from "@/shared/constants/layout";
 import AuthLayout from "@/shared/layout/AuthLayout";
 import UserDashboardLayout from "@/shared/layout/UserDashboardLayout";
 import AdminLayout from "@/shared/layout/AdminLayout";
+import AppLayout from "@/shared/layout/AppLayout";
 
 const generateRoutes = (routes: RoutesType[]) => {
   return routes.map(({ path, element, isProtected, layout }) => {
     let wrappedElement = element;
+
 
     if (isProtected) {
       wrappedElement = <WithAuth>{wrappedElement}</WithAuth>;
@@ -25,11 +27,10 @@ const generateRoutes = (routes: RoutesType[]) => {
       );
     }
 
-    if(layout == Layout.AdminLayout) {   
-      wrappedElement = (
-        <AdminLayout>{wrappedElement}</AdminLayout>
-      );
-    } 
+    if (layout == Layout.AdminLayout) {
+      wrappedElement = <AdminLayout>{wrappedElement}</AdminLayout>;
+    }
+    wrappedElement = <AppLayout>{wrappedElement}</AppLayout>;
 
     return { path, element: wrappedElement };
   });
