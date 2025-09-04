@@ -32,6 +32,8 @@ type GoalRepository interface {
 	CalculateUserIncompleteGoalsUntilDay(ctx context.Context, tx *sqlx.Tx, userID int) (int, error)
 	CreateUserGoalSummary(ctx context.Context, tx *sqlx.Tx, userGoalSummary GoalSummary) (GoalSummary, error)
 	FetchUserGoalSummary(ctx context.Context, tx *sqlx.Tx, userId int) ([]GoalSummary, error)
+	GetUserGoalSummaryBySnapshotDate(ctx context.Context, tx *sqlx.Tx, snapshotDate time.Time, userId int) (*GoalSummary, error)
+	UpdateUserGoalSummary(ctx context.Context, tx *sqlx.Tx, goalSummaryId int, userGoalSummary GoalSummary) (GoalSummary, error)
 }
 
 func NewGoalRepository(db *sqlx.DB) GoalRepository {
@@ -117,6 +119,10 @@ const (
 	RETURNING *`
 
 	fetchUserGoalSummaryQuery = "SELECT * FROM goal_summary WHERE user_id=$1"
+
+	getUserGoalSummaryBySnapshotDateQuery = "SELECT * FROM goal_summary WHERE snapshot_date<$1 AND user_id=$2"
+
+	updateUserGoalSummaryQuery = "UPDATE user_goal SET snapshot_date=$2, incomplete_goals_count=$3, target_set=$4, target_completed=$5 where id=$1 "
 )
 
 func (gr *goalRepository) ListGoalLevels(ctx context.Context, tx *sqlx.Tx) ([]GoalLevel, error) {
@@ -347,4 +353,39 @@ func (gr *goalRepository) FetchUserGoalSummary(ctx context.Context, tx *sqlx.Tx,
 	}
 
 	return usersGoalSummary, nil
+}
+
+func (gr *goalRepository) GetUserGoalSummaryBySnapshotDate(ctx context.Context, tx *sqlx.Tx, snapshotDate time.Time, userId int) (*GoalSummary, error) {
+	executer := gr.BaseRepository.initiateQueryExecuter(tx)
+
+	var userGoalSummary GoalSummary
+	err := executer.GetContext(ctx, &userGoalSummary, getUserGoalSummaryBySnapshotDateQuery, snapshotDate, userId)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		slog.Error("error getting user goal summary", "error", err)
+		return nil, err
+	}
+
+	return &userGoalSummary, nil
+}
+
+func (gr *goalRepository) UpdateUserGoalSummary(ctx context.Context, tx *sqlx.Tx, goalSummaryId int, userGoalSummary GoalSummary) (GoalSummary, error) {
+	executer := gr.BaseRepository.initiateQueryExecuter(tx)
+
+	var updatedUserGoalSummary GoalSummary
+	err := executer.GetContext(ctx, &updatedUserGoalSummary, updateUserGoalSummaryQuery,
+		goalSummaryId,
+		userGoalSummary.SnapshotDate,
+		userGoalSummary.IncompleteGoalsCount,
+		userGoalSummary.TargetSet,
+		userGoalSummary.TargetCompleted,
+	)
+	if err != nil {
+		slog.Error("failed to update user goal summary", "error", err)
+		return GoalSummary{}, apperrors.ErrInternalServer
+	}
+
+	return GoalSummary{}, nil
 }

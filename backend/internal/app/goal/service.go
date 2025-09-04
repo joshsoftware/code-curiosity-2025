@@ -417,13 +417,30 @@ func (s *service) CreateUserGoalSummary(ctx context.Context, userId int) (GoalSu
 		TargetCompleted:      totalTargetCompleted,
 	}
 
-	createdUserGoalSummary, err := s.goalRepository.CreateUserGoalSummary(ctx, nil, repository.GoalSummary(userMonthlyGoalSummary))
+	userGoalSummaryForToday, err := s.goalRepository.GetUserGoalSummaryBySnapshotDate(ctx, nil, userMonthlyGoalSummary.SnapshotDate, userId)
 	if err != nil {
-		slog.Error("error creating user goal summary", "error", err)
+		slog.Error("error fetching user goal summary for today", "error", err)
 		return GoalSummary{}, err
 	}
 
-	return GoalSummary(createdUserGoalSummary), nil
+	var userGoalSummary GoalSummary
+	if userGoalSummaryForToday == nil {
+		createdUserGoalSummary, err := s.goalRepository.CreateUserGoalSummary(ctx, nil, repository.GoalSummary(userMonthlyGoalSummary))
+		if err != nil {
+			slog.Error("error creating user goal summary", "error", err)
+			return GoalSummary{}, err
+		}
+		userGoalSummary = GoalSummary(createdUserGoalSummary)
+	} else {
+		updatedUserGoalSummary, err := s.goalRepository.UpdateUserGoalSummary(ctx, nil, userGoalSummaryForToday.Id, repository.GoalSummary(userMonthlyGoalSummary))
+		if err != nil {
+			slog.Error("error updating user goal summary", "error", err)
+			return GoalSummary{}, err
+		}
+		userGoalSummary = GoalSummary(updatedUserGoalSummary)
+	}
+
+	return userGoalSummary, nil
 }
 
 func (s *service) FetchUserGoalSummary(ctx context.Context, userId int) ([]GoalSummary, error) {
