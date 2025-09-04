@@ -1,5 +1,5 @@
 import React, { type FC, type ReactNode } from "react";
-import { User, BarChart3, Users, ChevronRight, LogOut } from "lucide-react";
+import { User, BarChart3, Users, ChevronRight, LogOut, Trophy } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ADMIN_LOGIN_PATH } from "../constants/routes";
 import { Button } from "../components/ui/button";
@@ -20,7 +20,7 @@ const AdminLayout: FC<AdminLayoutProps> = ({ children }) => {
       path: "/admin/configure/score"
     },
     { name: "Users", icon: Users, path: "/admin/users" },
-    { name: "View Leaderboard", icon: BarChart3, path: "/admin/leaderboard" }
+    { name: "View Leaderboard", icon: Trophy, path: "/admin/leaderboard" }
   ];
 
   const handleMenuClick = (itemName: string, path: string) => {
