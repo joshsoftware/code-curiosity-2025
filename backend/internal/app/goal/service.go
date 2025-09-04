@@ -264,7 +264,7 @@ func (s *service) GetUserCurrentGoalStatus(ctx context.Context, userId int) (*Ge
 			Progress:         contributionProgressCount,
 		}
 
-		if goalTargetProgress.Target == goalTargetProgress.Progress {
+		if goalTargetProgress.Target <= goalTargetProgress.Progress {
 			totalTargetsCompleted++
 		}
 
@@ -281,7 +281,7 @@ func (s *service) GetUserCurrentGoalStatus(ctx context.Context, userId int) (*Ge
 		GoalTargetProgress: goalTargetProgresses,
 	}
 
-	if totalTargets == totalTargetsCompleted {
+	if totalTargets <= totalTargetsCompleted {
 		userGoal := UserGoal{
 			Id:     userCurrentGoal.Id,
 			Status: GoalStatusCompleted,
@@ -341,12 +341,12 @@ func (s *service) AllocateBadge(ctx context.Context, userId int) error {
 	var totalTargetsCompleted int
 	totalTargets := len(userCurrentGoalStatus.GoalTargetProgress)
 	for _, goalTargetProgress := range userCurrentGoalStatus.GoalTargetProgress {
-		if goalTargetProgress.Progress == goalTargetProgress.Target {
+		if goalTargetProgress.Target <= goalTargetProgress.Progress {
 			totalTargetsCompleted++
 		}
 	}
 
-	if totalTargets == totalTargetsCompleted {
+	if totalTargets <= totalTargetsCompleted {
 		userGoal := UserGoal{
 			Id:     userCurrentGoalStatus.UserGoalId,
 			Status: GoalStatusCompleted,
