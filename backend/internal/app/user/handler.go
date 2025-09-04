@@ -20,7 +20,6 @@ type Handler interface {
 	SoftDeleteUser(w http.ResponseWriter, r *http.Request)
 	ListUserRanks(w http.ResponseWriter, r *http.Request)
 	GetCurrentUserRank(w http.ResponseWriter, r *http.Request)
-	// UpdateCurrentActiveGoalId(w http.ResponseWriter, r *http.Request)
 	ListAllUsers(w http.ResponseWriter, r *http.Request)
 	BlockOrUnblockUser(w http.ResponseWriter, r *http.Request)
 }
@@ -108,6 +107,20 @@ func (h *handler) GetCurrentUserRank(w http.ResponseWriter, r *http.Request) {
 		slog.Error("error obtaining user id from context")
 		status, errorMessage := apperrors.MapError(apperrors.ErrContextValue)
 		response.WriteJson(w, status, errorMessage, nil)
+		return
+	}
+
+	isAdminValue := ctx.Value(middleware.IsAdminKey)
+	isAdmin, ok := isAdminValue.(bool)
+	if !ok {
+		slog.Error("error obtaining id admin from context")
+		status, errorMessage := apperrors.MapError(apperrors.ErrContextValue)
+		response.WriteJson(w, status, errorMessage, nil)
+		return
+	}
+
+	if isAdmin {
+		response.WriteJson(w, http.StatusOK, "current user is admin", nil)
 		return
 	}
 

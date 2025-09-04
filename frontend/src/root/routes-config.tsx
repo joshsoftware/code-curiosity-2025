@@ -5,6 +5,7 @@ import MyContributions from "@/features/MyContributions";
 import UserDashboard from "@/features/UserDashboard";
 import {
   ACCOUNT_INFO_PATH,
+  ADMIN_LEADERBOARD_PATH,
   ADMIN_LOGIN_PATH,
   ADMIN_SCORE_CONFIGURE_PATH,
   ADMIN_USERS_PATH,
@@ -18,6 +19,8 @@ import { AllUsersList } from "@/features/Admin/Users.tsx";
 import ScoreConfigure from "@/features/Admin/ScoreConfigure";
 import BlockedAccountPage from "@/shared/components/common/BlockedAccountPage";
 import RepositoryDetails from "@/features/RepositoryDetails";
+import Leaderboard from "@/features/UserDashboard/components/Leaderboard";
+import AdminLeaderboard from "@/features/Admin/AdminLeaderboard";
 export interface RoutesType {
   path: string;
   element: ReactNode;
@@ -65,6 +68,12 @@ export const routesConfig: RoutesType[] = [
   {
     path: ADMIN_SCORE_CONFIGURE_PATH,
     element: <ScoreConfigure />,
+    isProtected: true,
+    layout: Layout.AdminLayout
+  },
+  {
+    path: ADMIN_LEADERBOARD_PATH,
+    element: <AdminLeaderboard />,
     isProtected: true,
     layout: Layout.AdminLayout
   },

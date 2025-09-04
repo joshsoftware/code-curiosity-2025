@@ -3,7 +3,10 @@ import type { AdminCredentials } from "@/shared/types/types";
 import { useLogInAdmin } from "@/api/queries/Admin";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import { ACCESS_TOKEN_KEY } from "@/shared/constants/local-storage";
+import {
+  ACCESS_TOKEN_KEY,
+  USER_DATA_KEY
+} from "@/shared/constants/local-storage";
 import { Button } from "@/shared/components/ui/button";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
@@ -25,6 +28,7 @@ const AdminLogin: FC = () => {
         onSuccess: res => {
           console.log(" Admin login success", res);
           localStorage.setItem(ACCESS_TOKEN_KEY, res.data.jwtToken);
+          localStorage.setItem(USER_DATA_KEY, JSON.stringify(res.data));
           navigate("/admin/users");
         },
         onError: err => {

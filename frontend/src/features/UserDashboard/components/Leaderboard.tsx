@@ -6,6 +6,7 @@ import { Card } from "@/shared/components/ui/card";
 import LeaderboardCard from "@/features/UserDashboard/components/LeaderboardCard";
 import { useCurrentUserRank, useLeaderboard } from "@/api/queries/Leaderboard";
 import { TrendingUp } from "lucide-react";
+import { USER_DATA_KEY } from "@/shared/constants/local-storage";
 
 interface LeaderboardProps {
   className?: string;
@@ -22,9 +23,12 @@ const Leaderboard: FC<LeaderboardProps> = ({ className }) => {
   const leaderboard = data?.data ?? [];
 
   const leaderboardData = viewAll ? leaderboard : leaderboard?.slice(0, 10);
+  const user = JSON.parse(localStorage.getItem(USER_DATA_KEY) || "{}");
 
   const { data: userData } = useCurrentUserRank();
   const currentUser = userData?.data;
+
+  console.log(user.isAdmin);
 
   return (
     <Card
@@ -68,7 +72,7 @@ const Leaderboard: FC<LeaderboardProps> = ({ className }) => {
               />
             ))}
           </div>
-          {!viewAll && (
+          {!viewAll && !user.isAdmin && (
             <div className="bg-cc-app-blue mt-auto rounded-xl p-2">
               <LeaderboardCard
                 rank={currentUser?.rank || 0}

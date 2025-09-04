@@ -19,7 +19,8 @@ const AdminLayout: FC<AdminLayoutProps> = ({ children }) => {
       icon: BarChart3,
       path: "/admin/configure/score"
     },
-    { name: "Users", icon: Users, path: "/admin/users" }
+    { name: "Users", icon: Users, path: "/admin/users" },
+    { name: "View Leaderboard", icon: BarChart3, path: "/admin/leaderboard" }
   ];
 
   const handleMenuClick = (itemName: string, path: string) => {

@@ -89,6 +89,8 @@ const (
 	current_balance,
     RANK() OVER (ORDER BY current_balance DESC) AS rank
   	FROM users
+	WHERE is_admin=false 
+	AND is_deleted=false
 	) 
 	ranked_users
 	WHERE id = $1;`
