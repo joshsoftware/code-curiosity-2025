@@ -3,11 +3,13 @@ import type { Badge } from "@/shared/types/types";
 import bronzeBadge from "@/assets/bronzeBadge.svg";
 import silverBadge from "@/assets/silverBadge.svg";
 import goldBadge from "@/assets/goldBadge.svg";
+import customBadge from "@/assets/customBadge.svg";
 
 const badgeColorMap: Record<string, string> = {
   BEGINNER: bronzeBadge,
   INTERMEDIATE: silverBadge,
-  ADVANCED: goldBadge
+  ADVANCED: goldBadge,
+  CUSTOM: customBadge
 };
 
 const UserBadges = () => {
@@ -36,10 +38,12 @@ const UserBadges = () => {
             >
               <img src={badge} alt="Badge" className="h-10 w-10" />
               {badgeList.length > 1 && (
-                <span className="mt-1 text-xs text-white">×{badgeList.length}</span>
+                <span className="mt-1 text-xs text-white">
+                  ×{badgeList.length}
+                </span>
               )}
-              <div className="absolute bottom-8 z-10 hidden w-max rounded bg- px-2 py-1 text-xs text-white group-hover:block">
-                {type} <br />
+              <div className="absolute bottom-8 left-1/2 z-10 hidden -translate-x-1/2 rounded-md bg-gray-800 px-3 py-1.5 text-xs whitespace-nowrap text-white shadow-md group-hover:block">
+                {type}
               </div>
             </div>
           );

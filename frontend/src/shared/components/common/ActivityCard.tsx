@@ -34,8 +34,7 @@ const ActivityCard: FC<ActivityCardProps> = ({
           </div>
           {isRepositoryActivity ? null : (
             <div className="text-cc-app-mid-blue mt-1 text-xs">
-              Contributed to 
-                &lt;{repositoryName}&gt;
+              Contributed to &lt;{repositoryName}&gt;
             </div>
           )}
 

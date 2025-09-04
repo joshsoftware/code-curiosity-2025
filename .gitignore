@@ -25,7 +25,4 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-backend/secrets/*.json
-frontend/Dockerfile
-frontend/nginx.conf
-frontend/schema.sql
+

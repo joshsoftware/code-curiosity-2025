@@ -12,7 +12,9 @@ const OverviewCard: FC<OverviewCardProps> = ({ type, count, totalCoins }) => {
   return (
     <Card className="border-none p-3 shadow-none">
       <div className="flex flex-col items-center justify-between gap-1">
-        <p className="w-full text-sm font-medium text-gray-900">{type}</p>
+        <p className="w-full text-sm font-medium text-gray-900">
+          {type.replace(/([A-Z])/g, " $1")}
+        </p>
         <div className="flex w-full flex-row items-center justify-between">
           <span className="text-cc-app-blue text-2xl font-semibold">
             {count}
