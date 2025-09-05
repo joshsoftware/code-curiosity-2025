@@ -120,9 +120,13 @@ const (
 
 	fetchUserGoalSummaryQuery = "SELECT * FROM goal_summary WHERE user_id=$1"
 
-	getUserGoalSummaryBySnapshotDateQuery = "SELECT * FROM goal_summary WHERE snapshot_date<$1 AND user_id=$2"
+	getUserGoalSummaryBySnapshotDateQuery = `
+	SELECT * FROM goal_summary
+	WHERE user_id = $2
+  	AND snapshot_date::date = $1::date
+	LIMIT 1`
 
-	updateUserGoalSummaryQuery = "UPDATE user_goal SET snapshot_date=$2, incomplete_goals_count=$3, target_set=$4, target_completed=$5 where id=$1 "
+	updateUserGoalSummaryQuery = "UPDATE goal_summary SET snapshot_date=$2, incomplete_goals_count=$3, target_set=$4, target_completed=$5 where id=$1 "
 )
 
 func (gr *goalRepository) ListGoalLevels(ctx context.Context, tx *sqlx.Tx) ([]GoalLevel, error) {
