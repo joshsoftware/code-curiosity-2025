@@ -3,7 +3,7 @@ import clsx from "clsx";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
 import ActivityCard from "@/shared/components/common/ActivityCard";
-import {  useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { TrendingUp } from "lucide-react";
 import { useRepositoryActivities } from "@/api/queries/RepostoryActivities";
 import CoinsInfo from "@/shared/components/common/CoinsInfo";
@@ -36,7 +36,7 @@ const RepositoryActivities: FC<RepositoryActivitiesProps> = ({ className }) => {
     );
   } else if (repositoryActivitiesData?.length === 0) {
     content = (
-      <div className="flex h-full w-full flex-col items-center justify-center text-center">
+      <div className="flex flex-1 flex-col items-center justify-center text-center">
         <TrendingUp className="mb-3 h-12 w-12 text-gray-400" />
         <p className="mb-2 text-lg font-medium text-gray-600">
           No recent activities found
@@ -47,25 +47,28 @@ const RepositoryActivities: FC<RepositoryActivitiesProps> = ({ className }) => {
     content = (
       <div
         className={clsx(
-          "flex h-full flex-col items-center justify-between pt-2",
+          "flex h-full flex-col items-center justify-between",
           viewAll ? "no-scrollbar overflow-auto" : ""
         )}
       >
         {repositoryActivitiesData?.map((activity, index) => (
           <ActivityCard
-            key={activity.id ?? `${activity.contributionType}-${activity.contributedAt}-${index}`}
+            key={
+              activity.id ??
+              `${activity.contributionType}-${activity.contributedAt}-${index}`
+            }
             contributionType={activity.contributionType}
             contributedAt={activity.contributedAt}
             balanceChange={activity.balanceChange}
-            showLine={index < repositoryActivities.length - 1}
+            showLine={index < repositoryActivitiesData.length - 1}
             isRepositoryActivity={true}
           />
         ))}
-         {!viewAll && (
-            <div className="w-full text-right">
-              <CoinsInfo />
-            </div>
-          )}
+        {!viewAll && (
+          <div className="w-full text-right">
+            <CoinsInfo />
+          </div>
+        )}
       </div>
     );
   }
@@ -73,7 +76,7 @@ const RepositoryActivities: FC<RepositoryActivitiesProps> = ({ className }) => {
   return (
     <Card
       className={clsx(
-        "flex h-full w-full flex-col gap-2 overflow-auto border border-gray-300 p-5 shadow-none",
+        "flex h-full w-full flex-col gap-2 border border-gray-300 p-5 shadow-none",
         className
       )}
     >

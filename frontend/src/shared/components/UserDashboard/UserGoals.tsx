@@ -13,6 +13,7 @@ import { Loader2 } from "lucide-react";
 import {
   useAllContributionTypes,
   useGoalLevels,
+  useGoalLevelTargets,
   useResetUserGoalStatus,
   useSetUserGoalLevel,
   useUserCurrentGoalStatus
@@ -30,15 +31,19 @@ const UserGoals = () => {
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [isSettingLevel, setIsSettingLevel] = useState(false);
   const [isCustomDialogOpen, setIsCustomDialogOpen] = useState(false);
+  const [levelTargetDialogOpen, setLevelTargetDialogOpen] = useState(false);
 
   const [customGoals, setCustomGoals] = useState<CustomGoalLevelTarget[]>([]);
   const [selectedType, setSelectedType] = useState("");
   const [target, setTarget] = useState("");
+  const [selectedLevel, setSelectedLevel] = useState("");
 
   const { data: userGoalLevelRes, isLoading: isGoalLevelLoading } =
     useUserCurrentGoalStatus();
   const { data: goalLevelsRes, isLoading: isGoalLevelsLoading } =
     useGoalLevels();
+  const { mutate: goalLevel, data: goalLevelTargetData } =
+    useGoalLevelTargets();
   const { mutate: setGoalLevel } = useSetUserGoalLevel();
   const { mutate: resetGoalStatus } = useResetUserGoalStatus();
   const { data: contributionTypesRes } = useAllContributionTypes();
@@ -47,6 +52,7 @@ const UserGoals = () => {
 
   const userLevel = userGoalLevelRes?.data ?? null;
   const goalLevels = goalLevelsRes?.data ?? [];
+  const goalLevelTargets = goalLevelTargetData?.data ?? [];
   const allTypes: ContributionTypeDetail[] = contributionTypesRes?.data ?? [];
 
   const createdAt = userLevel?.createdAt
@@ -136,6 +142,17 @@ const UserGoals = () => {
     );
   };
 
+  const handleViewLevelTarget = (selectedLevel: {
+    id: number;
+    level: string;
+    createdAt: string;
+    updatedAt: string;
+  }) => {
+    goalLevel(selectedLevel);
+    setSelectedLevel(selectedLevel.level);
+    setLevelTargetDialogOpen(true);
+  };
+
   if (isGoalLevelLoading || isGoalLevelsLoading) {
     return (
       <div className="flex items-center gap-2 text-white">
@@ -215,28 +232,59 @@ const UserGoals = () => {
             You haven't selected a goal level yet. Choose a level to start
             tracking contributions.
           </p>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen} >
-            <DialogTrigger asChild >
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
               <Button variant="ccAppOutlineMidBlue">Set My Goal</Button>
             </DialogTrigger>
-            <DialogContent className="flex w-[20%] flex-col rounded-md bg-white p-4 text-black shadow-sm">
-              <DialogHeader className="pb-3">
-                <DialogTitle className=" text-lg">
+            <DialogContent className="flex w-[25%] flex-col rounded-lg bg-white p-5 text-black shadow-md">
+              <DialogHeader className="pb-4">
+                <DialogTitle className="text-lg font-semibold">
                   Select Goal Level
                 </DialogTitle>
               </DialogHeader>
+
               {!isSettingLevel ? (
-                <div className="flex flex-col items-center gap-3 px-2">
-                  {goalLevels.map(level => (
-                    <Button
-                      key={level.id}
-                      variant="outline"
-                      className="hover:bg-cc-app-blue bg-cc-app-mid-blue w-full rounded-lg px-5 py-2.5 text-white capitalize transition-colors duration-200 hover:cursor-pointer"
-                      onClick={() => handleLevelSelect(level.level)}
-                    >
-                      {level.level}
-                    </Button>
-                  ))}
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-3">
+                    {goalLevels
+                      .filter(level => level.level !== "Custom")
+                      .map(level => (
+                        <div
+                          key={level.id}
+                          className="flex w-full items-center gap-2"
+                        >
+                          <Button
+                            variant="outline"
+                            className="hover:bg-cc-app-blue bg-cc-app-mid-blue flex-1 rounded-lg px-5 py-2.5 text-white capitalize transition-colors duration-200"
+                            onClick={() => handleLevelSelect(level.level)}
+                          >
+                            {level.level}
+                          </Button>
+
+                          <Button
+                            variant="ghost"
+                            className="text-cc-app-blue border-cc-app-blue hover:bg-cc-app-blue/10 rounded-lg border px-4 py-2 text-sm font-medium"
+                            onClick={() =>
+                              handleViewLevelTarget({
+                                id: level.id,
+                                level: level.level,
+                                createdAt: level.createdAt,
+                                updatedAt: level.updatedAt
+                              })
+                            }
+                          >
+                            View Target
+                          </Button>
+                        </div>
+                      ))}
+                  </div>
+                  <Button
+                    variant="outline"
+                    className="hover:border-cc-app-blue hover:text-cc-app-blue rounded-lg border border-2 border-gray-300 px-5 py-2.5 text-gray-600"
+                    onClick={() => handleLevelSelect("Custom")}
+                  >
+                    Want to set custom target?
+                  </Button>
                 </div>
               ) : (
                 <div className="text-cc-app-light-blue flex items-center justify-center gap-2 py-5">
@@ -244,7 +292,8 @@ const UserGoals = () => {
                   <span className="text-sm">Setting your goal...</span>
                 </div>
               )}
-              <DialogFooter className="pt-3">
+
+              <DialogFooter className="pt-4">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -257,6 +306,55 @@ const UserGoals = () => {
           </Dialog>
         </div>
       )}
+
+      {/* Level Target Dialog */}
+      <Dialog
+        open={levelTargetDialogOpen}
+        onOpenChange={setLevelTargetDialogOpen}
+      >
+        <DialogContent className="w-[28%] rounded-lg bg-white p-6 text-black shadow-lg">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold text-gray-800">
+              Target for Level: {selectedLevel}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="mt-4 space-y-3">
+            <h3 className="flex items-center justify-between  py-2.5 ">
+              <span className="text-sm font-medium text-gray-900 capitalize">
+                Contribution Type
+                </span>
+                <span className="text-gray-900 text-sm font-semibold">
+                  Target
+                </span>
+            </h3>
+
+            {goalLevelTargets.map(goal => (
+              <div
+                key={goal.contributionType}
+                className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 shadow-sm"
+              >
+                <span className="text-sm font-medium text-gray-700 capitalize">
+                  {goal.contributionType}
+                </span>
+                <span className="text-cc-app-blue text-sm font-semibold">
+                  {goal.target}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <DialogFooter className="mt-5">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setLevelTargetDialogOpen(false)}
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Custom Goal Dialog */}
       <Dialog open={isCustomDialogOpen} onOpenChange={setIsCustomDialogOpen}>
@@ -273,20 +371,36 @@ const UserGoals = () => {
                 className="w-full rounded border p-2"
               >
                 <option value="">Select Type</option>
-                {allTypes.map(type => (
-                  <option key={type.id} value={type.contributionType}>
-                    {type.contributionType}
-                  </option>
-                ))}
+                {allTypes.map(type => {
+                  const isAlreadyAdded = customGoals.some(
+                    goal => goal.contributionType === type.contributionType
+                  );
+                  return (
+                    <option
+                      key={type.id}
+                      value={type.contributionType}
+                      disabled={isAlreadyAdded}
+                    >
+                      {type.contributionType}
+                    </option>
+                  );
+                })}
               </select>
               <input
-                type="number"
-                min={1}
+                type="text"
+                inputMode="numeric"
+                pattern="[1-9][0-9]*"
                 className="w-1/2 rounded border p-2"
                 placeholder="Target"
                 value={target}
-                onChange={e => setTarget(e.target.value)}
+                onChange={e => {
+                  const val = e.target.value;
+                  if (/^[1-9][0-9]*$/.test(val) || val === "") {
+                    setTarget(val);
+                  }
+                }}
               />
+
               <Button
                 variant="ccAppOutlineMidBlue"
                 onClick={handleAddCustomGoal}

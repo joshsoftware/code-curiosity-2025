@@ -121,6 +121,15 @@ export interface GoalLevel {
   updatedAt: string;
 }
 
+export interface GoalLevelTarget {  
+  id: number;
+  goalLevelId: number;
+  contributionType: string;
+  target: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface UserGoalTargetProgress {
   contributionType: string;
   target: number;

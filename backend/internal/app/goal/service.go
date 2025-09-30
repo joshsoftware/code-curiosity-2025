@@ -19,6 +19,7 @@ type service struct {
 
 type Service interface {
 	ListGoalLevels(ctx context.Context) ([]GoalLevel, error)
+	FetchGoalLevelTargetByGoalLevel(ctx context.Context, goalLevel GoalLevel) ([]GoalLevelTarget, error)
 	CreateUserGoalInProgress(ctx context.Context, userSelecetdGoal CreateUserGoalRequest, userId int) (UserGoal, error)
 	CreateCustomUserGoalTarget(ctx context.Context, userSelectedCustomGoals []CustomTargetRequest, createdUserGoal UserGoal) ([]UserGoalTarget, error)
 	SyncUserGoalProgress(ctx context.Context, userGoalTargets []UserGoalTarget, monthStartedAt time.Time, userId int) ([]UserGoalProgress, error)
@@ -52,6 +53,34 @@ func (s *service) ListGoalLevels(ctx context.Context) ([]GoalLevel, error) {
 	}
 
 	return serviceGoals, nil
+}
+
+func(s *service) FetchGoalLevelTargetByGoalLevel(ctx context.Context, goalLevel GoalLevel) ([]GoalLevelTarget, error) {
+	goalLevelTargets, err := s.goalRepository.FetchGoalLevelTargetByGoalLevel(ctx, nil, repository.GoalLevel(goalLevel))
+	if err != nil {
+		slog.Error("error fetching goal level target by goal level", "error", err)
+		return nil, err
+	}
+
+	serviceGoalLevelTargets := make([]GoalLevelTarget, len(goalLevelTargets))
+	for i, g := range goalLevelTargets {
+		contributionType, err := s.contributionRepository.GetContributionTypeByContributionScoreId(ctx, nil, g.ContributionScoreId)
+		if err != nil {
+			slog.Error("error fetching contribution type by contribution score id", "error", err)
+			return nil, err
+		}
+		
+		serviceGoalLevelTargets[i] = GoalLevelTarget{
+			Id:               g.Id,
+			GoalLevelId:      g.GoalLevelId,
+			ContributionType: contributionType,
+			Target:           g.Target,
+			CreatedAt:        g.CreatedAt,
+			UpdatedAt:        g.UpdatedAt,
+		}
+	}
+
+	return serviceGoalLevelTargets, nil
 }
 
 func (s *service) CreateUserGoalInProgress(ctx context.Context, userSelecetdGoal CreateUserGoalRequest, userId int) (UserGoal, error) {
@@ -99,7 +128,7 @@ func (s *service) CreateUserGoalInProgress(ctx context.Context, userSelecetdGoal
 
 	//check if goal level is not custom
 	if userSelecetdGoal.Level != GoalLevelCustom {
-		goalLevelTargets, err := s.goalRepository.FetchGoalLevelTargetByGoalLevel(ctx, nil, goalLevel)
+		goalLevelTargets, err := s.goalRepository.FetchGoalLevelTargetByGoalLevelId(ctx, nil, goalLevel)
 		if err != nil {
 			slog.Error("error fetching goal level target", "error", err)
 			return UserGoal{}, err

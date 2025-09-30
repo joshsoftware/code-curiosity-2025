@@ -104,9 +104,11 @@ type GoalSummary struct {
 	UpdatedAt            time.Time `json:"updatedAt"`
 }
 
-// type MonthlyGoalSummary struct {
-// 	Day                  time.Time `json:"Day"`
-// 	IncompleteGoalsCount int `json:"IncompleteGoalsCount"`
-// 	TargetSet            int       `json:"TargetSet"`
-// 	TargetCompleted      int       `json:"TargetCompleted"`
-// }
+type GoalLevelTarget struct {
+	Id               int       `json:"id"`
+	GoalLevelId      int       `json:"goalLevelId"`
+	ContributionType string    `json:"contributionType"`
+	Target           int       `json:"target"`
+	CreatedAt        time.Time `json:"createdAt"`
+	UpdatedAt        time.Time `json:"updatedAt"`
+}

@@ -11,6 +11,7 @@ export const REPOSITORY_LANGUAGES_QUERY_KEY = "repository-languages";
 export const REPOSITORY_ACTIVITIES_QUERY_KEY = "repository-activites";
 export const USER_ACTIVE_GOAL_LEVEL_QUERY_KEY = "user-goal-level";
 export const GOAL_LEVELS_QUERY_KEY = "goal-levels";
+export const GOAL_LEVEL_TARGETS_QUERY_KEY = "goal-level-targets";
 export const USER_GOAL_LEVEL_PROGRESS_QUERY_KEY = "goal-level-progresss";
 export const CONTRIBUTION_TYPES_QUERY_KEY = "contribution-types";
 export const GITHUB_OAUTH_LOGIN_QUERY_KEY = "github-oauth-login";

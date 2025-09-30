@@ -4,6 +4,7 @@ import { BACKEND_URL } from "@/shared/constants/endpoints";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   CONTRIBUTION_TYPES_QUERY_KEY,
+  GOAL_LEVEL_TARGETS_QUERY_KEY,
   GOAL_LEVELS_QUERY_KEY,
   USER_ACTIVE_GOAL_LEVEL_QUERY_KEY,
   USER_GOAL_LEVEL_SUMMARY_QUERY_KEY
@@ -11,6 +12,7 @@ import {
 import type {
   ContributionTypeDetail,
   GoalLevel,
+  GoalLevelTarget,
   GoalSummary,
   SetUserGoalLevelRequest,
   UserCurrentGoalStatus,
@@ -31,6 +33,23 @@ export const useGoalLevels = () => {
   return useQuery({
     queryKey: [GOAL_LEVELS_QUERY_KEY],
     queryFn: fetchGoalLevels
+  });
+};
+
+const fetchGoalLevelTargets = async (
+  goalLevel: GoalLevel
+): Promise<ApiResponse<GoalLevelTarget[]>> => {
+  const response = await api.post<{
+    message: string;
+    data: GoalLevelTarget[];
+  }>(`${BACKEND_URL}/api/v1/goal/level/targets`, goalLevel);
+
+  return response.data;
+};
+
+export const useGoalLevelTargets = () => {
+  return useMutation({
+    mutationFn: (goalLevel: GoalLevel) => fetchGoalLevelTargets(goalLevel)
   });
 };
 

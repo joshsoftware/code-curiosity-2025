@@ -16,8 +16,8 @@ const ScoreConfigure = () => {
   const { data, isLoading, isError } = useFetchContributionTypes();
   const { mutate: configureScore, isPending } = useConfigureContributionScore();
 
-  // keep all scores in state (so empty can be tracked)
   const [scores, setScores] = useState<Record<string, string>>({});
+  const [version, setVersion] = useState(0); // force re-render after save
 
   if (isLoading) return <div>Loading...</div>;
   if (isError || !data?.data)
@@ -37,7 +37,6 @@ const ScoreConfigure = () => {
   };
 
   const handleSaveAll = () => {
-    // validate: no empty or invalid scores
     const invalid = Object.entries(scores).some(
       ([, score]) => score === "" || isNaN(Number(score))
     );
@@ -56,6 +55,8 @@ const ScoreConfigure = () => {
     configureScore(updates, {
       onSuccess: () => {
         toast.success("Contribution scores updated successfully.");
+        // trigger re-render to update sorted order
+        setVersion(prev => prev + 1);
       },
       onError: () => {
         toast.error("Failed to update contribution scores.");
@@ -64,6 +65,12 @@ const ScoreConfigure = () => {
     });
   };
 
+  // Sort data based on current scores
+  const sortedData = [...data.data].sort(
+    (a, b) =>
+      Number(scores[a.contributionType]) - Number(scores[b.contributionType])
+  );
+
   return (
     <div className="mx-auto max-w-4xl p-6">
       <div className="mb-6">
@@ -71,8 +78,9 @@ const ScoreConfigure = () => {
           Configure Contribution Scores
         </h1>
       </div>
+
       <div className="space-y-4">
-        {data.data.map((item: ContributionScore) => (
+        {sortedData.map((item: ContributionScore) => (
           <div
             key={item.id}
             className="flex items-center justify-between border-b pb-2"

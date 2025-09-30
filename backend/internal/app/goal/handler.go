@@ -16,6 +16,7 @@ type handler struct {
 
 type Handler interface {
 	ListGoalLevels(w http.ResponseWriter, r *http.Request)
+	FetchGoalLevelTargetByGoalLevel(w http.ResponseWriter, r *http.Request)
 	CreateUserGoalInProgress(w http.ResponseWriter, r *http.Request)
 	ResetUserCurrentGoalStatus(w http.ResponseWriter, r *http.Request)
 	GetUserCurrentGoalStatus(w http.ResponseWriter, r *http.Request)
@@ -40,6 +41,28 @@ func (h *handler) ListGoalLevels(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.WriteJson(w, http.StatusOK, "goal levels fetched successfully", gaols)
+}
+
+func (h *handler) FetchGoalLevelTargetByGoalLevel(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	
+	var goalLevel GoalLevel
+	err := json.NewDecoder(r.Body).Decode(&goalLevel)
+	if err != nil {
+		slog.Error(apperrors.ErrFailedMarshal.Error(), "error", err)
+		response.WriteJson(w, http.StatusBadRequest, apperrors.ErrInvalidRequestBody.Error(), nil)
+		return
+	}
+	
+	goalLevelTargets, err := h.goalService.FetchGoalLevelTargetByGoalLevel(ctx, goalLevel)
+	if err != nil {
+		slog.Error("error fetching goal level targets by goal level", "error", err)
+		status, errorMessage := apperrors.MapError(err)
+		response.WriteJson(w, status, errorMessage, nil)
+		return
+	}
+	
+	response.WriteJson(w, http.StatusOK, "goal level targets fetched successfully", goalLevelTargets)
 }
 
 func (h *handler) CreateUserGoalInProgress(w http.ResponseWriter, r *http.Request) {

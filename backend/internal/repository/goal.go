@@ -20,6 +20,7 @@ type GoalRepository interface {
 	ListGoalLevels(ctx context.Context, tx *sqlx.Tx) ([]GoalLevel, error)
 	GetGoalLevelByLevel(ctx context.Context, tx *sqlx.Tx, level string) (GoalLevel, error)
 	CreateUserGoalInProgress(ctx context.Context, tx *sqlx.Tx, userGoal UserGoal) (UserGoal, error)
+	FetchGoalLevelTargetByGoalLevelId(ctx context.Context, tx *sqlx.Tx, goalLevel GoalLevel) ([]GoalLevelTarget, error)
 	FetchGoalLevelTargetByGoalLevel(ctx context.Context, tx *sqlx.Tx, goalLevel GoalLevel) ([]GoalLevelTarget, error)
 	CreateUserGoalTarget(ctx context.Context, tx *sqlx.Tx, userGoalTarget UserGoalTarget) (UserGoalTarget, error)
 	CreateUserGoalProgress(ctx context.Context, tx *sqlx.Tx, userGoalProgress UserGoalProgress) (UserGoalProgress, error)
@@ -58,7 +59,9 @@ const (
 	($1, $2, $3, $4)
 	RETURNING *`
 
-	fetchGoalLevelTargetByGoalLevelQuery = "SELECT * FROM goal_level_target WHERE goal_level_id=$1"
+	fetchGoalLevelTargetByGoalLevelIdQuery = "SELECT * FROM goal_level_target WHERE goal_level_id=$1"
+
+	fetchGoalLevelTargetByGoalLevelQuery = "SELECT * FROM goal_level_target WHERE goal_level_id=(SELECT id FROM goal_level WHERE level=$1)"
 
 	createUserGoalTargetQuery = `
 	INSERT INTO user_goal_target(
@@ -173,11 +176,24 @@ func (gr *goalRepository) CreateUserGoalInProgress(ctx context.Context, tx *sqlx
 	return createdUserGoal, nil
 }
 
+func (gr *goalRepository) FetchGoalLevelTargetByGoalLevelId(ctx context.Context, tx *sqlx.Tx, goalLevel GoalLevel) ([]GoalLevelTarget, error) {
+	executer := gr.BaseRepository.initiateQueryExecuter(tx)
+
+	var goalLevelTargets []GoalLevelTarget
+	err := executer.SelectContext(ctx, &goalLevelTargets, fetchGoalLevelTargetByGoalLevelIdQuery, goalLevel.Id)
+	if err != nil {
+		slog.Error("error fetching goal level target by goal level", "error", err)
+		return nil, apperrors.ErrFetchingGoalLevelTargets
+	}
+
+	return goalLevelTargets, nil
+}
+
 func (gr *goalRepository) FetchGoalLevelTargetByGoalLevel(ctx context.Context, tx *sqlx.Tx, goalLevel GoalLevel) ([]GoalLevelTarget, error) {
 	executer := gr.BaseRepository.initiateQueryExecuter(tx)
 
 	var goalLevelTargets []GoalLevelTarget
-	err := executer.SelectContext(ctx, &goalLevelTargets, fetchGoalLevelTargetByGoalLevelQuery, goalLevel.Id)
+	err := executer.SelectContext(ctx, &goalLevelTargets, fetchGoalLevelTargetByGoalLevelQuery, goalLevel.Level)
 	if err != nil {
 		slog.Error("error fetching goal level target by goal level", "error", err)
 		return nil, apperrors.ErrFetchingGoalLevelTargets

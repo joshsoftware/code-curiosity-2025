@@ -35,6 +35,7 @@ func NewRouter(deps Dependencies) http.Handler {
 	router.HandleFunc("GET /api/v1/user/leaderboard", middleware.Authentication(middleware.AuthorizeUnblockedUser(deps.UserHandler.GetCurrentUserRank), deps.AppCfg))
 
 	router.HandleFunc("GET /api/v1/goal/level", middleware.Authentication(deps.GoalHandler.ListGoalLevels, deps.AppCfg))
+	router.HandleFunc("POST /api/v1/goal/level/targets", middleware.Authentication(deps.GoalHandler.FetchGoalLevelTargetByGoalLevel, deps.AppCfg))
 	router.HandleFunc("POST /api/v1/user/goal/level", middleware.Authentication(deps.GoalHandler.CreateUserGoalInProgress, deps.AppCfg))
 	router.HandleFunc("POST /api/v1/user/goal/level/reset", middleware.Authentication(deps.GoalHandler.ResetUserCurrentGoalStatus, deps.AppCfg))
 	router.HandleFunc("GET /api/v1/user/goal/level", middleware.Authentication(deps.GoalHandler.GetUserCurrentGoalStatus, deps.AppCfg))

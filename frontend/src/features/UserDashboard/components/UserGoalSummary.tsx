@@ -14,7 +14,14 @@ const UserGoalSummaryChart = () => {
   const { data, isLoading, isError } = useUserGoalSummary();
 
   if (isLoading) return <div>Loading...</div>;
-  if (isError || !data) return <div>Error loading goal summary</div>;
+  if (!data)
+    return (
+      <div>
+        Please set goals to view goal summary. Goal summary is update after 24
+        hours.
+      </div>
+    );
+  if (isError) return <div>Error loading goal summary</div>;
 
   const summaryData = data.data;
   const chartData = summaryData.map(item => ({

@@ -20,7 +20,7 @@ const ContributorsList = () => {
   const contributorsData = viewAll ? contributors : contributors?.slice(0, 20);
 
   return (
-    <div className="mx-auto flex h-full flex-col gap-2 overflow-auto p-6 shadow-none">
+    <div className="mx-auto flex h-full flex-col gap-2 overflow-auto px-4 pt-3 pb-10 shadow-none">
       <div className="flex items-center justify-between">
         <p className="text-md text-cc-app-blue font-bold">
           Contributors {contributors.length}
