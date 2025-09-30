@@ -25,6 +25,7 @@ import type {
   CustomGoalLevelTarget
 } from "@/shared/types/types";
 import { toast } from "sonner";
+import information from "@/assets/information.png";
 
 const UserGoals = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -165,9 +166,32 @@ const UserGoals = () => {
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <p className="text-cc-app-light-blue mb-4 text-left font-semibold">
-          MY GOALS {userLevel?.level && `(${userLevel.level.toUpperCase()})`}
-        </p>
+        <div className="flex flex-row gap-1">
+          <p className="text-cc-app-light-blue mb-4 text-left font-semibold">
+            MY GOALS {userLevel?.level && `(${userLevel.level.toUpperCase()})`}
+          </p>
+          <Dialog>
+            <DialogTrigger asChild>
+              <img
+                src={information}
+                className="h-4 w-4 cursor-pointer"
+                alt="Info"
+              />
+            </DialogTrigger>
+            <DialogContent className="bg-cc-app-mid-blue w-[300px] rounded-lg p-4 text-white shadow-md">
+              <DialogHeader>
+                <DialogTitle className="text-md font-medium">
+                  Goal Info
+                </DialogTitle>
+              </DialogHeader>
+              <p className="text-s">
+                You can set goals for a month. Once the month completes, your
+                goal will be reset automatically.
+              </p>
+            </DialogContent>
+          </Dialog>
+        </div>
+
         {isWithin48HoursOrGreaterThan30Days(createdAt) && (
           <Dialog
             open={resetDialogOpen}
@@ -182,7 +206,8 @@ const UserGoals = () => {
               </DialogHeader>
               <p className="mb-4 text-sm">
                 - Reset is available within 48 hours of setting a goal.
-                <br />- After 48 hours, goals reset automatically after 30 days.
+                <br />- After 48 hours, goals reset automatically after the
+                month completes.
               </p>
               <DialogFooter>
                 <Button
@@ -320,13 +345,13 @@ const UserGoals = () => {
           </DialogHeader>
 
           <div className="mt-4 space-y-3">
-            <h3 className="flex items-center justify-between  py-2.5 ">
+            <h3 className="flex items-center justify-between py-2.5">
               <span className="text-sm font-medium text-gray-900 capitalize">
                 Contribution Type
-                </span>
-                <span className="text-gray-900 text-sm font-semibold">
-                  Target
-                </span>
+              </span>
+              <span className="text-sm font-semibold text-gray-900">
+                Target
+              </span>
             </h3>
 
             {goalLevelTargets.map(goal => (
@@ -357,7 +382,17 @@ const UserGoals = () => {
       </Dialog>
 
       {/* Custom Goal Dialog */}
-      <Dialog open={isCustomDialogOpen} onOpenChange={setIsCustomDialogOpen}>
+      <Dialog
+        open={isCustomDialogOpen}
+        onOpenChange={open => {
+          setIsCustomDialogOpen(open);
+          if (!open) {
+            setCustomGoals([]);
+            setSelectedType("");
+            setTarget("");
+          }
+        }}
+      >
         <DialogContent className="bg-white text-black">
           <DialogHeader>
             <DialogTitle>Set Custom Contribution Goals</DialogTitle>
@@ -414,13 +449,16 @@ const UserGoals = () => {
                 {customGoals.map((goal, idx) => (
                   <div
                     key={goal.contributionType}
-                    className="flex justify-between rounded bg-gray-100 px-3 py-2"
+                    className="flex items-center justify-between rounded bg-gray-100 px-3 py-2"
                   >
-                    <span className="capitalize">{goal.contributionType}</span>
-                    <span>{goal.target}</span>
+                    <span className="flex-1 capitalize">
+                      {goal.contributionType}
+                    </span>
+                    <span className="w-16 text-center">{goal.target}</span>
                     <Button
                       size="sm"
                       variant="ghost"
+                      className="ml-2"
                       onClick={() =>
                         setCustomGoals(customGoals.filter((_, i) => i !== idx))
                       }
@@ -442,7 +480,12 @@ const UserGoals = () => {
             </Button>
             <Button
               variant="ghost"
-              onClick={() => setIsCustomDialogOpen(false)}
+              onClick={() => {
+                setIsCustomDialogOpen(false);
+                setCustomGoals([]);
+                setSelectedType("");
+                setTarget("");
+              }}
             >
               Cancel
             </Button>
