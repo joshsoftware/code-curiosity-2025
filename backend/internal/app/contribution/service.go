@@ -125,6 +125,20 @@ func (s *service) ProcessFetchedContributions(ctx context.Context) error {
 		}
 	}
 
+	usersWithActiveGoalsForCurrentMonth, err := s.goalService.FetchUsersWithActiveGoalsForCurrentMonth(ctx)
+	if err != nil {
+		slog.Error("error fetching users with active goals for current month", "error", err)
+		return err
+	}
+
+	for _, userId := range usersWithActiveGoalsForCurrentMonth {
+		err := s.HandleGoalSynchronization(ctx, userId)
+		if err != nil {
+			slog.Error("error handling goal synchronization for user", "user id", userId, "error", err)
+			continue
+		}
+	}
+
 	return nil
 }
 
@@ -151,12 +165,6 @@ func (s *service) ProcessEachContribution(ctx context.Context, contribution Cont
 	_, err = s.transactionService.HandleTransactionCreation(ctx, transaction.Contribution(obtainedContribution))
 	if err != nil {
 		slog.Error("error handling transaction creation", "error", err)
-		return err
-	}
-
-	err = s.HandleGoalSynchronization(ctx, obtainedContribution.UserId)
-	if err != nil {
-		slog.Error("error handling goal synchronization", "error", err)
 		return err
 	}
 

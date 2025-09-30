@@ -35,6 +35,7 @@ type GoalRepository interface {
 	FetchUserGoalSummary(ctx context.Context, tx *sqlx.Tx, userId int) ([]GoalSummary, error)
 	GetUserGoalSummaryBySnapshotDate(ctx context.Context, tx *sqlx.Tx, snapshotDate time.Time, userId int) (*GoalSummary, error)
 	UpdateUserGoalSummary(ctx context.Context, tx *sqlx.Tx, goalSummaryId int, userGoalSummary GoalSummary) (GoalSummary, error)
+	FetchUsersWithActiveGoalsForCurrentMonth(ctx context.Context, tx *sqlx.Tx) ([]int, error)
 }
 
 func NewGoalRepository(db *sqlx.DB) GoalRepository {
@@ -130,6 +131,10 @@ const (
 	LIMIT 1`
 
 	updateUserGoalSummaryQuery = "UPDATE goal_summary SET snapshot_date=$2, incomplete_goals_count=$3, target_set=$4, target_completed=$5 where id=$1 "
+
+	fetchUsersWithActiveGoalsForCurrentMonthQuery = `
+	SELECT DISTINCT(user_id) FROM user_goal 
+	WHERE date_trunc('month', month_started_at) = date_trunc('month', NOW())`
 )
 
 func (gr *goalRepository) ListGoalLevels(ctx context.Context, tx *sqlx.Tx) ([]GoalLevel, error) {
@@ -408,4 +413,17 @@ func (gr *goalRepository) UpdateUserGoalSummary(ctx context.Context, tx *sqlx.Tx
 	}
 
 	return GoalSummary{}, nil
+}
+
+func (gr *goalRepository) FetchUsersWithActiveGoalsForCurrentMonth(ctx context.Context, tx *sqlx.Tx) ([]int, error) {
+	executer := gr.BaseRepository.initiateQueryExecuter(tx)
+
+	var userIds []int
+	err := executer.SelectContext(ctx, &userIds, fetchUsersWithActiveGoalsForCurrentMonthQuery)
+	if err != nil {
+		slog.Error("error fetching users with active goals for current month", "error", err)
+		return nil, apperrors.ErrInternalServer
+	}
+
+	return userIds, nil
 }

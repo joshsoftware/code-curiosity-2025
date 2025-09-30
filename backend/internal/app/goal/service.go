@@ -30,6 +30,7 @@ type Service interface {
 	SyncUserGoalProgressWithContributions(ctx context.Context, userId int) error
 	CreateUserGoalSummary(ctx context.Context, userId int) (GoalSummary, error)
 	FetchUserGoalSummary(ctx context.Context, userId int) ([]GoalSummary, error)
+	FetchUsersWithActiveGoalsForCurrentMonth(ctx context.Context) ([]int, error)
 }
 
 func NewService(goalRepository repository.GoalRepository, contributionRepository repository.ContributionRepository, badgeService badge.Service) Service {
@@ -55,7 +56,7 @@ func (s *service) ListGoalLevels(ctx context.Context) ([]GoalLevel, error) {
 	return serviceGoals, nil
 }
 
-func(s *service) FetchGoalLevelTargetByGoalLevel(ctx context.Context, goalLevel GoalLevel) ([]GoalLevelTarget, error) {
+func (s *service) FetchGoalLevelTargetByGoalLevel(ctx context.Context, goalLevel GoalLevel) ([]GoalLevelTarget, error) {
 	goalLevelTargets, err := s.goalRepository.FetchGoalLevelTargetByGoalLevel(ctx, nil, repository.GoalLevel(goalLevel))
 	if err != nil {
 		slog.Error("error fetching goal level target by goal level", "error", err)
@@ -69,7 +70,7 @@ func(s *service) FetchGoalLevelTargetByGoalLevel(ctx context.Context, goalLevel 
 			slog.Error("error fetching contribution type by contribution score id", "error", err)
 			return nil, err
 		}
-		
+
 		serviceGoalLevelTargets[i] = GoalLevelTarget{
 			Id:               g.Id,
 			GoalLevelId:      g.GoalLevelId,
@@ -89,10 +90,10 @@ func (s *service) CreateUserGoalInProgress(ctx context.Context, userSelecetdGoal
 
 	userCurrentGoal, err := s.goalRepository.GetUserCurrentGoal(ctx, nil, userId)
 	if err == nil {
-		slog.Error("user already has existing goal set for current month")
+		slog.Warn("user already has existing goal set for current month")
 		return UserGoal(userCurrentGoal), apperrors.ErrUserGoalExists
 	} else if !errors.Is(err, apperrors.ErrUserGoalNotFound) {
-		slog.Error("error getting user goal for current month")
+		slog.Error("error getting user goal for current month", "error", err)
 		return UserGoal{}, err
 	}
 
@@ -485,4 +486,14 @@ func (s *service) FetchUserGoalSummary(ctx context.Context, userId int) ([]GoalS
 	}
 
 	return serviceUserGoalSummary, nil
+}
+
+func (s *service) FetchUsersWithActiveGoalsForCurrentMonth(ctx context.Context) ([]int, error) {
+	userIds, err := s.goalRepository.FetchUsersWithActiveGoalsForCurrentMonth(ctx, nil)
+	if err != nil {
+		slog.Error("error fetching users with active goals for current month", "error", err)
+		return nil, err
+	}
+
+	return userIds, nil
 }
