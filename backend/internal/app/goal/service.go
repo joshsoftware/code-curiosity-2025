@@ -30,7 +30,6 @@ type Service interface {
 	SyncUserGoalProgressWithContributions(ctx context.Context, userId int) error
 	CreateUserGoalSummary(ctx context.Context, userId int) (GoalSummary, error)
 	FetchUserGoalSummary(ctx context.Context, userId int) ([]GoalSummary, error)
-	FetchUsersWithActiveGoalsForCurrentMonth(ctx context.Context) ([]int, error)
 }
 
 func NewService(goalRepository repository.GoalRepository, contributionRepository repository.ContributionRepository, badgeService badge.Service) Service {
@@ -253,7 +252,7 @@ func (s *service) ResetUserCurrentGoalStatus(ctx context.Context, userId int) (U
 func (s *service) GetUserCurrentGoalStatus(ctx context.Context, userId int) (*GetUserCurrentGoalStatusResponse, error) {
 	userCurrentGoal, err := s.goalRepository.GetUserCurrentGoal(ctx, nil, userId)
 	if err != nil {
-		slog.Error("error getting user goal for current month")
+		slog.Error("error getting user goal for current month", "error", err)
 		return nil, err
 	}
 
@@ -335,6 +334,11 @@ func (s *service) GetUserCurrentGoalStatus(ctx context.Context, userId int) (*Ge
 func (s *service) SyncUserGoalProgressWithContributions(ctx context.Context, userId int) error {
 	userCurrentGoal, err := s.goalRepository.GetUserCurrentGoal(ctx, nil, userId)
 	if err != nil {
+		if errors.Is(err, apperrors.ErrUserGoalNotFound) {
+			slog.Info("user does not have active goal for current month, skipping goal synchronization")
+			return nil
+		}
+
 		slog.Error("error getting user goal for current month", "error", err)
 		return err
 	}
@@ -364,6 +368,11 @@ func (s *service) SyncUserGoalProgressWithContributions(ctx context.Context, use
 func (s *service) AllocateBadge(ctx context.Context, userId int) error {
 	userCurrentGoalStatus, err := s.GetUserCurrentGoalStatus(ctx, userId)
 	if err != nil {
+		if errors.Is(err, apperrors.ErrUserGoalNotFound) {
+			slog.Info("user does not have active goal for current month, skipping badge allocation")
+			return nil
+		}
+
 		slog.Error("error fetching user current goal status", "error", err)
 		return err
 	}
@@ -422,14 +431,21 @@ func (s *service) UpdateUserGoalStatusMonthly(ctx context.Context) error {
 func (s *service) CreateUserGoalSummary(ctx context.Context, userId int) (GoalSummary, error) {
 	userIncompleteGoalCount, err := s.goalRepository.CalculateUserIncompleteGoalsUntilDay(ctx, nil, userId)
 	if err != nil {
-		slog.Error("error calculating user incomplete goalstatus until day", "error", err)
+		slog.Error("error calculating user incomplete goal status until day", "error", err)
 		return GoalSummary{}, err
 	}
 
 	userCurrentGoalStatus, err := s.GetUserCurrentGoalStatus(ctx, userId)
 	if err != nil {
-		slog.Error("error getting user current goal status", "error", err)
-		return GoalSummary{}, err
+		if errors.Is(err, apperrors.ErrUserGoalNotFound) {
+			slog.Info("user does not have active goal for current month")
+			userCurrentGoalStatus = &GetUserCurrentGoalStatusResponse{
+				GoalTargetProgress: []UserGoalTargetProgress{},
+			}
+		} else {
+			slog.Error("error getting user current goal status", "error", err)
+			return GoalSummary{}, err
+		}
 	}
 
 	var totalTargetSet int
@@ -486,14 +502,4 @@ func (s *service) FetchUserGoalSummary(ctx context.Context, userId int) ([]GoalS
 	}
 
 	return serviceUserGoalSummary, nil
-}
-
-func (s *service) FetchUsersWithActiveGoalsForCurrentMonth(ctx context.Context) ([]int, error) {
-	userIds, err := s.goalRepository.FetchUsersWithActiveGoalsForCurrentMonth(ctx, nil)
-	if err != nil {
-		slog.Error("error fetching users with active goals for current month", "error", err)
-		return nil, err
-	}
-
-	return userIds, nil
 }

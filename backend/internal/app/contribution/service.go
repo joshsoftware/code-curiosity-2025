@@ -125,16 +125,16 @@ func (s *service) ProcessFetchedContributions(ctx context.Context) error {
 		}
 	}
 
-	usersWithActiveGoalsForCurrentMonth, err := s.goalService.FetchUsersWithActiveGoalsForCurrentMonth(ctx)
+	users, err := s.userService.ListAllUsers(ctx)
 	if err != nil {
-		slog.Error("error fetching users with active goals for current month", "error", err)
+		slog.Error("error fetching all users", "error", err)
 		return err
 	}
 
-	for _, userId := range usersWithActiveGoalsForCurrentMonth {
-		err := s.HandleGoalSynchronization(ctx, userId)
+	for _, user := range users {
+		err := s.HandleGoalSynchronization(ctx, user.Id)
 		if err != nil {
-			slog.Error("error handling goal synchronization for user", "user id", userId, "error", err)
+			slog.Error("error handling goal synchronization for user", "user id", user.Id, "error", err)
 			continue
 		}
 	}

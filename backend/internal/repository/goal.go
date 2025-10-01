@@ -35,7 +35,6 @@ type GoalRepository interface {
 	FetchUserGoalSummary(ctx context.Context, tx *sqlx.Tx, userId int) ([]GoalSummary, error)
 	GetUserGoalSummaryBySnapshotDate(ctx context.Context, tx *sqlx.Tx, snapshotDate time.Time, userId int) (*GoalSummary, error)
 	UpdateUserGoalSummary(ctx context.Context, tx *sqlx.Tx, goalSummaryId int, userGoalSummary GoalSummary) (GoalSummary, error)
-	FetchUsersWithActiveGoalsForCurrentMonth(ctx context.Context, tx *sqlx.Tx) ([]int, error)
 }
 
 func NewGoalRepository(db *sqlx.DB) GoalRepository {
@@ -399,8 +398,7 @@ func (gr *goalRepository) GetUserGoalSummaryBySnapshotDate(ctx context.Context, 
 func (gr *goalRepository) UpdateUserGoalSummary(ctx context.Context, tx *sqlx.Tx, goalSummaryId int, userGoalSummary GoalSummary) (GoalSummary, error) {
 	executer := gr.BaseRepository.initiateQueryExecuter(tx)
 
-	var updatedUserGoalSummary GoalSummary
-	err := executer.GetContext(ctx, &updatedUserGoalSummary, updateUserGoalSummaryQuery,
+	_, err := executer.ExecContext(ctx, updateUserGoalSummaryQuery,
 		goalSummaryId,
 		userGoalSummary.SnapshotDate,
 		userGoalSummary.IncompleteGoalsCount,
@@ -413,17 +411,4 @@ func (gr *goalRepository) UpdateUserGoalSummary(ctx context.Context, tx *sqlx.Tx
 	}
 
 	return GoalSummary{}, nil
-}
-
-func (gr *goalRepository) FetchUsersWithActiveGoalsForCurrentMonth(ctx context.Context, tx *sqlx.Tx) ([]int, error) {
-	executer := gr.BaseRepository.initiateQueryExecuter(tx)
-
-	var userIds []int
-	err := executer.SelectContext(ctx, &userIds, fetchUsersWithActiveGoalsForCurrentMonthQuery)
-	if err != nil {
-		slog.Error("error fetching users with active goals for current month", "error", err)
-		return nil, apperrors.ErrInternalServer
-	}
-
-	return userIds, nil
 }
