@@ -1,0 +1,1 @@
+ALTER TABLE users DROP COLUMN IF EXISTS current_active_goal_id;

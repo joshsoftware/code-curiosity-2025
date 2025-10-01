@@ -1,0 +1,170 @@
+package repository
+
+import (
+	"context"
+	"database/sql"
+	"errors"
+	"log/slog"
+
+	"github.com/jmoiron/sqlx"
+	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/apperrors"
+)
+
+type repositoryRepository struct {
+	BaseRepository
+}
+
+type RepositoryRepository interface {
+	RepositoryTransaction
+	GetRepoByGithubId(ctx context.Context, tx *sqlx.Tx, repoGithubId int) (Repository, error)
+	GetRepoByRepoId(ctx context.Context, tx *sqlx.Tx, repoId int) (Repository, error)
+	CreateRepository(ctx context.Context, tx *sqlx.Tx, repository Repository) (Repository, error)
+	GetUserRepoTotalCoins(ctx context.Context, tx *sqlx.Tx, userId int, repoId int) (int, error)
+	FetchUsersContributedRepos(ctx context.Context, tx *sqlx.Tx, userId int) ([]Repository, error)
+	FetchUserContributionsInRepo(ctx context.Context, tx *sqlx.Tx, userId int, repoGithubId int) ([]Contribution, error)
+	FetchUserContributedReposCount(ctx context.Context, tx *sqlx.Tx, userId int) (int, error)
+}
+
+func NewRepositoryRepository(db *sqlx.DB) RepositoryRepository {
+	return &repositoryRepository{
+		BaseRepository: BaseRepository{db},
+	}
+}
+
+const (
+	getRepoByGithubIdQuery = `SELECT * from repositories where github_repo_id=$1`
+
+	getrepoByRepoIdQuery = `SELECT * from repositories where id=$1`
+
+	createRepositoryQuery = `
+	INSERT INTO repositories (
+	github_repo_id, 
+	repo_name, 
+	description, 
+	languages_url,
+	repo_url,
+	owner_name, 
+	update_date,
+	contributors_url
+	)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+	RETURNING *`
+
+	getUserRepoTotalCoinsQuery = `SELECT sum(balance_change) from contributions where user_id = $1 and repository_id = $2;`
+
+	fetchUsersContributedReposQuery = `SELECT * from repositories where id in (SELECT repository_id from contributions where user_id=$1);`
+
+	fetchUserContributionsInRepoQuery = `SELECT * from contributions where repository_id=$1 and user_id=$2;`
+
+	fetchUserContributedReposCountQuery = `SELECT COUNT(DISTINCT repository_id) AS unique_repo_count FROM contributions WHERE user_id = $1;`
+)
+
+func (rr *repositoryRepository) GetRepoByGithubId(ctx context.Context, tx *sqlx.Tx, repoGithubId int) (Repository, error) {
+	executer := rr.BaseRepository.initiateQueryExecuter(tx)
+
+	var repository Repository
+	err := executer.GetContext(ctx, &repository, getRepoByGithubIdQuery, repoGithubId)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			slog.Error("repository not found", "error", err)
+			return Repository{}, apperrors.ErrRepoNotFound
+		}
+		slog.Error("error occurred while getting repository by repo github id", "error", err)
+		return Repository{}, apperrors.ErrInternalServer
+	}
+
+	return repository, nil
+
+}
+
+func (rr *repositoryRepository) GetRepoByRepoId(ctx context.Context, tx *sqlx.Tx, repoId int) (Repository, error) {
+	executer := rr.BaseRepository.initiateQueryExecuter(tx)
+
+	var repository Repository
+	err := executer.GetContext(ctx, &repository, getrepoByRepoIdQuery, repoId)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			slog.Error("repository not found", "error", err)
+			return Repository{}, apperrors.ErrRepoNotFound
+		}
+		slog.Error("error occurred while getting repository by id", "error", err)
+		return Repository{}, apperrors.ErrInternalServer
+	}
+
+	return repository, nil
+}
+
+func (rr *repositoryRepository) CreateRepository(ctx context.Context, tx *sqlx.Tx, repositoryInfo Repository) (Repository, error) {
+	executer := rr.BaseRepository.initiateQueryExecuter(tx)
+
+	var repository Repository
+	err := executer.GetContext(ctx, &repository, createRepositoryQuery,
+		repositoryInfo.GithubRepoId,
+		repositoryInfo.RepoName,
+		repositoryInfo.Description,
+		repositoryInfo.LanguagesUrl,
+		repositoryInfo.RepoUrl,
+		repositoryInfo.OwnerName,
+		repositoryInfo.UpdateDate,
+		repositoryInfo.ContributorsUrl,
+	)
+	if err != nil {
+		slog.Error("error occured while creating repository", "error", err)
+		return Repository{}, apperrors.ErrInternalServer
+	}
+
+	return repository, nil
+
+}
+
+func (r *repositoryRepository) GetUserRepoTotalCoins(ctx context.Context, tx *sqlx.Tx, userId int, repoId int) (int, error) {
+	executer := r.BaseRepository.initiateQueryExecuter(tx)
+
+	var totalCoins int
+	err := executer.GetContext(ctx, &totalCoins, getUserRepoTotalCoinsQuery, userId, repoId)
+	if err != nil {
+		slog.Error("error calculating total coins earned by user for the repository", "error", err)
+		return 0, apperrors.ErrCalculatingUserRepoTotalCoins
+	}
+
+	return totalCoins, nil
+}
+
+func (r *repositoryRepository) FetchUsersContributedRepos(ctx context.Context, tx *sqlx.Tx, userId int) ([]Repository, error) {
+	executer := r.BaseRepository.initiateQueryExecuter(tx)
+
+	var usersContributedRepos []Repository
+	err := executer.SelectContext(ctx, &usersContributedRepos, fetchUsersContributedReposQuery, userId)
+	if err != nil {
+		slog.Error("error fetching users contributed repositories", "error", err)
+		return nil, apperrors.ErrFetchingUsersContributedRepos
+	}
+
+	return usersContributedRepos, nil
+}
+
+func (r *repositoryRepository) FetchUserContributionsInRepo(ctx context.Context, tx *sqlx.Tx, userId int, repoGithubId int) ([]Contribution, error) {
+	executer := r.BaseRepository.initiateQueryExecuter(tx)
+
+	var userContributionsInRepo []Contribution
+	err := executer.SelectContext(ctx, &userContributionsInRepo, fetchUserContributionsInRepoQuery, repoGithubId, userId)
+	if err != nil {
+		slog.Error("error fetching users contribution in repository", "error", err)
+		return nil, apperrors.ErrFetchingUserContributionsInRepo
+	}
+
+	return userContributionsInRepo, nil
+}
+
+func (r *repositoryRepository) FetchUserContributedReposCount(ctx context.Context, tx *sqlx.Tx, userId int) (int, error) {
+	executer := r.BaseRepository.initiateQueryExecuter(tx)
+
+	var usersContributedReposCount int
+	err := executer.GetContext(ctx, &usersContributedReposCount, fetchUserContributedReposCountQuery, userId)
+	if err != nil {
+		slog.Error("error fetching user contributed repos count", "error", err)
+		return 0, apperrors.ErrFetchingUsersContributedReposCount
+	}
+
+	return usersContributedReposCount, nil
+}

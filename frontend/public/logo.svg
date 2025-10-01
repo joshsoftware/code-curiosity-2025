@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="220" viewBox="0 0 220 220" role="img" aria-labelledby="title desc">
+  <title id="title">Code Curiosity Logo</title>
+  <desc id="desc">Minimal logo with coding brackets, a centered medal, and gradient colors to represent coding, open source contributions, and recognition.</desc>
+
+  <!-- Gradient background -->
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06b6d4"/>
+      <stop offset="100%" stop-color="#2563eb"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Circle background -->
+  <circle cx="110" cy="110" r="100" fill="url(#grad)"/>
+
+  <!-- Coding brackets -->
+  <path d="M55 70 L40 110 L55 150" fill="none" stroke="white" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M165 70 L180 110 L165 150" fill="none" stroke="white" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Medal (centered at 110,110) -->
+  <g transform="translate(110,110)">
+    <!-- Ribbon -->
+    <path d="M-15 -55 L0 -25 L15 -55 Z" fill="white" opacity="0.8"/>
+    <!-- Medal circle -->
+    <circle cx="0" cy="0" r="22" fill="#facc15" stroke="#eab308" stroke-width="3"/>
+    <!-- Star inside medal -->
+    <path d="M0 -13 L4 -4 L14 -3 L6 3 L8 12 L0 7 L-8 12 L-6 3 L-14 -3 L-4 -4 Z"
+          fill="#eab308" stroke="#d97706" stroke-width="1.5"/>
+  </g>
+</svg>
