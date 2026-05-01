@@ -5,6 +5,7 @@ import (
 
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/joshsoftware/code-curiosity-2025/internal/pkg/apperrors"
+	"gopkg.in/yaml.v3"
 )
 
 type HTTPServer struct {
@@ -47,7 +48,10 @@ func LoadAppConfig() (AppConfig, error) {
 
 	var appCfg AppConfig
 	if err := cleanenv.ReadConfig(appConfigPath, &appCfg); err != nil {
-		return AppConfig{}, apperrors.ErrFailedToLoadAppConfig
+		configBytes, readErr := os.ReadFile(appConfigPath)
+		if readErr != nil || yaml.Unmarshal(configBytes, &appCfg) != nil {
+			return AppConfig{}, apperrors.ErrFailedToLoadAppConfig
+		}
 	}
 
 	return appCfg, nil

@@ -58,3 +58,15 @@ func Authentication(next http.HandlerFunc, appCfg config.AppConfig) http.Handler
 		next.ServeHTTP(w, r)
 	})
 }
+
+func AdminOnly(next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		isAdmin, ok := r.Context().Value(IsAdminKey).(bool)
+		if !ok || !isAdmin {
+			response.WriteJson(w, http.StatusForbidden, apperrors.ErrAccessForbidden.Error(), nil)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}

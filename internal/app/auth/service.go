@@ -23,6 +23,7 @@ type service struct {
 type Service interface {
 	GithubOAuthLoginUrl(ctx context.Context) string
 	GithubOAuthLoginCallback(ctx context.Context, code string) (string, error)
+	AdminLogin(ctx context.Context, requestBody AdminLoginRequestBody) (string, error)
 	GetLoggedInUser(ctx context.Context) (User, error)
 }
 
@@ -76,10 +77,27 @@ func (s *service) GithubOAuthLoginCallback(ctx context.Context, code string) (st
 			return "", apperrors.ErrUserCreationFailed
 		}
 	}
+	if userData.IsBlocked {
+		return "", apperrors.ErrAccessForbidden
+	}
 
-	jwtToken, err := jwt.GenerateJWT(userData.Id, userInfo.IsAdmin, s.appCfg)
+	jwtToken, err := jwt.GenerateJWT(userData.Id, userData.IsAdmin, s.appCfg)
 	if err != nil {
 		slog.Error("error generating jwt", "error", err)
+		return "", apperrors.ErrInternalServer
+	}
+
+	return jwtToken, nil
+}
+
+func (s *service) AdminLogin(ctx context.Context, requestBody AdminLoginRequestBody) (string, error) {
+	if requestBody.Email != AdminEmail || requestBody.Password != AdminPassword {
+		return "", apperrors.ErrUnauthorizedAccess
+	}
+
+	jwtToken, err := jwt.GenerateJWT(AdminUserId, true, s.appCfg)
+	if err != nil {
+		slog.Error("error generating admin jwt", "error", err)
 		return "", apperrors.ErrInternalServer
 	}
 
@@ -93,6 +111,9 @@ func (s *service) GetLoggedInUser(ctx context.Context) (User, error) {
 	if !ok {
 		slog.Error("error obtaining user id from context")
 		return User{}, apperrors.ErrInternalServer
+	}
+	if userId == AdminUserId {
+		return User{Id: AdminUserId, Email: AdminEmail, IsAdmin: true}, nil
 	}
 
 	user, err := s.userService.GetUserById(ctx, userId)

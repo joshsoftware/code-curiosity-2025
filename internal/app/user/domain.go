@@ -33,3 +33,32 @@ type CreateUserRequestBody struct {
 type Email struct {
 	Email string `json:"email"`
 }
+
+type ConfigureContributionScoreRequestBody struct {
+	Score int `json:"score"`
+}
+
+type BlockUserRequestBody struct {
+	IsBlocked bool `json:"is_blocked"`
+}
+
+type ContributionScore struct {
+	Id               int       `json:"id"`
+	AdminId          int       `json:"admin_id"`
+	ContributionType string    `json:"contribution_type"`
+	Score            int       `json:"score"`
+	CreatedAt        time.Time `json:"created_at"`
+	UpdatedAt        time.Time `json:"updated_at"`
+}
+
+type LeaderboardEntry struct {
+	Id             int       `json:"id"`
+	UserId         int       `json:"user_id"`
+	GithubId       int       `json:"github_id"`
+	AvatarUrl      string    `json:"avatar_url"`
+	CurrentBalance int       `json:"current_balance"`
+	Rank           int       `json:"rank"`
+	RefreshedAt    time.Time `json:"refreshed_at"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
+}

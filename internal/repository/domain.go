@@ -29,3 +29,24 @@ type CreateUserRequestBody struct {
 	Email          string
 	IsAdmin        bool
 }
+
+type ContributionScore struct {
+	Id               int
+	AdminId          int
+	ContributionType string
+	Score            int
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
+}
+
+type LeaderboardEntry struct {
+	Id             int
+	UserId         int
+	GithubId       int
+	AvatarUrl      string
+	CurrentBalance int
+	Rank           int
+	RefreshedAt    time.Time
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+}
