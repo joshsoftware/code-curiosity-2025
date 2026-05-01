@@ -12,6 +12,9 @@ const (
 	GithubOauthScope      = "read:user"
 	GetUserGithubUrl      = "https://api.github.com/user"
 	GetUserEmailUrl       = "https://api.github.com/user/emails"
+	AdminUserId           = 0
+	AdminEmail            = "admin@codecuriosity.org"
+	AdminPassword         = "admin@123"
 )
 
 type User struct {
@@ -37,4 +40,13 @@ type GithubUserResponse struct {
 	AvatarUrl      string `json:"avatar_url"`
 	Email          string `json:"email"`
 	IsAdmin        bool   `json:"is_admin"`
+}
+
+type AdminLoginRequestBody struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type AdminLoginResponse struct {
+	Token string `json:"token"`
 }

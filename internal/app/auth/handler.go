@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -18,6 +19,7 @@ type handler struct {
 type Handler interface {
 	GithubOAuthLoginUrl(w http.ResponseWriter, r *http.Request)
 	GithubOAuthLoginCallback(w http.ResponseWriter, r *http.Request)
+	AdminLogin(w http.ResponseWriter, r *http.Request)
 	GetLoggedInUser(w http.ResponseWriter, r *http.Request)
 }
 
@@ -57,6 +59,29 @@ func (h *handler) GithubOAuthLoginCallback(w http.ResponseWriter, r *http.Reques
 	}
 	http.SetCookie(w, cookie)
 	http.Redirect(w, r, h.appConfig.ClientURL, http.StatusPermanentRedirect)
+}
+
+func (h *handler) AdminLogin(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var requestBody AdminLoginRequestBody
+	err := json.NewDecoder(r.Body).Decode(&requestBody)
+	if err != nil {
+		slog.Error(apperrors.ErrFailedMarshal.Error(), "error", err)
+		response.WriteJson(w, http.StatusBadRequest, apperrors.ErrInvalidRequestBody.Error(), nil)
+		return
+	}
+
+	token, err := h.authService.AdminLogin(ctx, requestBody)
+	if err != nil {
+		slog.Error("failed to login admin", "error", err)
+		status, errorMessage := apperrors.MapError(err)
+		response.WriteJson(w, status, errorMessage, nil)
+		return
+	}
+
+	http.SetCookie(w, &http.Cookie{Name: AccessTokenCookieName, Value: token, HttpOnly: true})
+	response.WriteJson(w, http.StatusOK, "admin logged in successfully", AdminLoginResponse{Token: token})
 }
 
 func (h *handler) GetLoggedInUser(w http.ResponseWriter, r *http.Request) {

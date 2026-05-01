@@ -18,6 +18,10 @@ type Service interface {
 	GetUserByGithubId(ctx context.Context, githubId int) (User, error)
 	CreateUser(ctx context.Context, userInfo CreateUserRequestBody) (User, error)
 	UpdateUserEmail(ctx context.Context, email string) error
+	GetContributionScores(ctx context.Context) ([]ContributionScore, error)
+	UpdateContributionScore(ctx context.Context, contributionScoreId int, score int) error
+	GetLeaderboard(ctx context.Context) ([]LeaderboardEntry, error)
+	UpdateUserBlocked(ctx context.Context, userId int, isBlocked bool) error
 }
 
 func NewService(userRepository repository.UserRepository) Service {
@@ -69,6 +73,56 @@ func (s *service) UpdateUserEmail(ctx context.Context, email string) error {
 	err := s.userRepository.UpdateUserEmail(ctx, nil, userId, email)
 	if err != nil {
 		slog.Error("failed to update user email", "error", err)
+		return err
+	}
+
+	return nil
+}
+
+func (s *service) GetContributionScores(ctx context.Context) ([]ContributionScore, error) {
+	repositoryContributionScores, err := s.userRepository.ListContributionScores(ctx, nil)
+	if err != nil {
+		slog.Error("failed to get contribution scores", "error", err)
+		return nil, err
+	}
+
+	contributionScores := make([]ContributionScore, len(repositoryContributionScores))
+	for index, contributionScore := range repositoryContributionScores {
+		contributionScores[index] = ContributionScore(contributionScore)
+	}
+
+	return contributionScores, nil
+}
+
+func (s *service) UpdateContributionScore(ctx context.Context, contributionScoreId int, score int) error {
+	err := s.userRepository.UpdateContributionScore(ctx, nil, contributionScoreId, score)
+	if err != nil {
+		slog.Error("failed to update contribution score", "error", err)
+		return err
+	}
+
+	return nil
+}
+
+func (s *service) GetLeaderboard(ctx context.Context) ([]LeaderboardEntry, error) {
+	repositoryLeaderboard, err := s.userRepository.ListLeaderboard(ctx, nil)
+	if err != nil {
+		slog.Error("failed to get leaderboard", "error", err)
+		return nil, err
+	}
+
+	leaderboard := make([]LeaderboardEntry, len(repositoryLeaderboard))
+	for index, leaderboardEntry := range repositoryLeaderboard {
+		leaderboard[index] = LeaderboardEntry(leaderboardEntry)
+	}
+
+	return leaderboard, nil
+}
+
+func (s *service) UpdateUserBlocked(ctx context.Context, userId int, isBlocked bool) error {
+	err := s.userRepository.UpdateUserBlocked(ctx, nil, userId, isBlocked)
+	if err != nil {
+		slog.Error("failed to update user blocked status", "error", err)
 		return err
 	}
 

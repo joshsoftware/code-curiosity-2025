@@ -1,1 +1,6 @@
 local.yaml
+.env.local
+.env.development
+.env.production
+server.log
+server.err
